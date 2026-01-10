@@ -1,39 +1,73 @@
 # Videco Platform
 
+🎥 **AI Personalized Video Generation Platform for Cold Outreach**
 
-## Getting Started
+Videco is an open-source AI-powered video generation platform designed for creating personalized videos for cold outreach campaigns. This project enables anyone to build and deploy their own video personalization solution.
 
-This project is based on Next.js SSG. Please use Yarn.
+🌐 **Website:** [videco.io](https://videco.io)
+
+👨‍💻 **Developed by:** [Malith](https://x.com/malith_dev)
+
+⚡ **Powered by:** [ZapDigits](https://zapdigits.com/) - Part of ZapDigits Web3 projects
+
+---
+
+## 🚀 Getting Started
+
+This project is based on Next.js SSG. Please use Yarn for package management.
 
 
 
-## Available Scripts
+## ⚙️ Environment Setup
 
-### Running the development server.
+Before running the project, copy the environment variables template and configure your settings:
 
 ```bash
-    yarn dev
+cp env.example .env.local
 ```
 
-### Building for production.
+Fill in your actual API keys and configuration values in `.env.local`. See the `env.example` file for all required environment variables.
+
+## 📦 Available Scripts
+
+### 🔧 Running the development server
 
 ```bash
-    yarn build
+yarn dev
 ```
 
-### Running the production server.
+### 🏗️ Building for production
 
 ```bash
-    yarn start
+yarn build
 ```
 
-## Learn More
+### 🚀 Running the production server
 
-To learn more about **superplate**, please check out the [Documentation](https://github.com/pankod/superplate).
+```bash
+yarn start
+```
 
-### **Videco Platform**
+## 🎯 Features
 
-Videco core product codebase
+- **AI-Powered Video Generation**: Create personalized videos using advanced AI technology
+- **Cold Outreach Optimization**: Specifically designed for sales and marketing outreach campaigns
+- **Customizable Templates**: Multiple video templates and personalization options
+- **Analytics Dashboard**: Track video performance and engagement metrics
+- **Integration Ready**: Connect with popular CRM and marketing tools
+- **Open Source**: Free to use, modify, and distribute
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js, React, Chakra UI
+- **Backend**: Next.js API Routes, Supabase
+- **AI Services**: Sync.so, Cloudinary, Mux
+- **Payment**: Stripe
+- **Analytics**: PostHog, Usetiful
+- **State Management**: Zustand
+- **Internationalization**: next-i18next
+
+## 📚 Learn More
 
 ### **Chakra UI**
 
@@ -93,6 +127,22 @@ GitHub Actions makes it easy to automate all your software workflows, now with w
 
 
 
-## License
+## 🤝 Contributing
 
-MIT
+We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## 📄 License
+
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- **Website**: [videco.io](https://videco.io)
+- **Developer**: [Malith on X](https://x.com/malith_dev)
+- **Powered by**: [ZapDigits](https://zapdigits.com/)
+- **Telegram Community**: [Join ZapDigits ($ZD) Group](https://t.me/+xeLiHJPIYdMxZjQ0)
+- **Contract Address**: `6vvfNVTdwN6pYHcKERLbnPZaEHEHJakRCvPmXaJnory`
+
+---
+
+**Made with ❤️ as part of ZapDigits Web3 projects**
