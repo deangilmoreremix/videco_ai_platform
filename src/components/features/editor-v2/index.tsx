@@ -27,6 +27,7 @@ import { PageAiVideos } from "./page-aivideos";
 import { blobUrlToBlob } from "src/utils/video";
 import { useWorkspaces } from "src/store/workspace";
 import { PageInsights } from "./page-insights";
+import { pollMuapiJob } from "src/services/api/pollMuapi";
 
 export const Editor: React.FC = () => {
     const router = useRouter();
@@ -127,6 +128,32 @@ export const Editor: React.FC = () => {
             });
         setLoading(false);
     }, []);
+
+    // 2026: Auto-poll for Muapi-generated AI clones / personalized videos
+    useEffect(() => {
+        if (mediaStatus === "in_progress" && videoId && (router.query.clone === "true" || router.query.aivideos)) {
+            const requestId = (video as any)?.ai_preview || meta?.preview; // ai_preview stores the Muapi request_id in new path
+
+            if (requestId && typeof requestId === "string" && requestId.length < 100) {
+                const interval = setInterval(async () => {
+                    try {
+                        const res = await pollMuapiJob(requestId, videoId);
+                        if (res.status === "completed" && res.final_url) {
+                            setVideoUrl(res.final_url);
+                            setMediaStatus("completed");
+                            clearInterval(interval);
+                            // Refresh video data
+                            getVideoByID();
+                        }
+                    } catch (e) {
+                        console.log("Muapi poll error (will retry)", e);
+                    }
+                }, 6000);
+
+                return () => clearInterval(interval);
+            }
+        }
+    }, [mediaStatus, videoId, router.query.clone]);
 
     useEffect(() => {
         if (router.query.preview) {

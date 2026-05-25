@@ -401,6 +401,7 @@ const Create: React.FC = () => {
     const confirmScriptAndGenerate = async () => {
         setReadyToGenerate(true);
         setLoading(false);
+
         const startJob = await createAIClone({
             video_id: router.query.id,
             voice_id: voiceID,
@@ -409,6 +410,35 @@ const Create: React.FC = () => {
             ai_video_id: "test_id",
             language: language,
         });
+
+        const response = startJob.data;
+
+        // New Muapi + OpenAI path support (2026)
+        if (response?.mode === "muapi" && response.result?.request_id) {
+            // Store the Muapi job id so the video edit page can poll for completion
+            await supabase
+                .from("videos")
+                .update({
+                    ai_preview: response.result.request_id,
+                    media_status: "in_progress",
+                })
+                .eq("id", router.query.id);
+
+            // Optionally kick off background polling via Edge (non-blocking)
+            fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                    action: "poll",
+                    request_id: response.result.request_id,
+                    video_id: router.query.id,
+                }),
+            }).catch(() => {}); // fire and forget
+        }
+
         setJobsGenerated(true);
     };
     const continueToNextStep = async () => {
