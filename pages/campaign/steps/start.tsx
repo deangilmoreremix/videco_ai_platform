@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+// 2026 Migration: AI personalization available via <PersonalizationPanel /> (see src/components/features/ai/PersonalizationPanel.tsx)
 import {
     Box,
     Spinner,

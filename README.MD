@@ -60,8 +60,10 @@ yarn start
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js, React, Chakra UI
-- **Backend**: Next.js API Routes, Supabase
-- **AI Services**: Sync.so, Cloudinary, Mux
+- **Backend**: Next.js API Routes (served via Netlify), Supabase (Auth, DB, Realtime, Edge Functions, Storage)
+- **AI Services (2026)**: Muapi.ai (image/video/lipsync), OpenAI (Responses, Realtime, LLM scripting & TTS)
+- **Legacy (transitional)**: Sync.so, Cloudinary, Speechify, Inngest
+- **Hosting**: Netlify (replacing Vercel)
 - **Payment**: Stripe
 - **Analytics**: PostHog, Usetiful
 - **State Management**: Zustand
@@ -126,6 +128,30 @@ GitHub Actions makes it easy to automate all your software workflows, now with w
 
 
 
+
+## 🤝 Contributing
+
+## 🚀 2026 Tech Stack Migration (In Progress)
+
+The platform is being rebuilt on:
+- **Supabase** Edge Functions + Storage + Auth
+- **Muapi.ai** for all image/video generation, lipsync, and effects (replacing Sync.so + Cloudinary heavy usage)
+- **Netlify** for hosting + serverless functions
+- **OpenAI** Responses + Realtime APIs + LLM for personalized scripting and voice
+
+**Key changes for developers:**
+- New integration modules: `src/lib/muapi.ts`, `src/lib/openai.ts`, `src/lib/storage.ts`
+- Supabase Edge Function: `supabase/functions/ai-orchestrator`
+- Netlify config: `netlify.toml` + `netlify/functions/`
+- Feature flag: `NEXT_PUBLIC_USE_MUAPI_AI=true` enables new AI paths (legacy paths remain for rollback)
+- See detailed plan: `.kilo/plans/1779745006493-.md`
+
+Run with the new stack:
+```bash
+netlify dev
+# or
+yarn dev   # still works (hybrid during migration)
+```
 
 ## 🤝 Contributing
 

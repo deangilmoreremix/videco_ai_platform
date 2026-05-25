@@ -92,3 +92,45 @@ export const createAIClone = inngest.createFunction(
         return { event: ai_video_update, body: result };
     },
 );
+
+/**
+ * NEW 2026: Muapi + OpenAI path for AI Clone (lipsync).
+ * Dispatches to Supabase Edge Function "ai-orchestrator".
+ * Keeps the old Inngest/Sync path untouched for rollback.
+ */
+export async function createAICloneMuapi(params: {
+  video_url: string;
+  audio_url?: string;
+  video_id: string | number;
+  language?: string;
+  text?: string;
+  voice_id?: string;
+}) {
+  const useMuapi = process.env.NEXT_PUBLIC_USE_MUAPI_AI === "true" || process.env.USE_MUAPI_AI === "true";
+
+  if (!useMuapi) {
+    // Fallback to legacy (caller should use old createAIClone via Inngest)
+    throw new Error("Muapi path disabled. Set NEXT_PUBLIC_USE_MUAPI_AI=true");
+  }
+
+  const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`;
+
+  const res = await fetch(edgeUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
+      action: "clone",
+      ...params,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Edge AI clone failed: ${err}`);
+  }
+
+  return res.json();
+}

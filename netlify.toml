@@ -1,0 +1,22 @@
+[build]
+  command = "yarn build"
+  publish = ".next"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Optional: increase timeout for long-running API routes during transition (Netlify default 10s, can be higher on paid)
+# [functions."*"]
+#   timeout = 26
+
+[dev]
+  command = "next dev"
+  port = 3000
+  publish = ".next"
+
+# Example redirect if needed for SPA or API
+# [[redirects]]
+#   from = "/api/*"
+#   to = "/.netlify/functions/:splat"
+#   status = 200
