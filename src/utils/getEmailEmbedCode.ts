@@ -71,13 +71,23 @@ export const emailProvidersList = () => [
     },
 ];
 
-const generateGif = (og_url: string, fname: string) =>
-    `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_200,l_play-3-xxl_wefrsh/fl_layer_apply/c_scale,h_400,e_loop/dl_200,vs_30/b_black,co_white,fl_text_no_trim,l_text:Arial_50:${fname}/bo_6px_solid_rgb:05405A,fl_layer_apply,g_south,y_30/${og_url
-        .split("/")
-        .pop()
-        .replace(".m3u8", ".gif")
-        .replace(".mov", ".gif")
-        .replace(".mp4", ".gif")}`;
+const generateGif = (og_url: string, fname: string) => {
+    // Normalize og_url via media helper to support Supabase paths
+    try {
+        // lazy import to avoid circular deps during build
+        const { normalizeMediaUrl } = require("src/utils/media");
+        const normalized = normalizeMediaUrl(og_url);
+        const file = normalized.split("/").pop();
+        return `${normalized.includes("res.cloudinary.com") ? normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif') : normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif')}`;
+    } catch (e) {
+        const fnameEsc = encodeURIComponent(fname);
+        return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_200,l_play-3-xxl_wefrsh/fl_layer_apply/c_scale,h_400,e_loop/dl_200,vs_30/b_black,co_white,fl_text_no_trim,l_text:Arial_50:${fnameEsc}/bo_6px_solid_rgb:05405A,fl_layer_apply,g_south,y_30/${og_url
+            .split("/")
+            .pop()
+            .replace(".m3u8", ".gif")
+            .replace(".mov", ".gif")
+            .replace(".mp4", ".gif")}`;
+}
 export const getEmailEmbedCode = (
     url: string,
     og_url: string,

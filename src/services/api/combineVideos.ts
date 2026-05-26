@@ -32,7 +32,7 @@ export const uploadVideosTocloudinaryDirectly = async (file: any) => {
             },
         });
         // Normalize response to mimic previous shape
-        return { data: { public_url: uploadedVideo.data.result.publicUrl, path: uploadedVideo.data.result.path } };
+        return { data: { public_url: uploadedVideo.data.result.publicUrl || uploadedVideo.data.result.publicUrl, path: uploadedVideo.data.result.path } };
     } catch (e) {
         console.log(e);
     }

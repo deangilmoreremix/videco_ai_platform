@@ -47,6 +47,7 @@ import { uploadVideosTocloudinaryDirectly } from "src/services/api/combineVideos
 import { createAIPreview } from "src/services/api/createAIPreview";
 import { rem } from "polished";
 import { UploadV2 } from "@components/features/editor-v2/upload/v2";
+import { PersonalizationPanel } from "src/components/features/ai/PersonalizationPanel";
 import { FileUploader } from "react-drag-drop-files";
 import axios from "axios";
 import { blobUrlToBlob } from "src/utils/video";
@@ -186,7 +187,7 @@ const Start: React.FC = () => {
         try {
             const result = await uploadVideosTocloudinaryDirectly(url);
             const startJob = await createAIPreview({
-                audio: `https://res.cloudinary.com/dhd6m0fh3/video/upload/${result.data.public_id}.mp3`,
+                audio: result.data?.publicUrl ? result.data.publicUrl.replace(/\.(mp4|webm|mov|m3u8)$/, '.mp3') : result.data?.publicUrl || '',
                 video_id: router.query.id,
                 language: language,
                 userId: user.id,
@@ -362,11 +363,11 @@ const Start: React.FC = () => {
             .eq("id", router.query.id);
         if (error) throw error;
     };
-    const saveVideo = async (file, type = "webm") => {
+const saveVideo = async (file, type = "webm") => {
         setVideoLoading(true);
-        const url = "https://api.cloudinary.com/v1_1/dhd6m0fh3/video/upload";
+        const uploadApi = "/api/v1/videos/cloudinary";
         const blobFile = await blobUrlToBlob(file);
-        // Create a FormData object and append the file and api_key
+        // Create a FormData object and append the file
         const formData = new FormData();
         if (type === "mp4") {
             formData.append(
@@ -387,19 +388,23 @@ const Start: React.FC = () => {
                 `${user.id}-${Date.now()}-screen-record.webm`,
             ); // Append the video file
         }
-        formData.append("upload_preset", "videco");
 
         try {
-            const uploadedVideo: any = await axios.post(url, formData, {
+            const uploadedVideo: any = await axios.post(uploadApi, formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
             setVideoLoading(false);
-            startUpload(
-                uploadedVideo.data.secure_url,
-                new File([blobFile], "test").size / (1024 * 1024),
-            );
+            const publicUrl = uploadedVideo.data?.result?.publicUrl || uploadedVideo.data?.result?.public_url || uploadedVideo.data?.public_url || uploadedVideo.data?.result?.url;
+            if (publicUrl) {
+                startUpload(
+                    publicUrl,
+                    new File([blobFile], "test").size / (1024 * 1024),
+                );
+            } else {
+                console.error('Upload API did not return publicUrl', uploadedVideo.data);
+            }
         } catch (e) {
             console.log(e);
             setVideoLoading(false);
@@ -1330,11 +1335,21 @@ const Start: React.FC = () => {
                                     </Box>
                                 </Flex>
 
-                                <Box mt={4}>
+<Box mt={4}>
                                     <Text>
                                         Select the greeting AI will use to
                                         address your prospects (Beta):
                                     </Text>
+
+                                    <PersonalizationPanel
+                                        lead={{ name: "", company: "" }}
+                                        onScriptGenerated={(script) => {
+                                            // prefill AI script input for campaign flows
+                                            // find the ai script textarea and set its value
+                                            setAiIntro(script);
+                                        }}
+                                    />
+
                                     <Flex mt={2}>
                                         {language === "english" &&
                                             greetings.en.map((myGreeting) => (
@@ -1355,13 +1370,70 @@ const Start: React.FC = () => {
                                                     alignItems="center"
                                                 >
                                                     <Text mr={2}>
-                                                        {myGreeting} ||FNAME||{" "}
+                                                        {myGreeting} ||FNAME|| {" "}
                                                     </Text>
                                                     {myGreeting ===
                                                         greeting && (
                                                         <FiCheck color="#4991A1" />
                                                     )}
                                                 </Box>
+                                            ))}
+                                        {language === "french" &&
+                                            greetings.fr.map((myGreeting) => (
+                                                <Box
+                                                    border="1px solid #4991A1"
+                                                    rounded="md"
+                                                    py={2}
+                                                    onClick={() =>
+                                                        setGreeting(myGreeting)
+                                                    }
+                                                    px={3}
+                                                    mr={2}
+                                                    fontSize="16px"
+                                                    bg="#F7F9FA"
+                                                    cursor="pointer"
+                                                    display="flex"
+                                                    justifyContent="center"
+                                                    alignItems="center"
+                                                >
+                                                    <Text mr={2}>
+                                                        {myGreeting} ||FNAME|| {" "}
+                                                    </Text>
+                                                    {myGreeting ===
+                                                        greeting && (
+                                                        <FiCheck color="#4991A1" />
+                                                    )}
+                                                </Box>
+                                            ))}
+                                        {language === "spanish" &&
+                                            greetings.sp.map((myGreeting) => (
+                                                <Box
+                                                    border="1px solid #4991A1"
+                                                    rounded="md"
+                                                    py={2}
+                                                    px={3}
+                                                    mr={2}
+                                                    onClick={() =>
+                                                        setGreeting(myGreeting)
+                                                    }
+                                                    fontSize="16px"
+                                                    bg="#F7F9FA"
+                                                    cursor="pointer"
+                                                    display="flex"
+                                                    justifyContent="center"
+                                                    alignItems="center"
+                                                >
+                                                    <Text mr={2}>
+                                                        {myGreeting} ||FNAME|| {" "}
+                                                    </Text>
+                                                    {myGreeting ===
+                                                        greeting && (
+                                                        <FiCheck color="#4991A1" />
+                                                    )}
+                                                </Box>
+                                            ))}
+                                    </Flex>
+                                </Box>
                                             ))}
                                         {language === "french" &&
                                             greetings.fr.map((myGreeting) => (

@@ -31,13 +31,7 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
         const container = document.createElement("div");
         container.innerHTML = getEmailEmbedCodeForSimpleVideos(
             `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-            `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
-                .split("/")
-                .pop()
-                .replace(".mp4", ".gif")
-                .replace(".mov", ".gif")
-                .replace(".m3u8", ".gif")
-                .replace(".webm", ".gif")}`,
+            (function(){ try { const { normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(ogURL); return normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); } catch (e) { return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })(),
             provider.value,
         );
 

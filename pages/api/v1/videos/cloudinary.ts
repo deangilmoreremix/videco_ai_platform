@@ -55,8 +55,10 @@ export default async function handler(
                     // Move uploaded temp file into Supabase Storage
                     const fileStream = fs.createReadStream(filePath);
                     const fileName = `${uuidv4()}-${Date.now()}`;
+                    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'user-uploads';
+                    // Ensure bucket exists - Supabase JS client will return an error if it doesn't.
                     const { data: uploadData, error: uploadErr } = await supabase.storage
-                        .from('user-uploads')
+                        .from(bucketName)
                         .upload(fileName, fileStream, { upsert: true });
 
                     // Remove the file from the file system after upload
@@ -64,7 +66,7 @@ export default async function handler(
 
                     if (uploadErr) throw uploadErr;
 
-                    const publicUrl = supabase.storage.from('user-uploads').getPublicUrl(uploadData.path).publicUrl;
+                    const publicUrl = supabase.storage.from(bucketName).getPublicUrl(uploadData.path).publicUrl;
 
                     if (fields?.video_id) {
                         await supabase
