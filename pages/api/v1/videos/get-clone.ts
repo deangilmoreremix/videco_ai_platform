@@ -1,47 +1,34 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import axios from "axios";
-import { v2 as cloudinary } from "cloudinary";
 
 const supabase = createClientComponentClient();
 export default async function handler(req, res) {
     if (req.method === "POST") {
         let cloneData = null;
-        let uploadData = null;
         const getVideo = await supabase
             .from("videos")
             .select("ai_preview, media_status, url")
             .eq("id", req.body.id);
 
         if (getVideo.data?.[0].media_status === "in_progress") {
-            const sync_options = {
-                method: "GET",
-                url: `https://api.sync.so/v2/generate/${getVideo.data?.[0].ai_preview}`,
-                headers: {
-                    "x-api-key": process.env.SYNC_API_KEY!,
-                    "Content-Type": "application/json",
-                },
-            };
-            cloneData = await axios(sync_options);
-            if (cloneData.data?.outputUrl && !cloneData.data?.error) {
-                uploadData = await new Promise((resolve, reject) => {
-                    cloudinary.uploader.upload_large(
-                        cloneData.data?.outputUrl,
-                        { resource_type: "video", chunk_size: 6000000 },
-                        (error, result) => {
-                            if (error) reject(error);
-                            else resolve(result);
-                        },
-                    );
+            // Try Muapi status polling instead of Sync
+            try {
+                const muapiRes = await axios.get(`https://api.muapi.ai/api/v1/predictions/${getVideo.data?.[0].ai_preview}/result`, {
+                    headers: { 'x-api-key': process.env.MUAPI_API_KEY || '' }
                 });
-                if (uploadData.playback_url) {
+
+                if (muapiRes.data?.status === 'completed' && muapiRes.data.outputs?.[0]?.url) {
+                    const finalUrl = muapiRes.data.outputs[0].url;
+                    // Save final URL to Supabase
                     const { data, error } = await supabase
                         .from("videos")
                         .update({
-                            url: uploadData.playback_url,
+                            url: finalUrl,
                             media_status: "ready",
                         })
                         .eq("id", req.body.id)
                         .select("ai_preview, media_status, url");
+
                     if (error) {
                         return res.status(500).json({ error: error });
                     } else {
@@ -52,6 +39,8 @@ export default async function handler(req, res) {
                         });
                     }
                 }
+            } catch (e) {
+                console.log('muapi poll error', e.message || e);
             }
         }
 

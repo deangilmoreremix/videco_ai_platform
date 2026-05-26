@@ -165,7 +165,7 @@ const Edit: React.FC = ({ videoData }: any) => {
                     property="og:title"
                     content={videoData.title ?? "Videco"}
                 />
-<meta property="og:image" content={(function(){ try{ const { normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoData.url); return normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); } catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoData.url.split('/').pop().replace('.m3u8', '.gif').replace('.mp4', '.gif')}` } })()} />
+<meta property="og:image" content={(function(){ try{ const { buildPreviewUrl, normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoData.url); const transform = process.env.NEXT_PUBLIC_CLOUDINARY_TRANSFORM_PREFIX || 'https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/'; return buildPreviewUrl(normalized, transform).replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); } catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoData.url.split('/').pop().replace('.m3u8', '.gif').replace('.mp4', '.gif')}` } })()} />
             </Head>
             {!router.query.method && (
                 <Box bg="#FCFCFC" py={4}>

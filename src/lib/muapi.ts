@@ -55,6 +55,20 @@ export async function submitPrediction(
   return data;
 }
 
+/** Verify webhook signature using MUAPI_WEBHOOK_SECRET if present */
+export function verifyWebhookSignature(payload: string, signature?: string) {
+  const secret = process.env.MUAPI_WEBHOOK_SECRET;
+  if (!secret) return true; // no secret configured
+  if (!signature) return false;
+  try {
+    const crypto = require('crypto');
+    const hmac = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    return hmac === signature;
+  } catch (e) {
+    return false;
+  }
+}
+
 /**
  * Poll until completion or failure. Throws on timeout or error.
  */

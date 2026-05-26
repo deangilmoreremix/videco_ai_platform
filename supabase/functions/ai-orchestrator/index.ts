@@ -149,6 +149,17 @@ async function handlePersonalizeScript(data: any) {
  * Simplified for Muapi era — voice via OpenAI, then Muapi video generation.
  */
 async function handleProcessVideo(data: any) {
+  // log usage attempt (estimate)
+  try {
+    const { ai_video_id, text } = data;
+    // Store a preliminary usage row (cost estimation TBD)
+    await fetch(`${SUPABASE_URL}/rest/v1/usage`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_SERVICE_ROLE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: data.user_id || null, model: 'tts-1', provider: 'openai', action: 'generate-tts', details: { text_len: (text||'').length }, cost_estimate: 0.0 })
+    }).catch(()=>{});
+  } catch(e) {}
+
   const { ai_video_id, text, og_video_public_id } = data;
 
   await supabase

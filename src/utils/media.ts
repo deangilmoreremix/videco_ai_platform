@@ -53,3 +53,29 @@ export function getPublicMediaUrl(videoRow: any) {
 
     return "";
 }
+
+/**
+ * Build a preview URL. When a Cloudinary absolute URL or Cloudinary path is present,
+ * prefer returning the Cloudinary transform URL (best-effort). Otherwise use Supabase public URL.
+ * transformPrefix is typically the Cloudinary transform & prefix up to the place where the public id is appended.
+ */
+export function buildPreviewUrl(original: string | undefined | null, transformPrefix?: string) {
+    if (!original) return "";
+    if (/^https?:\/\//.test(original)) {
+        // Absolute URL: return as-is
+        return original;
+    }
+
+    // If original looks like a Cloudinary public id with slashes or starts with 'v' etc.
+    if (original.includes("res.cloudinary.com") || original.includes("cloudinary.com")) {
+        return original;
+    }
+
+    // If transformPrefix provided and original looks like a cloudinary public id, construct
+    if (transformPrefix && original && original.length > 0 && transformPrefix.includes("res.cloudinary.com")) {
+        return `${transformPrefix}${original}`;
+    }
+
+    // fallback: normalized supabase public url
+    return normalizeMediaUrl(original);
+}

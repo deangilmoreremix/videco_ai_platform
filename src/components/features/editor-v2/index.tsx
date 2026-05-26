@@ -328,6 +328,7 @@ export const Editor: React.FC = () => {
                 },
             });
             setLoading(false);
+            const publicUrl = uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.public_url || uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.secure_url || uploadedVideo?.data?.secure_url;
             if (router.query.id) {
                 const theVideoId = router.query.id
                     ? router.query.id.toString()
@@ -340,7 +341,7 @@ export const Editor: React.FC = () => {
             setVideoOnboardReady({
                 ready: true,
                 platform: "videco",
-                url: uploadedVideo.data.secure_url,
+                url: publicUrl,
                 passthrough_id: "",
                 name: "",
                 size: new File([blobFile], "test").size / (1024 * 1024),
@@ -358,7 +359,7 @@ export const Editor: React.FC = () => {
                 user_id: user?.id,
                 status: "draft",
                 url: videoOnboardReady.url,
-                preview: (function(){ try{ const { normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoOnboardReady.url); return normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); }catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoOnboardReady.url.split('/').pop().replace('.m3u8', '.gif').replace('.mov', '.gif').replace('.mp4', '.gif').replace('.webm', '.gif')}` } })(),
+                preview: (function(){ try{ const { buildPreviewUrl, normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoOnboardReady.url); const transform = process.env.NEXT_PUBLIC_CLOUDINARY_TRANSFORM_PREFIX || 'https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/'; return buildPreviewUrl(normalized, transform).replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); }catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoOnboardReady.url.split('/').pop().replace('.m3u8', '.gif').replace('.mov', '.gif').replace('.mp4', '.gif').replace('.webm', '.gif')}` } })(),
                 platform: videoOnboardReady?.platform ?? "videco",
                 name: videoOnboardReady.name,
                 meta_data: { type: ".mp4" },
