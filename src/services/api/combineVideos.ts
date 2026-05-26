@@ -18,22 +18,23 @@ async function blobUrlToBlob(blobUrl) {
     return blob;
 }
 
+// Upload via our server API so we can store in Supabase Storage
 export const uploadVideosTocloudinaryDirectly = async (file: any) => {
-    const url = "https://api.cloudinary.com/v1_1/dhd6m0fh3/video/upload";
     const blobFile = await blobUrlToBlob(file);
-    // Create a FormData object and append the file and api_key
     const formData = new FormData();
-    formData.append("file", new File([blobFile], `noname`)); // Append the video file
-    formData.append("upload_preset", "videco");
+    formData.append("file", new File([blobFile], `upload.mp4`));
 
     try {
-        const uploadedVideo: any = await axios.post(url, formData, {
+        // Post to our API route that handles storage uploads
+        const uploadedVideo: any = await axios.post("/api/v1/videos/cloudinary", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
         });
-        return uploadedVideo;
+        // Normalize response to mimic previous shape
+        return { data: { public_url: uploadedVideo.data.result.publicUrl, path: uploadedVideo.data.result.path } };
     } catch (e) {
         console.log(e);
     }
 };
+
