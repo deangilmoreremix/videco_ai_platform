@@ -38,6 +38,23 @@ const client = axios.create({
   timeout: 30000,
 });
 
+// Log usage helper (client-side fire-and-forget)
+export async function logMuapiUsage(userId: string | null, model: string, action: string, details: any = {}, cost = 0) {
+  try {
+    // attempt server-side usage logging endpoint if exists
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      await fetch('/api/usage/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, model, provider: 'muapi', action, details, cost_estimate: cost })
+      });
+    }
+  } catch (e) {
+    console.warn('logMuapiUsage failed', e.message || e);
+  }
+}
+
+
 /**
  * Submit a generation request to any Muapi model.
  * Example models: "veo3-fast-text-to-video", "kling-master", "sd-2-omni-reference", "flux-dev", etc.
@@ -131,8 +148,10 @@ export async function uploadFile(
 /**
  * Convenience: generate video from text prompt using a recommended fast model.
  */
-export async function generateTextToVideo(prompt: string, opts?: { webhook?: string }) {
+export async function generateTextToVideo(prompt: string, opts?: { webhook?: string, userId?: string }) {
   const res = await submitPrediction("veo3-fast-text-to-video", { prompt }, opts);
+  // log usage (best-effort)
+  try { await logMuapiUsage(opts?.userId || null, MUAPI_MODELS.FAST_T2V || 'veo3-fast-text-to-video', 'text-to-video', { prompt_length: (prompt||'').length }, 0); } catch(e){}
   return pollResult(res.request_id);
 }
 
@@ -142,13 +161,14 @@ export async function generateTextToVideo(prompt: string, opts?: { webhook?: str
 export async function generateImageToVideo(
   imageUrl: string,
   prompt: string,
-  opts?: { webhook?: string }
+  opts?: { webhook?: string, userId?: string }
 ) {
   const res = await submitPrediction(
     "kling-o1-standard-image-to-video",
     { prompt, image_url: imageUrl },
     opts
   );
+  try { await logMuapiUsage(opts?.userId || null, MUAPI_MODELS.HIGH_QUALITY_I2V || 'kling-o1-standard-image-to-video', 'image-to-video', { prompt_length: (prompt||'').length }, 0); } catch(e){}
   return pollResult(res.request_id);
 }
 
