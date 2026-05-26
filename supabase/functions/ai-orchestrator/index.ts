@@ -304,30 +304,86 @@ async function handlePollMuapi(data: any) {
 }
 
 /** Handle Muapi webhook callbacks */
-async function handleMuapiWebhook(data: any) {
+async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?: string) {
   const { request_id, status, outputs, video_id, ai_video_id } = data;
+
+  // Signature verification stub: if header present, validate using MUAPI_WEBHOOK_SECRET
+  if (signatureHeader) {
+    try {
+      // import local helper dynamically to avoid circular issues in Deno edge environment
+      const verify = (await import("/workspace/0c85e0dc-1244-40ab-8f84-e11668f857da/sessions/agent_c69a9913-dcc1-4130-9934-8015f769a184/src/lib/muapi.ts")).verifyWebhookSignature;
+      const ok = verify(rawBody || JSON.stringify(data), signatureHeader);
+      if (!ok) {
+        console.warn("[ai-orchestrator] muapi webhook signature invalid");
+        return new Response(JSON.stringify({ received: false, error: "invalid signature" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } catch (err) {
+      console.error("[ai-orchestrator] signature verification failed", err);
+      // proceed but log
+    }
+  }
+
+  console.log("[ai-orchestrator] handling webhook for request", request_id, "status", status);
+
+  // Idempotency: if DB already marked completed for this request, ignore
+  async function getExistingStatus() {
+    if (video_id) {
+      const { data: v } = await supabase.from("videos").select("media_status, ai_preview").eq("id", video_id).single();
+      return v;
+    }
+    if (ai_video_id) {
+      const { data: a } = await supabase.from("ai_videos").select("status, ai_preview").eq("id", ai_video_id).single();
+      return a;
+    }
+    return null;
+  }
+
+  const existing = await getExistingStatus();
+  if (existing) {
+    if (existing.media_status === "completed" || existing.status === "completed") {
+      console.log("[ai-orchestrator] already completed for request", request_id, "- ignoring");
+      return new Response(JSON.stringify({ received: true, ignored: true }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Helper for reliable updates with retry/backoff
+  async function reliableUpdate(table: string, payload: any, eqClause: any) {
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const { error } = await supabase.from(table).update(payload).eq("id", eqClause);
+        if (error) throw error;
+        return true;
+      } catch (err) {
+        console.error(`[ai-orchestrator] DB update attempt ${attempt} failed for ${table} id=${eqClause}`, err);
+        if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, 200 * Math.pow(2, attempt))); // exponential backoff
+      }
+    }
+    return false;
+  }
 
   if (status === "completed" && outputs?.[0]?.url) {
     const finalUrl = outputs[0].url;
 
     if (video_id) {
-      await supabase.from("videos").update({
-        final_url: finalUrl,
-        preview: finalUrl,
-        media_status: "completed",
-        ai_preview: request_id,
-      }).eq("id", video_id);
+      await reliableUpdate(
+        "videos",
+        { final_url: finalUrl, preview: finalUrl, media_status: "completed", ai_preview: request_id },
+        video_id,
+      );
     }
 
     if (ai_video_id) {
-      await supabase.from("ai_videos").update({
-        status: "completed",
-        url: finalUrl,
-      }).eq("id", ai_video_id);
+      await reliableUpdate("ai_videos", { status: "completed", url: finalUrl }, ai_video_id);
     }
   } else if (status === "failed") {
-    if (video_id) await supabase.from("videos").update({ media_status: "failed" }).eq("id", video_id);
-    if (ai_video_id) await supabase.from("ai_videos").update({ status: "failed" }).eq("id", ai_video_id);
+    if (video_id) await reliableUpdate("videos", { media_status: "failed" }, video_id);
+    if (ai_video_id) await reliableUpdate("ai_videos", { status: "failed" }, ai_video_id);
   }
 
   return new Response(JSON.stringify({ received: true }), {

@@ -141,9 +141,26 @@ export async function generateImageToVideo(
 /**
  * Webhook signature verification stub (implement when Muapi publishes spec).
  */
+import crypto from "crypto";
+
 export function verifyWebhookSignature(payload: string, signature: string): boolean {
-  // TODO: implement HMAC when Muapi provides secret + algorithm
-  return true;
+  const secret = process.env.MUAPI_WEBHOOK_SECRET;
+  if (!secret) {
+    // No secret configured; accept by default but log a warning
+    if (process.env.NODE_ENV !== "test") console.warn("[muapi] MUAPI_WEBHOOK_SECRET not set - skipping signature verification");
+    return true;
+  }
+
+  try {
+    const hmac = crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
+    // Some providers prefix signature with sha256=...; support both raw hex and prefixed
+    const normalized = signature?.startsWith("sha256=") ? signature.split("=")[1] : signature;
+    const verified = crypto.timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(normalized || "", "hex"));
+    return verified;
+  } catch (err) {
+    console.error("[muapi] signature verification error", err);
+    return false;
+  }
 }
 
 export const MUAPI_MODELS = {
