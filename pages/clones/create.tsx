@@ -313,13 +313,7 @@ const Create: React.FC = () => {
                 status: "draft",
                 media_status: "in_progress",
                 passthrough_id: "no",
-                preview: `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${url
-                    .split("/")
-                    .pop()
-                    .replace(".m3u8", ".gif")
-                    .replace(".mov", ".gif")
-                    .replace(".mp4", ".gif")
-                    .replace(".webm", ".gif")}`,
+                 preview: url,
                 url: url,
                 platform: "videco",
                 type: videoTypes.clone,

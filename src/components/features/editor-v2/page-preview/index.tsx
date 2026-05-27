@@ -342,32 +342,32 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                                 />
                             </Box>
                         ) : (
-                            <Player
-                                platform={meta?.platform}
-                                elements={interactiveElements}
-                                videoUrl={latestUrl}
-                                width="100%"
-                                embeded={true}
-                                isEditor={true}
-                                endCTA={
-                                    {
-                                        link: meta.endCTAlink,
-                                        title: meta.endCTAtitle,
-                                        text: meta.endCTAtext,
-                                    } as any
-                                }
-                                preview={
-                                    (function(){ try { const { buildPreviewUrl, normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoUrl); const transform = process.env.NEXT_PUBLIC_CLOUDINARY_TRANSFORM_PREFIX || 'https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/'; return normalized ? buildPreviewUrl(normalized, transform).replace(/\.(mp4|mov|m3u8|webm)$/, '.gif') : '/default_thumb.png'; } catch(e) { try { const url = videoUrl; return url && !url.includes('videco.s3.') && !url.includes('youtube') ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${url.split('/').pop().replace('.mp4','.gif').replace('.mov','.gif').replace('.m3u8','.gif').replace('.webm','.gif')}` : '/default_thumb.png' } catch(e2) { return '/default_thumb.png' } } })()
-                                }
-                                playerRef={playerRef}
-                                videcoBrandingRemoved={
-                                    meta.remove_logo ?? false
-                                }
-                                playing={playing}
-                                setDuration={setDuration}
-                                setPlaying={setPlaying}
-                                setVideo={setVideo}
-                            />
+                                 <Player
+                                 platform={meta?.platform}
+                                 elements={interactiveElements}
+                                 videoUrl={latestUrl}
+                                 width="100%"
+                                 embeded={true}
+                                 isEditor={true}
+                                 endCTA={
+                                     {
+                                         link: meta.endCTAlink,
+                                         title: meta.endCTAtitle,
+                                         text: meta.endCTAtext,
+                                     } as any
+                                 }
+                                 preview={
+                                     (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoUrl); } catch(e) { return '/default_thumb.png'; } })()
+                                 }
+                                 playerRef={playerRef}
+                                 videcoBrandingRemoved={
+                                     meta.remove_logo ?? false
+                                 }
+                                 playing={playing}
+                                 setDuration={setDuration}
+                                 setPlaying={setPlaying}
+                                 setVideo={setVideo}
+                                 />
                         )}
                     </Box>
                     <Box pos="absolute" right="-88px" id="player-edit">

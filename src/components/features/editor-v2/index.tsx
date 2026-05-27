@@ -359,7 +359,7 @@ export const Editor: React.FC = () => {
                 user_id: user?.id,
                 status: "draft",
                 url: videoOnboardReady.url,
-                preview: (function(){ try{ const { buildPreviewUrl, normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoOnboardReady.url); const transform = process.env.NEXT_PUBLIC_CLOUDINARY_TRANSFORM_PREFIX || 'https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/'; return buildPreviewUrl(normalized, transform).replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); }catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoOnboardReady.url.split('/').pop().replace('.m3u8', '.gif').replace('.mov', '.gif').replace('.mp4', '.gif').replace('.webm', '.gif')}` } })(),
+                 preview: (function(){ try{ const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoOnboardReady.url); }catch(e){ return '/default_thumb.png'; } })(),
                 platform: videoOnboardReady?.platform ?? "videco",
                 name: videoOnboardReady.name,
                 meta_data: { type: ".mp4" },
