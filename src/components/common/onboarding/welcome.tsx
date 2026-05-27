@@ -455,25 +455,25 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
                                         with AI-powered personalized videos that
                                         engage your prospects instantly
                                     </Text>
-                                    <Box
-                                        pos="absolute"
-                                        top={64}
-                                        left="33"
-                                        ml={7}
-                                        px={12}
-                                        opacity="0.6"
-                                    >
-                                        <video
-                                            src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1738168015/Hey_First_name_2_snyiuw.mp4"
-                                            muted
-                                            autoPlay
-                                            style={{
-                                                borderRadius: "20px",
-                                                border: "1px solid #DADADA",
-                                            }}
-                                            width={400}
-                                        />
-                                    </Box>
+                                         <Box
+                                         pos="absolute"
+                                         top={64}
+                                         left="33"
+                                         ml={7}
+                                         px={12}
+                                         opacity="0.6"
+                                     >
+                                         <video
+                                             src={(function(){ try { const { normalizeMediaUrl } = require('src/utils/media'); return normalizeMediaUrl('https://res.cloudinary.com/dhd6m0fh3/video/upload/v1738168015/Hey_First_name_2_snyiuw.mp4'); } catch(e) { return 'https://res.cloudinary.com/dhd6m0fh3/video/upload/v1738168015/Hey_First_name_2_snyiuw.mp4'; } })()}
+                                             muted
+                                             autoPlay
+                                             style={{
+                                                 borderRadius: "20px",
+                                                 border: "1px solid #DADADA",
+                                             }}
+                                             width={400}
+                                         />
+                                     </Box>
                                 </Box>
                             </Flex>
                         </ModalBody>
