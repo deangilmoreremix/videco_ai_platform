@@ -79,3 +79,19 @@ export function buildPreviewUrl(original: string | undefined | null, transformPr
     // fallback: normalized supabase public url
     return normalizeMediaUrl(original);
 }
+
+export function getGifPreviewUrl(original: string | undefined | null) {
+    try {
+        if (!original) return '/default_thumb.png';
+        const normalized = normalizeMediaUrl(original);
+        if (!isCloudinaryUrl(normalized)) {
+            // For non-Cloudinary, we don't have a GIF preview. Return a default thumbnail.
+            return '/default_thumb.png';
+        }
+        const transform = process.env.NEXT_PUBLIC_CLOUDINARY_TRANSFORM_PREFIX || 'https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/';
+        const previewUrl = buildPreviewUrl(normalized, transform);
+        return previewUrl.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif');
+    } catch (e) {
+        return '/default_thumb.png';
+    }
+}
