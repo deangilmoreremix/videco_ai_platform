@@ -1,24 +1,24 @@
-import { Handler } from '@netlify/functions';
-import Stripe from 'stripe';
+require('events').EventEmitter.defaultMaxListeners = 100;
+const Stripe = require('stripe');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-14',
 });
 
-export const handler: Handler = async (event, context) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' };
   }
 
   const sig = event.headers['stripe-signature'] || event.headers['Stripe-Signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOKS_SECRET!;
+  const webhookSecret = process.env.STRIPE_WEBHOOKS_SECRET;
 
-  let stripeEvent: Stripe.Event;
+  let stripeEvent;
 
   try {
     stripeEvent = stripe.webhooks.constructEvent(
       event.body || '',
-      sig!,
+      sig,
       webhookSecret
     );
   } catch (err) {
@@ -29,20 +29,14 @@ export const handler: Handler = async (event, context) => {
   try {
     switch (stripeEvent.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(
-          stripeEvent.data.object as Stripe.Checkout.Session
-        );
+        await handleCheckoutSessionCompleted(stripeEvent.data.object);
         break;
       case 'invoice.payment_succeeded':
-        await handleInvoicePaymentSucceeded(
-          stripeEvent.data.object as Stripe.Invoice
-        );
+        await handleInvoicePaymentSucceeded(stripeEvent.data.object);
         break;
       case 'customer.subscription.deleted':
       case 'customer.subscription.updated':
-        await handleSubscriptionChange(
-          stripeEvent.data.object as Stripe.Subscription
-        );
+        await handleSubscriptionChange(stripeEvent.data.object);
         break;
     }
 
@@ -56,12 +50,12 @@ export const handler: Handler = async (event, context) => {
   }
 };
 
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  const customerId = session.customer as string;
-  const subscriptionId = session.subscription as string;
+async function handleCheckoutSessionCompleted(session) {
+  const customerId = session.customer;
+  const subscriptionId = session.subscription;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   await fetch(`${supabaseUrl}/rest/v1/profiles`, {
     method: 'PATCH',
@@ -78,12 +72,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   });
 }
 
-async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+async function handleInvoicePaymentSucceeded(invoice) {
+  const subscriptionId = invoice.subscription;
   const amountPaid = invoice.amount_paid / 100;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   await fetch(`${supabaseUrl}/rest/v1/usage`, {
     method: 'POST',
@@ -100,12 +94,12 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   });
 }
 
-async function handleSubscriptionChange(subscription: Stripe.Subscription) {
-  const customerId = subscription.customer as string;
+async function handleSubscriptionChange(subscription) {
+  const customerId = subscription.customer;
   const status = subscription.status;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   await fetch(`${supabaseUrl}/rest/v1/profiles`, {
     method: 'PATCH',
