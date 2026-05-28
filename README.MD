@@ -60,12 +60,25 @@ yarn start
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js, React, Chakra UI
-- **Backend**: Next.js API Routes, Supabase
-- **AI Services**: Sync.so, Cloudinary, Mux
+- **Backend**: Next.js API Routes, Supabase Edge Functions
+- **Storage**: Supabase Storage
+- **AI Services**: Muapi (video/image generation), OpenAI (TTS, scripting)
 - **Payment**: Stripe
 - **Analytics**: PostHog, Usetiful
+- **Hosting**: Netlify
 - **State Management**: Zustand
 - **Internationalization**: next-i18next
+
+## Migration Notes
+
+This platform has been migrated from Sync.so/Cloudinary/Mux/Inngest to use:
+- Muapi for AI video/image generation and lipsync
+- Supabase Storage for media storage
+- Supabase Edge Functions for background processing
+- Netlify for hosting and serverless functions
+- OpenAI for script personalization and TTS
+
+See `DEPLOYMENT.md` for setup instructions.
 
 ## 📚 Learn More
 
