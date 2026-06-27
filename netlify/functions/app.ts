@@ -84,12 +84,20 @@ export default async (req: Request) => {
       return handleUploadRoutes(req);
     }
 
+    if (path.startsWith("/s3-upload")) {
+      return handleS3Upload(req);
+    }
+
     if (path.startsWith("/inngest")) {
       return handleInngest(req);
     }
 
     if (path.startsWith("/video/send")) {
       return handleVideoSend(req, segments.slice(1));
+    }
+
+    if (path.startsWith("/proxy")) {
+      return handleProxy(req);
     }
 
     return jsonResponse({ error: "Not Found" }, 404);
@@ -273,6 +281,24 @@ async function handleVideoRoutes(req: Request, segments: string[]) {
     return jsonResponse({ status: getVideo?.media_status });
   }
 
+  if (segments[0] === "onboarding" && req.method === "POST") {
+    const body = await req.json();
+    const { greeting, language, user_id: userId, voice_id: voiceId, text, background, website, voiceCloningEnabled = true, og_video_public_id } = body;
+
+    const { data: job } = await supabase
+      .from("jobs")
+      .insert([{ job_details: { user_id: userId }, status: "pending" }])
+      .select("id")
+      .single();
+
+    await inngest.send({
+      name: "ai/onboarding",
+      data: { user_id: userId, job_id: job.id, text, language, voice_id: voiceId, greeting, background, og_video_public_id, website, voiceCloningEnabled },
+    });
+
+    return jsonResponse({ success: true, event: { job_id: job.id } });
+  }
+
   if (segments[0] === "endpoint" && req.method === "POST") {
     const muxTokenId = process.env.MUX_TOKEN_ID;
     const muxTokenSecret = process.env.MUX_TOKEN_SECRET;
@@ -295,24 +321,6 @@ async function handleVideoRoutes(req: Request, segments: string[]) {
 
     const data = await res.json();
     return jsonResponse({ result: data });
-  }
-
-  if (segments[0] === "onboarding" && req.method === "POST") {
-    const body = await req.json();
-    const { greeting, language, user_id: userId, voice_id: voiceId, text, background, website, voiceCloningEnabled = true, og_video_public_id } = body;
-
-    const { data: job } = await supabase
-      .from("jobs")
-      .insert([{ job_details: { user_id: userId }, status: "pending" }])
-      .select("id")
-      .single();
-
-    await inngest.send({
-      name: "ai/onboarding",
-      data: { user_id: userId, job_id: job.id, text, language, voice_id: voiceId, greeting, background, og_video_public_id, website, voiceCloningEnabled },
-    });
-
-    return jsonResponse({ success: true, event: { job_id: job.id } });
   }
 
   if (segments.length > 0 && segments[segments.length - 1] === "assets") {
@@ -444,6 +452,19 @@ async function handleStripeRoutes(req: Request, segments: string[]) {
     return jsonResponse({ paymentIntents: paymentIntents.data });
   }
 
+  if (segments[0] === "downgrade" && req.method === "POST") {
+    const body = await req.json();
+    const customer = await stripe.subscriptions.update(
+      body.stripe_sub_id,
+      { cancel_at_period_end: false }
+    );
+    return jsonResponse(customer);
+  }
+
+  if (segments[0] === "one-time-purchase" && req.method === "POST") {
+    return handleOneTimePurchase(req);
+  }
+
   return jsonResponse({ error: "Not Found" }, 404);
 }
 
@@ -501,13 +522,15 @@ async function handleMailRoutes(req: Request, segments: string[]) {
   }
 
   if (segments[0] === "welcome" && req.method === "POST") {
-    const { email } = await req.json();
+    const body = await req.json();
+    const { email, name } = body;
+
     await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { accept: "application/json", "content-type": "application/json", "api-key": brevoApiKey },
       body: JSON.stringify({
         sender: { name: "Malith from Videco", email: "no-reply@videco.io" },
-        to: [{ email }],
+        to: [{ email, FIRSTNAME: name }],
         templateId: 2,
       }),
     });
@@ -515,16 +538,24 @@ async function handleMailRoutes(req: Request, segments: string[]) {
   }
 
   if (segments[0] === "delete" && req.method === "POST") {
-    const { email } = await req.json();
+    const body = await req.json();
+    const { email, user_id: userId } = body;
+
     await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { accept: "application/json", "content-type": "application/json", "api-key": brevoApiKey },
       body: JSON.stringify({
         sender: { name: "Malith from Videco", email: "no-reply@videco.io" },
         to: [{ email }],
-        templateId: 3,
+        params: { email },
+        templateId: 12,
       }),
     });
+
+    if (userId) {
+      await supabase.from("profiles").update({ deleted: true }).eq("id", userId);
+    }
+
     return jsonResponse({ result: "delete sent" });
   }
 
@@ -589,6 +620,37 @@ async function handleUploadRoutes(req: Request) {
   }
 
   return jsonResponse({ success: true, path });
+}
+
+async function handleS3Upload(req: Request) {
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method Not Allowed" }, 405);
+  }
+
+  const formData = await req.formData();
+  const file = formData.get("file") as File;
+  const userId = formData.get("user_id") as string;
+  const videoId = formData.get("video_id") as string;
+
+  if (!file) {
+    return jsonResponse({ error: "No file provided" }, 400);
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const filePath = `${userId}/${Date.now()}_${file.name}`;
+  const { error } = await supabase.storage.from("videco-assets").upload(filePath, buffer, {
+    contentType: file.type,
+    upsert: true,
+  });
+
+  if (error) {
+    console.error("Upload error:", error);
+    return jsonResponse({ error: "Upload failed" }, 500);
+  }
+
+  return jsonResponse({ success: true, path: filePath });
 }
 
 async function handleVideoSend(req: Request, segments: string[]) {
@@ -667,21 +729,62 @@ async function handleStripeWebhook(req: Request) {
   return new Response("OK", { status: 200 });
 }
 
-function isResetExpired(dateString: string) {
-  if (!dateString) return true;
-  const lastReset = new Date(dateString);
-  const now = new Date();
-  const diffDays = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24);
-  return diffDays >= 30;
-}
+async function handleOneTimePurchase(req: Request) {
+  const body = await req.json();
 
-function planUsage(planName: string) {
-  const plans = {
-    lite: { videos: [5, 5], dynamicVideos: [5, 5], seat: [1, 1] },
-    growth: { videos: [20, 20], dynamicVideos: [20, 20], seat: [3, 3] },
-    scale: { videos: [50, 50], dynamicVideos: [50, 50], seat: [10, 10] },
-  };
-  return plans[planName] || plans.lite;
+  if (!body.customer || !body.stripe_plan_id || !body.user_id) {
+    return jsonResponse({ message: "Missing required fields" }, 400);
+  }
+
+  try {
+    let validPromoCodeId: string | undefined;
+    if (body.promoCode) {
+      const promoCodeObject = await stripe.promotionCodes.list({
+        code: body.promoCode,
+        active: true,
+      });
+
+      if (promoCodeObject.data.length > 0) {
+        validPromoCodeId = promoCodeObject.data[0].id;
+      } else {
+        throw new Error("Invalid or expired promo code.");
+      }
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      customer: body.customer,
+      mode: "payment",
+      line_items: [
+        {
+          price: body.stripe_plan_id,
+          quantity: 1,
+        },
+      ],
+      discounts: validPromoCodeId
+        ? [{ promotion_code: validPromoCodeId }]
+        : undefined,
+      metadata: {
+        userId: body.user_id,
+        planId: body.stripe_plan_id,
+        plan_name: body.plan_name,
+      },
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/settings?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing?canceled=true`,
+    });
+
+    await supabase
+      .from("plan")
+      .update({
+        onboard_completed: true,
+      })
+      .eq("user_id", body.user_id);
+
+    return jsonResponse({ sessionId: session.id });
+  } catch (err) {
+    const error = err as Error;
+    console.error("One-time purchase error:", error);
+    return jsonResponse(`One-time purchase creation failed: ${error.message}`, 400);
+  }
 }
 
 async function handleBrevoRoutes(req: Request, segments: string[]) {
@@ -747,4 +850,72 @@ async function handleWebhookRoutes(req: Request, segments: string[]) {
   }
 
   return jsonResponse({ error: "Not Found" }, 404);
+}
+
+async function handleProxy(req: Request) {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  const body = await req.json();
+  const { action, payload } = body;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  try {
+    if (action === "openai") {
+      headers["Authorization"] = `Bearer ${process.env.OPENAI_API_KEY}`;
+      const res = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      return jsonResponse(data);
+    }
+
+    if (action === "mux_upload") {
+      headers["Authorization"] = `Basic ${Buffer.from(`${process.env.MUX_TOKEN_ID}:${process.env.MUX_TOKEN_SECRET}`).toString("base64")}`;
+      const res = await fetch("https://api.mux.com/video/v1/uploads", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      return jsonResponse(data);
+    }
+
+    if (action === "sync_generate") {
+      const res = await fetch("https://api.sync.so/v2/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.SYNC_API_KEY!,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      return jsonResponse(data);
+    }
+
+    return jsonResponse({ error: "Invalid action" }, 400);
+  } catch (error) {
+    return jsonResponse({ error: (error as Error).message }, 500);
+  }
+}
+
+function isResetExpired(dateString: string) {
+  if (!dateString) return true;
+  const lastReset = new Date(dateString);
+  const now = new Date();
+  const diffDays = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays >= 30;
+}
+
+function planUsage(planName: string) {
+  const plans = {
+    lite: { videos: [5, 5], dynamicVideos: [5, 5], seat: [1, 1] },
+    growth: { videos: [20, 20], dynamicVideos: [20, 20], seat: [3, 3] },
+    scale: { videos: [50, 50], dynamicVideos: [50, 50], seat: [10, 10] },
+  };
+  return plans[planName] || plans.lite;
 }

@@ -29,14 +29,14 @@ export const processAIVideos = inngest.createFunction(
         body: JSON.stringify({ input: text, voice: voiceId }),
       });
       const voiceData = await voiceRes.json();
-      voiceCloningResult = uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
+      voiceCloningResult = await uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
     }
 
     let videoUrl = "";
     if (background === "website") {
       const screenshotRes = await fetch(`https://api.screenshotone.com/animate?access_key=${process.env.SCREENSHOTONE_KEY}&url=${website}&format=mp4&block_ads=true&scroll_duration=1500&scroll_by=1000`);
       const screenshotBlob = await screenshotRes.blob();
-      const videoBG = uploadToCloudinary(screenshotBlob, "video");
+      const videoBG = await uploadToCloudinary(screenshotBlob, "video");
 
       videoUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload/${ogVideoPublicId}.mp3`;
     } else {
@@ -66,14 +66,14 @@ export const processOnboardingVideo = inngest.createFunction(
         body: JSON.stringify({ input: text, voice: voiceId }),
       });
       const voiceData = await voiceRes.json();
-      voiceCloningResult = uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
+      voiceCloningResult = await uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
     }
 
     let videoUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload/${ogVideoPublicId}.mp3`;
     if (background === "website") {
       const screenshotRes = await fetch(`https://api.screenshotone.com/animate?access_key=${process.env.SCREENSHOTONE_KEY}&url=${website}&format=mp4`);
       const screenshotBlob = await screenshotRes.blob();
-      uploadToCloudinary(screenshotBlob, "video");
+      await uploadToCloudinary(screenshotBlob, "video");
       videoUrl = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload/${ogVideoPublicId}.mp3`;
     }
 
@@ -96,7 +96,7 @@ export const createAIIntro = inngest.createFunction(
       body: JSON.stringify({ input: `${greeting} ${text}`, voice: "alloy" }),
     });
     const voiceData = await voiceRes.json();
-    const result = uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
+    const result = await uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
 
     await supabase.from("videos").update({
       ai_preview: `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/video/upload/${result.public_id}.mp3`,
@@ -124,7 +124,7 @@ export const createAIClone = inngest.createFunction(
       body: JSON.stringify({ input: text, voice: voiceId }),
     });
     const voiceData = await voiceRes.json();
-    const audioResult = uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
+    const audioResult = await uploadToCloudinary(`data:audio/mp3;base64,${voiceData.audio_data}`, "video");
 
     const syncRes = await fetch("https://api.sync.so/v2/generate", {
       method: "POST",

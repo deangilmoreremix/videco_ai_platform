@@ -8,15 +8,10 @@
   status = 200
   force = true
 
-[[redirects]]
-  from = "/.netlify/functions/api"
-  to = "/.netlify/functions/api"
-  status = 200
-  force = true
-
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Content-Type = "application/json"

@@ -7,11 +7,11 @@ This migration replaces the Next.js API routes with a serverless architecture po
 ## Architecture
 
 ### Netlify Functions (`netlify/functions/`)
-- `app.ts` — Main API router handling all `/api/*` routes
-- `proxy.ts` — External API proxy for OpenAI, Mux, Sync.so
-- `openai-proxy.ts` — OpenAI Responses API proxy
+- `app.ts` — Main API router handling all `/api/*` routes (all existing API logic consolidated here)
 - `inngest.ts` — Inngest workflow definitions for AI video processing
-- `mail-send.ts` — Brevo email sending utility
+
+### Standalone utility (optional)
+- `proxy.ts` — External API proxy for OpenAI, Mux, Sync.so (can be called via `/api/proxy`)
 
 ### Supabase Edge Functions (`supabase/functions/`)
 - `video/index.ts` — Multi-tenant video operations
@@ -50,6 +50,10 @@ This migration replaces the Next.js API routes with a serverless architecture po
 | File Upload | `POST /api/upload` | `app.ts` -> Supabase Storage |
 | Brevo Start Trial | `POST /api/brevo/start-trial` | `app.ts` -> Brevo Contacts |
 | Sync Webhook | `POST /api/webhooks/sync` | `app.ts` -> Supabase |
+| Downgrade | `POST /api/stripe/downgrade` | `app.ts` -> Stripe SDK |
+| One-time Purchase | `POST /api/stripe/one-time-purchase` | `app.ts` -> Stripe SDK |
+| S3 Upload Replacement | `POST /api/s3-upload` | `app.ts` -> Supabase Storage |
+| External API Proxy | `POST /api/proxy` | `app.ts` -> proxied call |
 
 ## Environment Variables
 
