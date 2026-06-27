@@ -27,7 +27,7 @@ import {
 } from "react-icons/fi";
 import { daysLeftInTrial, isTrialExpired } from "src/utils/isTrialExpierd";
 import { Onboarding } from "../onboarding/welcome";
-import { internalAPIRequest } from "src/services/api/stripe-event";
+import { supabase } from "src/services";
 import New from "../create/new";
 import { useRouter } from "next/router";
 import Pricing from "../pricing";
@@ -85,10 +85,7 @@ export const Header: FC<HeaderProps> = (props) => {
                     fullName: data.full_name,
                 });
                 setShowOnboarding(false);
-                //Rest usage limits. TODO: move to a cronjob in the future
-                await internalAPIRequest("/api/credits/deduct", {
-                    user_id: user.id,
-                });
+                // Usage reset happens via Supabase cron / scheduled function in production.
             } else {
                 setShowOnboarding(true);
             }

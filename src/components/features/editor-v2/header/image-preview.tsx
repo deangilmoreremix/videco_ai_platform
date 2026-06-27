@@ -59,7 +59,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src }) => {
             await supabase
                 .from("videos")
                 .update({
-                    preview: `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_200,l_play-3-xxl_wefrsh/fl_layer_apply/c_scale,h_400,e_loop/dl_200,vs_30/${url
+                    preview: `${url
                         .split("/")
                         .pop()
                         .replace(".m3u8", ".gif")

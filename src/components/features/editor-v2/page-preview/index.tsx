@@ -55,7 +55,7 @@ import { useEditorStore } from "src/store/editor";
 import ThemeSidebar from "../theme-siderbar";
 import { PlayerSettings } from "./player-settings";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import axios from "axios";
+// Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 
 type PagePreviewProps = {
     videoUrl: string;
@@ -110,16 +110,33 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
         if (router.query.clone === "true" && mediaStatus === "in_progress") {
             const interval = setInterval(async () => {
                 try {
-                    const response = await axios.post(
-                        "/api/v1/videos/get-clone",
-                        {
-                            id: router.query.id,
-                        },
-                    );
-                    if (response.data?.url) {
-                        setLatestUrl(response.data.url);
-                        setLatestMediaStatus("ready");
-                        clearInterval(interval);
+                    // Poll the Muapi job via Supabase Edge Function
+                    const { supabase } = await import("src/services");
+                    const { data: jobs } = await supabase
+                        .from("jobs")
+                        .select("*")
+                        .eq("user_id", user?.id)
+                        .eq("status", "processing")
+                        .order("created_at", { ascending: false })
+                        .limit(1);
+
+                    if (jobs?.[0]?.id) {
+                        const res = await fetch(
+                            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/jobs?id=${jobs[0].id}&action=poll`,
+                            {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "x-tenant-id": user?.app_metadata?.tenant_id || "",
+                                },
+                            }
+                        );
+                        const data = await res.json();
+                        if (data.status === "completed" && data.outputs?.[0]) {
+                            setLatestUrl(data.outputs[0]);
+                            setLatestMediaStatus("ready");
+                            clearInterval(interval);
+                        }
                     }
                 } catch (error) {
                     console.error("Error fetching clone status:", error);
@@ -360,7 +377,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                                     videoUrl &&
                                     !videoUrl.includes("videco.s3.") &&
                                     !videoUrl.includes("youtube")
-                                        ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl
+                                        ? `${videoUrl
                                               .split("/")
                                               .pop()
                                               .replace(".mp4", ".gif")

@@ -263,7 +263,7 @@ const New: React.FC = () => {
                                         autoPlay={true}
                                         loop
                                         muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1733740543/qnpsgtdubqgtylmuvpmu.webm"
+                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/seed-assets/qnpsgtdubqgtylmuvpmu.webm`}
                                     />
                                 </Box>
                                 <Box mt={6}>
@@ -349,7 +349,7 @@ const New: React.FC = () => {
                                         autoPlay={true}
                                         loop
                                         muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1726760673/Grey_and_Ivory_Collage_Simple_Photo_Minimalist_Fashion_Collection_YouTube_Intro_2.mp4"
+                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/seed-assets/Grey_and_Ivory_Collage_Simple_Photo_Minimalist_Fashion_Collection_YouTube_Intro_2.mp4`}
                                     />
                                 </Box>
                                 <Box mt={6}>
@@ -432,7 +432,7 @@ const New: React.FC = () => {
                                         autoPlay={true}
                                         loop
                                         muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1735839318/qyhz03uwj9r0oxwutx69.mp4"
+                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/seed-assets/qyhz03uwj9r0oxwutx69.mp4`}
                                     />
                                 </Box>
                                 <Box mt={6}>

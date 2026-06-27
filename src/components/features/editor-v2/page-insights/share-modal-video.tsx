@@ -31,7 +31,7 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
         const container = document.createElement("div");
         container.innerHTML = getEmailEmbedCodeForSimpleVideos(
             `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-            `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
+            ${ogURL
                 .split("/")
                 .pop()
                 .replace(".mp4", ".gif")
@@ -41,11 +41,11 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
             provider.value,
         );
 
-        if (provider.value === "brevo") {
+        if (provider.value === "html") {
             navigator.clipboard.writeText(
                 getEmailEmbedCodeForSimpleVideos(
                     `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-                    `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
+                    ${ogURL
                         .split("/")
                         .pop()
                         .replace(".mp4", ".gif")

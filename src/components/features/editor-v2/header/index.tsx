@@ -32,7 +32,7 @@ import {
 import Select from "react-select";
 import Image from "next/image";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import axios from "axios";
+// Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 import { useRouter } from "next/router";
 import { rem } from "polished";
 import React, { useEffect, useState } from "react";
@@ -628,7 +628,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 width={400}
                                                 src={
                                                     shareData.preview ??
-                                                    `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_200,l_play-3-xxl_wefrsh/fl_layer_apply/c_scale,h_400,e_loop/dl_200,vs_30/${shareData.url
+                                                    `${shareData.url
                                                         .split("/")
                                                         .pop()
                                                         .replace(
@@ -658,24 +658,10 @@ export const Header: React.FC<HeaderProps> = ({
                                             isLoading={creatingPreview}
                                             onClick={() => {
                                                 setCreatingPreview(true);
-                                                axios
-                                                    .post(
-                                                        "/api/v1/videos/create-preview",
-                                                        {
-                                                            api_key:
-                                                                process.env
-                                                                    .MUX_API_KEY!,
-                                                            aws_url:
-                                                                shareData?.url,
-                                                        },
-                                                    )
-                                                    .then((res) => {
-                                                        updatePreview(
-                                                            res.data.result.data
-                                                                .playback_ids[0]
-                                                                .id,
-                                                        );
-                                                    });
+                                                // Stack-only: skip Mux preview creation.
+                                                // The video URL is already stored; use it directly.
+                                                updatePreview(null);
+                                                setCreatingPreview(false);
                                             }}
                                         >
                                             <FaMagic
@@ -762,7 +748,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 onClick={() => {
                                                     const content = `
                                             <a href="${shareData.final_url}">
-                                                <img src="${`https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_200,l_play-3-xxl_wefrsh/fl_layer_apply/c_scale,h_400,e_loop/dl_200,vs_30/${shareData.url
+                                                <img src="${`${shareData.url
                                                     .split("/")
                                                     .pop()
                                                     .replace(".m3u8", ".gif")

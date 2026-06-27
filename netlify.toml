@@ -1,17 +1,28 @@
 [build]
   publish = "out"
-  functions = "netlify/functions"
+
+# Netlify hosts the static SPA. All /api/* routes are proxied to the Supabase
+# Edge Function `api`. Set SUPABASE_PROJECT_URL in Netlify env before deploying.
+#
+# Example: SUPABASE_PROJECT_URL=abcdefghij.supabase.co
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/app"
+  to = "https://{{SUPABASE_PROJECT_URL}}/functions/v1/api/:splat"
   status = 200
   force = true
+  [redirects.headers]
+    Cache-Control = "no-store"
 
 [[headers]]
-  for = "/.netlify/functions/*"
+  for = "/*"
   [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
-    Content-Type = "application/json"
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

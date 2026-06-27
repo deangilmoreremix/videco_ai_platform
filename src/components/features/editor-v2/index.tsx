@@ -22,7 +22,7 @@ import { FileUploader } from "react-drag-drop-files";
 import ElementsLog from "../player/elements-log";
 import { rem } from "polished";
 import { PagePreview } from "./page-preview";
-import axios from "axios";
+// Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 import { PageAiVideos } from "./page-aivideos";
 import { blobUrlToBlob } from "src/utils/video";
 import { useWorkspaces } from "src/store/workspace";
@@ -264,37 +264,17 @@ export const Editor: React.FC = () => {
 
     const saveScreenRecordingToCloud = async (file, type = "webm") => {
         setLoading(true);
-        const url = "https://api.cloudinary.com/v1_1/dhd6m0fh3/video/upload";
         const blobFile = await blobUrlToBlob(file);
-        // Create a FormData object and append the file and api_key
-        const formData = new FormData();
-        if (type === "mp4") {
-            formData.append(
-                "file",
-                file[0],
-                `${user.id}-${Date.now()}-screen-record.mp4`,
-            );
-        } else {
-            formData.append(
-                "file",
-                new File(
-                    [blobFile],
-                    `${user.id}-${Date.now()}-screen-record.webm`,
-                    {
-                        type: "video/webm",
-                    },
-                ),
-                `${user.id}-${Date.now()}-screen-record.webm`,
-            ); // Append the video file
-        }
-        formData.append("upload_preset", "videco");
+        // Upload to Supabase Storage (stack: Supabase only, no Cloudinary)
+        const fileName = `${user.id}-${Date.now()}-screen-record.${type}`;
+        const fileToUpload = new File([blobFile], fileName, {
+            type: type === "mp4" ? "video/mp4" : "video/webm",
+        });
 
         try {
-            const uploadedVideo: any = await axios.post(url, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const { uploadFile } = await import("src/services");
+            const result = await uploadFile(fileToUpload, "videos", user.id);
+
             setLoading(false);
             if (router.query.id) {
                 const theVideoId = router.query.id
@@ -308,10 +288,10 @@ export const Editor: React.FC = () => {
             setVideoOnboardReady({
                 ready: true,
                 platform: "videco",
-                url: uploadedVideo.data.secure_url,
+                url: result.url,
                 passthrough_id: "",
                 name: "",
-                size: new File([blobFile], "test").size / (1024 * 1024),
+                size: blobFile.size / (1024 * 1024),
             });
         } catch (e) {
             console.log(e);
@@ -326,7 +306,7 @@ export const Editor: React.FC = () => {
                 user_id: user?.id,
                 status: "draft",
                 url: videoOnboardReady.url,
-                preview: `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoOnboardReady.url
+                preview: `${videoOnboardReady.url
                     .split("/")
                     .pop()
                     .replace(".m3u8", ".gif")
@@ -626,7 +606,7 @@ export const Editor: React.FC = () => {
                                         videoUrl &&
                                         !videoUrl.includes("videco.s3.") &&
                                         !videoUrl.includes("youtube")
-                                            ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl
+                                            ? `${videoUrl
                                                   .split("/")
                                                   .pop()
                                                   .replace(".mp4", ".gif")

@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { devtools, persist, createJSONStorage } from "zustand/middleware";
-import { axiosInstance } from "src/services/api";
 import { i18n } from "@i18n";
 import { ILanguageState, ILanguage } from "./types";
 
@@ -34,9 +33,6 @@ export const useLanguageStore = create(
                 ...initialLanguageState,
                 setLanguage: (language: ILanguage) => {
                     i18n.changeLanguage(language?.value);
-                    axiosInstance.defaults.headers["Accept-Language"] = String(
-                        language?.value,
-                    );
                     set(() => ({
                         language,
                     }));

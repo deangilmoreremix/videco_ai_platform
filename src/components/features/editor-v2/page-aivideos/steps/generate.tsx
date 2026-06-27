@@ -28,7 +28,7 @@ import {
     Select,
 } from "@chakra-ui/react";
 import { IoIosRefresh } from "react-icons/io";
-import { processAIVideos } from "src/services/api/createAIPreview";
+import { submitTextToVideo, pollJob } from "src/services";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -148,16 +148,15 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
         fname: string,
         website: string,
     ) => {
-        const startJob = await processAIVideos({
-            og_video_public_id: originalVideoPubId,
-            voice_id: voiceID,
-            ai_video_id: ai_video_id,
-            language: language,
-            greeting: the_greeting(language, greeting),
-            text: fname,
-            background: background,
-            website: website,
+        const prompt = `${the_greeting(language, greeting)} ${fname} ${background === "website" ? website : ""}`.trim();
+        const { job } = await submitTextToVideo(prompt, {
+            tenant_id: user?.app_metadata?.tenant_id,
+            user_id: user?.id,
         });
+        // Optionally poll in background or let user poll later
+        if (job?.id) {
+            pollJob(job.id).catch(() => {});
+        }
     };
     useEffect(() => {
         if (router.query.id) {

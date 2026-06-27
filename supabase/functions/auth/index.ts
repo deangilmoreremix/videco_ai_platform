@@ -1,69 +1,55 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-export default async (req: Request) => {
-  const url = new URL(req.url);
-  const path = url.pathname.replace(/^\/api\/v1\/auth/, "") || "/";
-  const method = req.method;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Content-Type": "application/json",
+};
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
 
-  if (method === "OPTIONS") {
-    return new Response(null, { status: 204, headers });
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    if (path === "/login" && method === "POST") {
-      const { api_key } = await req.json();
+    if (req.method === "POST") {
+      const body = await req.json();
+      const { tenant_id, email, password, full_name } = body;
 
-      const regex = /^api_.*_videco\.io$/;
-      if (!api_key || !regex.test(api_key)) {
-        return new Response(JSON.stringify({ error: "Not authorized" }), {
-          status: 500,
-          headers,
-        });
-      }
+      const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name, tenant_id },
+      });
+      if (error) throw error;
 
-      const { data: apikeyData } = await supabase
-        .from("apikey")
-        .select("user_id, tenant_id")
-        .eq("key", api_key)
-        .single();
-
-      if (!apikeyData) {
-        return new Response(JSON.stringify({ error: "Not authorized" }), {
-          status: 500,
-          headers,
-        });
-      }
-
-      const jwt = await supabase.auth.admin.generateLink({
-        email: apikeyData.user_id,
-        type: "magiclink",
+      await supabase.from("profiles").insert({
+        id: data.user.id,
+        tenant_id,
+        email,
+        full_name,
       });
 
-      return new Response(
-        JSON.stringify({ token: jwt.properties?.action_link || api_key }),
-        { headers }
-      );
+      return new Response(JSON.stringify({ user: data.user }), { headers: corsHeaders });
     }
 
-    return new Response(JSON.stringify({ error: "Not Found" }), {
-      status: 404,
-      headers,
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers,
-    });
+    if (req.method === "GET") {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+      const token = authHeader.replace("Bearer ", "");
+      const { data, error } = await supabase.auth.getUser(token);
+      if (error) throw error;
+      return new Response(JSON.stringify({ user: data.user }), { headers: corsHeaders });
+    }
+
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: corsHeaders });
   }
-};
+});
