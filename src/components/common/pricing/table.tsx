@@ -22,19 +22,13 @@ interface PricingTableProps {
     user: any;
     expanded?: any;
 }
-const stripePromise = Promise.resolve(null);
 
 export const PricingTable = ({ user, expanded }: PricingTableProps) => {
     const [selectedPlan, setSelectedPlan] = useState("growth");
-    const [showPaymentElement, setShowPaymentElement] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [promoCode, setPromoCode] = useState("");
     const supabase = createClientComponentClient();
     const [frequency, setFrequency] = useState("month");
-    const [clientSecret, setClientSecret] = useState(null);
-    const handleClose = () => {
-        setShowPaymentElement(false); // Hide the Payment Element
-    };
 
     const handleBuy = async () => {
         setIsLoading(true);
@@ -513,146 +507,6 @@ export const PricingTable = ({ user, expanded }: PricingTableProps) => {
             >
                 Need more? Book a meeting with us
             </Link>
-
-            {showPaymentElement && clientSecret && (
-                <Box
-                    position="fixed"
-                    bg="white"
-                    width={expanded ? "100%" : "65%"}
-                    boxShadow="lg"
-                    border="1px solid"
-                    rounded="md"
-                    zIndex={999}
-                    p={12}
-                    pt={32}
-                    height="full"
-                    w="full"
-                    left={0}
-                    top={0}
-                >
-                    <Input
-                        display="flex"
-                        maxW="md"
-                        margin="12px auto"
-                        width={expanded ? "50%" : "85%"}
-                        type="text"
-                        placeholder="Promo Code"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                    />
-                    <PaymentElementWrapper
-                        handleClose={handleClose}
-                        clientSecret={clientSecret}
-                        expanded={expanded}
-                    />
-                </Box>
-            )}
         </Flex>
     );
 };
-export default function PaymentForm({ handleClose, expanded }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
-    const toast = useToast();
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-
-        if (!stripe || !elements) {
-            toast({
-                title: "Stripe has not loaded yet. Please try again later.",
-                status: "error",
-                duration: 500,
-                isClosable: true,
-            });
-            setLoading(false);
-            return;
-        }
-
-        const { error } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                return_url: `${window.location.origin}/campaign`, // Optional success page
-            },
-        });
-
-        if (error) {
-            toast({
-                title: error.message,
-                status: "error",
-                duration: 500,
-                isClosable: true,
-            });
-        } else {
-            setMessage("Payment succeeded!");
-        }
-
-        setLoading(false);
-    };
-
-    return (
-        <Box maxW="4xl" m="0 auto">
-            {/* Close Button */}
-            <Button
-                onClick={handleClose}
-                position="absolute"
-                left={10}
-                top={10}
-            >
-                <CloseIcon />
-            </Button>
-
-            <form
-                onSubmit={handleSubmit}
-                style={{
-                    width: expanded ? "50%" : "85%",
-                    margin: expanded ? "0 auto" : "auto",
-                }}
-            >
-                <PaymentElement />
-                <Button
-                    zIndex={999}
-                    outline={0}
-                    px={20}
-                    className="buy-button"
-                    w="80%"
-                    py={6}
-                    fontWeight="normal"
-                    colorScheme="teal"
-                    bg="#05405A"
-                    rounded="full"
-                    fontSize="20px"
-                    display="flex"
-                    margin="32px auto"
-                    _hover={{
-                        bgGradient: "linear(to-l, #7928CA, #FF0080)",
-                    }}
-                    color="white"
-                    type="submit"
-                    disabled={!stripe || loading}
-                >
-                    {loading ? "Processing..." : "Pay and start creating"}
-                </Button>
-                {message && <div>{message}</div>}
-            </form>
-        </Box>
-    );
-}
-// Wrapper to pass clientSecret to the PaymentForm
-export function PaymentElementWrapper({ clientSecret, handleClose, expanded }) {
-    const options = {
-        clientSecret,
-        defaultValues: {
-            email: "", // Leave email blank to disable Link
-        },
-    };
-
-    return (
-        <Elements stripe={stripePromise} options={options}>
-            <PaymentForm handleClose={handleClose} expanded={expanded} />
-        </Elements>
-    );
-}

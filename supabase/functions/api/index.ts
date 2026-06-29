@@ -1114,6 +1114,86 @@ Deno.serve(async (req: Request) => {
       return json(data, 201);
     }
 
+    if (segments[0] === "videos" && segments[1] === "preview" && req.method === "POST") {
+      const tenantId = await getTenantFromRequest(req);
+      if (!tenantId) return json({ error: "Auth required" }, 401);
+      const body = await req.json();
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert({
+          tenant_id: tenantId,
+          user_id: body.user_id || null,
+          type: "ai-preview",
+          model: body.model || "gpt-4o-mini",
+          input: body,
+          status: "processing",
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ job_id: data.id }, 201);
+    }
+
+    if (segments[0] === "videos" && segments[1] === "clone" && req.method === "POST") {
+      const tenantId = await getTenantFromRequest(req);
+      if (!tenantId) return json({ error: "Auth required" }, 401);
+      const body = await req.json();
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert({
+          tenant_id: tenantId,
+          user_id: body.user_id || null,
+          type: "ai-clone",
+          model: body.model || "sync-lipsync",
+          input: body,
+          status: "processing",
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ job_id: data.id }, 201);
+    }
+
+    if (segments[0] === "videos" && segments[1] === "process" && req.method === "POST") {
+      const tenantId = await getTenantFromRequest(req);
+      if (!tenantId) return json({ error: "Auth required" }, 401);
+      const body = await req.json();
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert({
+          tenant_id: tenantId,
+          user_id: body.user_id || null,
+          type: "ai-process",
+          model: body.model || "generate_wan_ai_effects",
+          input: body,
+          status: "processing",
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ job_id: data.id }, 201);
+    }
+
+    if (segments[0] === "videos" && segments[1] === "onboarding" && req.method === "POST") {
+      const tenantId = await getTenantFromRequest(req);
+      if (!tenantId) return json({ error: "Auth required" }, 401);
+      const body = await req.json();
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert({
+          tenant_id: tenantId,
+          user_id: body.user_id || null,
+          type: "ai-onboarding",
+          model: body.model || "veo3-fast-text-to-video",
+          input: body,
+          status: "processing",
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ job_id: data.id }, 201);
+    }
+
     // ========================================================================
     // AUTH
     // ========================================================================

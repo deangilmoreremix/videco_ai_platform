@@ -1,7 +1,8 @@
 [build]
-  publish = "out"
+  command = "npm run build"
+  publish = "."
 
-# Netlify hosts the static SPA. All /api/* routes are proxied to the Supabase
+# Netlify serves the Next.js SSR app. API routes are proxied to the Supabase
 # Edge Function `api`. Set SUPABASE_PROJECT_URL in the Netlify site environment
 # before deploying (e.g. SUPABASE_PROJECT_URL=abcdefghij.supabase.co).
 

@@ -30,7 +30,7 @@ const ShareModal = ({ videoId, ogURL }) => {
         const container = document.createElement("div");
         container.innerHTML = getEmailEmbedCode(
             `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-            ${ogURL
+            `${ogURL
                 .split("/")
                 .pop()
                 .replace(".mp4", ".gif")
@@ -44,7 +44,7 @@ const ShareModal = ({ videoId, ogURL }) => {
             navigator.clipboard.writeText(
                 getEmailEmbedCode(
                     `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-                    ${ogURL
+                    `${ogURL
                         .split("/")
                         .pop()
                         .replace(".mp4", ".gif")

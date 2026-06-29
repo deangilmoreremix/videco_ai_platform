@@ -15,7 +15,7 @@ export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON
 // ============================================================================
 const FN_BASE = `${SUPABASE_URL}/functions/v1`;
 
-async function callMuapi<T = unknown>(
+export async function callMuapi<T = unknown>(
   endpoint: string,
   body: Record<string, unknown> = {}
 ): Promise<T> {
@@ -37,7 +37,7 @@ async function callMuapi<T = unknown>(
   return res.json();
 }
 
-async function callMuapiGet<T = unknown>(endpoint: string): Promise<T> {
+export async function callMuapiGet<T = unknown>(endpoint: string): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
   const tenantId = (session?.user?.app_metadata as any)?.tenant_id;
   const res = await fetch(`${FN_BASE}/${endpoint}`, {
@@ -93,6 +93,8 @@ export const generateVideo = (
     [k: string]: any;
   } = {}
 ) => callMuapi("videos/text-to-video", { prompt, ...opts });
+
+export const submitTextToVideo = generateVideo;
 
 export const imageToVideo = (
   prompt: string,
