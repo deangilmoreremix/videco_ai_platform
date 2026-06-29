@@ -48,7 +48,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { planUsage } from "src/utils/plans";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import { WokspaceSwitcher } from "./workspace";
+import { WorkspaceSwitcher } from "./workspace";
 import { SupportIcon } from "../icons";
 
 interface LinkItemProps {
@@ -87,6 +87,13 @@ const LinkItems: Array<LinkItemProps> = [
         target: "_self",
         url: "/videos",
         icon: FiUpload,
+        type: "item",
+    },
+    {
+        name: "AI Videos",
+        target: "_self",
+        url: "/ai-videos",
+        icon: FiVideo,
         type: "item",
     },
     {
@@ -262,7 +269,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                     onClick={onClose}
                 />
             </Flex>
-            <WokspaceSwitcher />
+            <WorkspaceSwitcher />
             {LinkItems.map((link) => {
                 return link.type === "item" ? (
                     <NavItem

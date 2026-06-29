@@ -97,7 +97,7 @@ export const OnBoardingVideoFrame: FC<{
                             borderRadius: "20px",
                             border: "1px solid #DADADA",
                         }}
-                        poster="assets/avatar.png"
+                        poster="/assets/avatar.png"
                         width="100%"
                     />
                 </Box>
@@ -233,7 +233,7 @@ export const OnBoardingVideoFrame: FC<{
                             >
                                 <CardBody p={0}>
                                     <Image
-                                        src="assets/avatar.png"
+                                        src="/assets/avatar.png"
                                         height="160px"
                                         alt="Create your first campaign"
                                         borderRadius="lg"

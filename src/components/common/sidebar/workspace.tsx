@@ -30,7 +30,7 @@ import { FiPlus, FiSettings } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useWorkspaces } from "src/store/workspace";
 
-export const WokspaceSwitcher = () => {
+export const WorkspaceSwitcher = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const supabase = createClientComponentClient();
     const session = useSession();
@@ -167,7 +167,7 @@ export const WokspaceSwitcher = () => {
                             initialValues={{ name: isUpdate && isUpdate.name }}
                             onSubmit={(values, actions) => {
                                 setTimeout(async () => {
-                                    await handleWorkspace(values.name, "test");
+                                    await handleWorkspace(values.name, "/default_icon.png");
                                     actions.setSubmitting(false);
                                 }, 1000);
                             }}

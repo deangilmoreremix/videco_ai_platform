@@ -65,8 +65,8 @@ export const Editor: React.FC = () => {
     } = useEditorStore();
     const [settingsDuration, setSettingsDuration] = useState(0);
     const [activeTimeLineValue, setActiveTimeLineValue] = useState(3);
-    const handleSetSettingsDuration = (value) =>
-        setSettingsDuration(settingsDuration);
+    const handleSetSettingsDuration = (value: number) =>
+        setSettingsDuration(value);
 
     const session = useSession();
     const toast = useToast();

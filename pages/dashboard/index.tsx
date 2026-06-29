@@ -40,6 +40,7 @@ import {
     FiEdit,
     FiUpload,
     FiUserPlus,
+    FiVideo,
 } from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
@@ -337,17 +338,42 @@ const Dashboard: React.FC = () => {
                                         justifyContent="center"
                                         alignItems="center"
                                         color="black"
-                                        ml={6}
-                                        onClick={() => router.push("/leads")}
-                                        rounded="md"
+                                        onClick={() =>
+                                            router.push("/analytics")
+                                        }
                                         border="1px solid #dcdcdc"
                                         px={4}
                                         fontSize="sm"
                                         py={1}
+                                        rounded="md"
                                     >
-                                        <FiDatabase color="gray" />
+                                        <FiBarChart color="gray" />
                                         <Text color="gray.500" pl={2}>
-                                            Form submissions
+                                            View analytics
+                                        </Text>
+                                    </Box>
+                                    <Text color="gray.500" ml={5}>
+                                        |
+                                    </Text>
+                                    <Box
+                                        display="flex"
+                                        cursor="pointer"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        color="black"
+                                        ml={6}
+                                        onClick={() =>
+                                            router.push("/ai-videos")
+                                        }
+                                        border="1px solid #dcdcdc"
+                                        px={4}
+                                        fontSize="sm"
+                                        py={1}
+                                        rounded="md"
+                                    >
+                                        <FiVideo color="gray" />
+                                        <Text color="gray.500" pl={2}>
+                                            AI Videos
                                         </Text>
                                     </Box>
                                     <Text color="gray.500" ml={5}>

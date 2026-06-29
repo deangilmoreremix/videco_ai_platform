@@ -149,7 +149,7 @@ export const Header: FC<HeaderProps> = (props) => {
                         <ModalContent>
                             <ModalBody m={0} p="5" bg="#ffffff" rounded="md">
                                 <Image
-                                    src="assets/logonew.png"
+                                    src="/assets/logonew.png"
                                     w="20"
                                     m="0 auto"
                                 />
