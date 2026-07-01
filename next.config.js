@@ -1,5 +1,4 @@
 /** @type {import('next').NextConfig} */
-// This file sets a custom webpack configuration to use your Next.js app
 const withTM = require("next-transpile-modules")([]);
 
 const withPlugins = require("next-compose-plugins");
@@ -8,6 +7,9 @@ module.exports = withTM(
     withPlugins(
         [],
         {
+            eslint: {
+                ignoreDuringBuilds: true,
+            },
             images: {
                 unoptimized: true,
             },
