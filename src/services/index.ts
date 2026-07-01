@@ -1,19 +1,31 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // ============================================================================
-// Singleton client for browser use.
+// Lazily-initialized client for browser use.
+// Avoids throwing during Next.js data-collection when env vars are absent.
 // ============================================================================
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+let _supabase: SupabaseClient | null = null;
 
-export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true },
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true },
+    });
+  }
+  return _supabase;
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_, prop) {
+    return (getSupabase() as any)[prop];
+  },
 });
 
-// ============================================================================
-// Direct-call helper to Supabase Edge Functions.
-// ============================================================================
-const FN_BASE = `${SUPABASE_URL}/functions/v1`;
+const FN_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
+  : "https://placeholder.supabase.co/functions/v1";
 
 export async function callMuapi<T = unknown>(
   endpoint: string,

@@ -1,5 +1,5 @@
 [build]
-  command = "npm install && npm run build"
+  command = "NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder NEXT_PUBLIC_SITE_URL=http://localhost:3000 npm install && npm run build"
 
 # Note: @netlify/plugin-nextjs handles .next publish directory automatically.
 # Redirects rely on env SUPABASE_PROJECT_URL set in Netlify dashboard:
