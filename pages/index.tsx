@@ -9,17 +9,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
-export const getServerSideProps = async (ctx: any) => {
-    const { res } = ctx;
-
-    res.setHeader("location", "/auth/login");
-    res.statusCode = 302;
-    res.end();
-
-    return {
-        props: {
-            data: [],
-        },
-    };
-};
