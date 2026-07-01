@@ -1,9 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "npm install && npm run build"
 
 # Note: @netlify/plugin-nextjs handles .next publish directory automatically.
 # Redirects rely on env SUPABASE_PROJECT_URL set in Netlify dashboard:
-#   https://app.netlify.com/sites/elaborate-souffle-66cb84/configuration/env
+#   https://app.netlify.com/sites/videoremix-ai-video-platform/configuration/env
 
 # Netlify serves the Next.js SSR app. API routes are proxied to the Supabase
 # Edge Function `api`. Set SUPABASE_PROJECT_URL in the Netlify site environment
