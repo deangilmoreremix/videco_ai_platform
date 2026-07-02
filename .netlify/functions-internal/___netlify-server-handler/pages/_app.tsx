@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { AppProps } from "next/app";
 import { Box, ChakraProvider } from "@chakra-ui/react";
@@ -6,11 +6,11 @@ import { useLanguageStore } from "src/store/language";
 import { ILanguage } from "src/store/types";
 import Head from "next/head";
 import { appWithTranslation } from "@i18n";
-// import posthog from "posthog-js";
 import { theme } from "src/utils/theme";
 import TagManager from "react-gtm-module";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
+
 declare global {
     interface Window {
         Trengo: {
@@ -33,11 +33,6 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     const [currentLanguage, setCurrentLanguage] = useState<
         ILanguage | undefined
     >();
-    // if (env !== "development") {
-    //     posthog?.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-    //         api_host: "https://eu.i.posthog.com",
-    //     });
-    // }
 
     const tagManagerArgs = {
         gtmId: "GTM-KG3QRFCQ",
@@ -94,16 +89,9 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
                     supabaseClient={supabase}
                     initialSession={pageProps.initialSession}
                 >
-                    {/* <Alert
-                        textAlign="center"
-                        justifyContent="center"
-                        p={6}
-                        status="info"
-                    >
-                        <AlertIcon />
-                        Get 60% off on all plans. Use code{" "}
-                    </Alert> */}
-                    <AnyComponent {...pageProps} />
+                    <Suspense fallback={null}>
+                        <AnyComponent {...pageProps} />
+                    </Suspense>
                 </SessionContextProvider>
             </ChakraProvider>
             <Box id="CHAT" />
