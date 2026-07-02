@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { AppProps } from "next/app";
 import { Box, ChakraProvider } from "@chakra-ui/react";
@@ -89,9 +89,7 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
                     supabaseClient={supabase}
                     initialSession={pageProps.initialSession}
                 >
-                    <Suspense fallback={null}>
-                        <AnyComponent {...pageProps} />
-                    </Suspense>
+                    <AnyComponent {...pageProps} />
                 </SessionContextProvider>
             </ChakraProvider>
             <Box id="CHAT" />
