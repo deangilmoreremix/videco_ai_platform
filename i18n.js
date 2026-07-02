@@ -7,5 +7,5 @@ module.exports = new NextI18Next({
         typeof window === "undefined"
             ? require("path").resolve("./public/locales")
             : "/locales",
-    useSuspense: false,
+    useSuspense: true,
 });
