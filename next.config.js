@@ -11,13 +11,11 @@ module.exports = withPlugins(
         images: {
             unoptimized: true,
         },
+        eslint: {
+            ignoreDuringBuilds: true,
+        },
         webpack: (config) => {
-            config.resolve.extensions = [".ts", ".js"];
-            config.module.rules.push({
-                test: /\.tsx?$\.svg$/,
-                use: ["@svgr/webpack", "ts-loader"],
-                exclude: /node_modules/,
-            });
+            config.resolve.extensions = [".ts", ".tsx", ".js", ".jsx"];
             return config;
         },
         productionBrowserSourceMaps: false,
