@@ -11,6 +11,7 @@ import { theme } from "src/utils/theme";
 import TagManager from "react-gtm-module";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
+import type { SupabaseClient } from "@supabase/supabase-js";
 declare global {
     interface Window {
         Trengo: {
@@ -25,7 +26,15 @@ declare global {
 }
 
 function MyApp({ Component, pageProps }: AppProps): JSX.Element {
-    const [supabase] = useState(() => createPagesBrowserClient());
+    const [supabase] = useState<SupabaseClient | null>(() => {
+        if (
+            process.env.NEXT_PUBLIC_SUPABASE_URL &&
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        ) {
+            return createPagesBrowserClient();
+        }
+        return null;
+    });
     const router = useRouter();
     const env = process.env.NODE_ENV;
 
@@ -90,21 +99,25 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
                 <title>Videco</title>
             </Head>
             <ChakraProvider theme={theme}>
-                <SessionContextProvider
-                    supabaseClient={supabase}
-                    initialSession={pageProps.initialSession}
-                >
-                    {/* <Alert
-                        textAlign="center"
-                        justifyContent="center"
-                        p={6}
-                        status="info"
+                {supabase ? (
+                    <SessionContextProvider
+                        supabaseClient={supabase}
+                        initialSession={pageProps.initialSession}
                     >
-                        <AlertIcon />
-                        Get 60% off on all plans. Use code{" "}
-                    </Alert> */}
+                        {/* <Alert
+                            textAlign="center"
+                            justifyContent="center"
+                            p={6}
+                            status="info"
+                        >
+                            <AlertIcon />
+                            Get 60% off on all plans. Use code{" "}
+                        </Alert> */}
+                        <AnyComponent {...pageProps} />
+                    </SessionContextProvider>
+                ) : (
                     <AnyComponent {...pageProps} />
-                </SessionContextProvider>
+                )}
             </ChakraProvider>
             <Box id="CHAT" />
         </Box>

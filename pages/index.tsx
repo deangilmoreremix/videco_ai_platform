@@ -13,7 +13,7 @@ export default Home;
 export const getServerSideProps = async (ctx: any) => {
     const { res } = ctx;
 
-    res.setHeader("location", "/auth/login");
+    res.setHeader("location", "/dashboard");
     res.statusCode = 302;
     res.end();
 
