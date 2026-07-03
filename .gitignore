@@ -20,3 +20,5 @@ coverage/
 .env.sentry-build-plugin
 
 .trigger
+# Local Netlify folder
+.netlify
