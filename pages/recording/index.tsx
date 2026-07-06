@@ -74,7 +74,7 @@ const Recording: React.FC = () => {
                 <Sidebar>
                     <iframe
                         // src="https://videco-recording.vercel.app/"
-                        src="http://localhost:5173/"
+                        src={process.env.NEXT_PUBLIC_RECORDING_URL || ""}
                         style={{ width: "100%", height: "100%" }}
                         allow="camera *;microphone *; autoplay *; encrypted-media *; fullscreen *; display-capture *; picture-in-picture *; "
                     ></iframe>
