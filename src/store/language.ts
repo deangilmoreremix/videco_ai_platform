@@ -26,6 +26,19 @@ const initialLanguageState = {
  *
  * const { language, languages, setLanguage } = useLanguageStore();
  */
+const isServer = typeof window === "undefined";
+
+const ssrSafeStorage = () => {
+    if (isServer) {
+        return {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+        };
+    }
+    return localStorage;
+};
+
 export const useLanguageStore = create(
     devtools(
         persist<ILanguageState>(
@@ -43,7 +56,7 @@ export const useLanguageStore = create(
             }),
             {
                 name: "language-storage",
-                storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+                storage: createJSONStorage(ssrSafeStorage),
             },
         ),
     ),

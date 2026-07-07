@@ -6,7 +6,6 @@ import { useLanguageStore } from "src/store/language";
 import { ILanguage } from "src/store/types";
 import Head from "next/head";
 import { appWithTranslation } from "@i18n";
-// import posthog from "posthog-js";
 import { theme } from "src/utils/theme";
 import TagManager from "react-gtm-module";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -42,11 +41,6 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     const [currentLanguage, setCurrentLanguage] = useState<
         ILanguage | undefined
     >();
-    // if (env !== "development") {
-    //     posthog?.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-    //         api_host: "https://eu.i.posthog.com",
-    //     });
-    // }
 
     const tagManagerArgs = {
         gtmId: "GTM-KG3QRFCQ",
