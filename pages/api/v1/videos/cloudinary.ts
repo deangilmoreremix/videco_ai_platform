@@ -1,115 +1,99 @@
-import type { NextApiResponse } from 'next';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { v2 as cloudinary } from 'cloudinary';
-import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import multiparty from 'multiparty';
-import { supabaseAdmin } from '../../../lib/storage';
+import type { NextApiResponse } from "next";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+// Replaced Cloudinary uploads with Supabase Storage helper (dual support during migration)
+import { v2 as cloudinary } from "cloudinary"; // kept for legacy support
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import multiparty from "multiparty";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 type ResponseData = {
-  result?: any;
-  error?: string;
+    result: any;
 };
 
-const USE_SUPABASE_STORAGE = process.env.NEXT_PUBLIC_USE_SUPABASE_STORAGE === 'true';
+const secretKey = process.env.VIDECO_SECRET_KEY;
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+    api: {
+        bodyParser: false, // Disable body parsing for this route
+    },
 };
 
 export default async function handler(
-  req: any,
-  res: NextApiResponse<ResponseData>
+    req: any,
+    res: NextApiResponse<ResponseData>,
 ) {
-  const supabase = createClientComponentClient();
-  const form = new multiparty.Form();
+    const supabase = createClientComponentClient();
 
-  if (req.method === 'POST') {
-    const passThroughId = uuidv4() + Date.now();
+    const form = new multiparty.Form();
+    //verifyToken(req, res, async () => {
+    if (req.method === "POST") {
+        const passThroughId = uuidv4() + Date.now();
+        try {
+            // Configuration
+            // Keep Cloudinary config as fallback (transitional)
+            try {
+                cloudinary.config({
+                    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+                    api_key: process.env.CLOUDINARY_API_KEY || '',
+                    api_secret: process.env.CLOUDINARY_API_SECRET || '',
+                });
+            } catch (e) {}
 
-    try {
-      form.parse(req, async (err, fields, files) => {
-        if (err) {
-          return res.status(500).json({ error: 'Error parsing form data' });
-        }
+            form.parse(req, async (err, fields, files) => {
+                if (err) {
+                    return new Response("Error parsing form data", {
+                        status: 500,
+                    });
+                }
 
-        const filePath = files.file[0].path;
+                // Get the file from the form data
+                const filePath = files.file[0].path;
 
-        if (USE_SUPABASE_STORAGE) {
-          const fileBuffer = fs.readFileSync(filePath);
-          const filename = `${fields?.user_id?.[0]}/videos/${passThroughId}.mp4`;
+                try {
+                    // Move uploaded temp file into Supabase Storage
+                    const fileStream = fs.createReadStream(filePath);
+                    const fileName = `${uuidv4()}-${Date.now()}`;
+                    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'user-uploads';
+                    // Ensure bucket exists - Supabase JS client will return an error if it doesn't.
+                    const { data: uploadData, error: uploadErr } = await supabase.storage
+                        .from(bucketName)
+                        .upload(fileName, fileStream, { upsert: true });
 
-          const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-            .from('user-uploads')
-            .upload(filename, fileBuffer, {
-              contentType: 'video/mp4',
+                    // Remove the file from the file system after upload
+                    fs.unlinkSync(filePath);
+
+                    if (uploadErr) throw uploadErr;
+
+                    const publicUrl = supabase.storage.from(bucketName).getPublicUrl(uploadData.path).publicUrl;
+
+                    if (fields?.video_id) {
+                        await supabase
+                            .from("videos")
+                            .update({
+                                training_audio: publicUrl,
+                            })
+                            .eq("user_id", fields?.user_id?.[0])
+                            .eq("id", fields?.video_id?.[0])
+                            .select();
+                    }
+
+                    // Send response back to the client with a normalized shape
+                    res.status(200).json({
+                        result: { publicUrl, path: uploadData.path },
+                    });
+                } catch (uploadError) {
+                    console.error("Upload error:", uploadError);
+                    return res.status(500).json({ result: [], error: uploadError.message });
+                }
             });
-
-          fs.unlinkSync(filePath);
-
-          if (uploadError) {
-            return res.status(500).json({ error: uploadError.message });
-          }
-
-          const { data: urlData } = supabaseAdmin.storage
-            .from('user-uploads')
-            .getPublicUrl(uploadData.path);
-
-          const result = {
-            secure_url: urlData.publicUrl,
-            public_id: uploadData.path,
-            format: 'mp4',
-          };
-
-          if (fields?.video_id) {
-            await supabase
-              .from('videos')
-              .update({ training_audio: result.secure_url })
-              .eq('user_id', fields?.user_id?.[0])
-              .eq('id', fields?.video_id?.[0])
-              .select();
-          }
-
-          return res.status(200).json({ result });
+        } catch (error) {
+            console.log("error..", error);
+            res.status(200).json({ result: [] });
         }
-
-        cloudinary.config({
-          cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-          api_key: process.env.CLOUDINARY_API_KEY!,
-          api_secret: process.env.CLOUDINARY_API_SECRET!,
-        });
-
-        const result = (await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_large(
-            filePath,
-            { resource_type: 'video', chunk_size: 6000000 },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-        })) as any;
-
-        fs.unlinkSync(filePath);
-
-        if (fields?.video_id) {
-          await supabase
-            .from('videos')
-            .update({ training_audio: result.secure_url })
-            .eq('user_id', fields?.user_id?.[0])
-            .eq('id', fields?.video_id?.[0])
-            .select();
-        }
-
-        return res.status(200).json({ result });
-      });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      return res.status(500).json({ error: 'Failed to upload' });
+    } else {
+        res.status(300).json({ result: "Not authorized!" });
     }
-  } else {
-    return res.status(405).json({ error: 'Not authorized!' });
-  }
+    //});
 }

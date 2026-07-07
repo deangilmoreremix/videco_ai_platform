@@ -27,6 +27,7 @@ import { PageAiVideos } from "./page-aivideos";
 import { blobUrlToBlob } from "src/utils/video";
 import { useWorkspaces } from "src/store/workspace";
 import { PageInsights } from "./page-insights";
+import { pollMuapiJob, pollUntilComplete } from "src/services/api/pollMuapi";
 
 export const Editor: React.FC = () => {
     const router = useRouter();
@@ -35,6 +36,8 @@ export const Editor: React.FC = () => {
     const [campaignName, setCampaignName] = useState<any>("");
     const [videoType, setVideoType] = useState("");
     const [videoId, setVideoId] = useState("");
+    // track video object for ai preview polling
+    const [video, setVideo] = useState<any>(null);
     const { workspace } = useWorkspaces();
     const [mediaStatus, setMediaStatus] = useState("");
     const [loading, setLoading] = useState(false);
@@ -127,6 +130,35 @@ export const Editor: React.FC = () => {
             });
         setLoading(false);
     }, []);
+
+    // 2026: Auto-poll for Muapi-generated AI clones / personalized videos
+    useEffect(() => {
+        // Auto-poll using pollUntilComplete when video is still processing
+        if (mediaStatus === "in_progress" && videoId && (router.query.clone === "true" || router.query.aivideos)) {
+            const requestId = (video as any)?.ai_preview || meta?.preview; // ai_preview stores the Muapi request_id in new path
+
+            if (requestId && typeof requestId === "string" && requestId.length < 100) {
+                let cancelled = false;
+                (async () => {
+                    try {
+                        const res = await pollUntilComplete(requestId, videoId);
+                        if (res.status === "completed" && res.final_url && !cancelled) {
+                            setVideoUrl(res.final_url);
+                            setMediaStatus("completed");
+                            // Refresh video data
+                            getVideoByID();
+                        }
+                    } catch (e) {
+                        console.log("Muapi poll error (will retry)", e);
+                    }
+                })();
+
+                return () => {
+                    cancelled = true;
+                };
+            }
+        }
+    }, [mediaStatus, videoId, router.query.clone]);
 
     useEffect(() => {
         if (router.query.preview) {
@@ -264,7 +296,7 @@ export const Editor: React.FC = () => {
 
     const saveScreenRecordingToCloud = async (file, type = "webm") => {
         setLoading(true);
-        const url = "https://api.cloudinary.com/v1_1/dhd6m0fh3/video/upload";
+        const url = "/api/v1/videos/cloudinary"; // legacy name kept; this route now stores files in Supabase Storage and returns { result: { publicUrl, path } }
         const blobFile = await blobUrlToBlob(file);
         // Create a FormData object and append the file and api_key
         const formData = new FormData();
@@ -296,6 +328,7 @@ export const Editor: React.FC = () => {
                 },
             });
             setLoading(false);
+            const publicUrl = uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.public_url || uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.secure_url || uploadedVideo?.data?.secure_url;
             if (router.query.id) {
                 const theVideoId = router.query.id
                     ? router.query.id.toString()
@@ -308,7 +341,7 @@ export const Editor: React.FC = () => {
             setVideoOnboardReady({
                 ready: true,
                 platform: "videco",
-                url: uploadedVideo.data.secure_url,
+                url: publicUrl,
                 passthrough_id: "",
                 name: "",
                 size: new File([blobFile], "test").size / (1024 * 1024),
@@ -326,13 +359,7 @@ export const Editor: React.FC = () => {
                 user_id: user?.id,
                 status: "draft",
                 url: videoOnboardReady.url,
-                preview: `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoOnboardReady.url
-                    .split("/")
-                    .pop()
-                    .replace(".m3u8", ".gif")
-                    .replace(".mov", ".gif")
-                    .replace(".mp4", ".gif")
-                    .replace(".webm", ".gif")}`,
+                 preview: (function(){ try{ const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoOnboardReady.url); }catch(e){ return '/default_thumb.png'; } })(),
                 platform: videoOnboardReady?.platform ?? "videco",
                 name: videoOnboardReady.name,
                 meta_data: { type: ".mp4" },
@@ -626,14 +653,7 @@ export const Editor: React.FC = () => {
                                         videoUrl &&
                                         !videoUrl.includes("videco.s3.") &&
                                         !videoUrl.includes("youtube")
-                                            ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl
-                                                  .split("/")
-                                                  .pop()
-                                                  .replace(".mp4", ".gif")
-                                                  .replace(".mov", ".gif")
-                                                  .replace(".m3u8", ".gif")
-                                                  .replace(".webm", ".gif")}`
-                                            : "/default_thumb.png"
+? (function(){ try{ const { normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoUrl); return normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); }catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })() : "/default_thumb.png"
                                     }
                                     playerRef={playerRef}
                                     videcoBrandingRemoved={

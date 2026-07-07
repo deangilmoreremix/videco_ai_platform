@@ -178,7 +178,7 @@ const Create: React.FC = () => {
         try {
             const result = await uploadVideosTocloudinaryDirectly(url);
             const startJob = await createAIPreview({
-                audio: `https://res.cloudinary.com/dhd6m0fh3/video/upload/${result.data.public_id}.mp3`,
+                audio: result.data?.publicUrl ? result.data.publicUrl.replace(/\.(mp4|webm|mov|m3u8)$/, '.mp3') : result.data?.publicUrl || '',
                 video_id: router.query.id,
                 language: language,
                 userId: user.id,
@@ -313,13 +313,7 @@ const Create: React.FC = () => {
                 status: "draft",
                 media_status: "in_progress",
                 passthrough_id: "no",
-                preview: `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${url
-                    .split("/")
-                    .pop()
-                    .replace(".m3u8", ".gif")
-                    .replace(".mov", ".gif")
-                    .replace(".mp4", ".gif")
-                    .replace(".webm", ".gif")}`,
+                 preview: url,
                 url: url,
                 platform: "videco",
                 type: videoTypes.clone,
@@ -354,11 +348,11 @@ const Create: React.FC = () => {
             .eq("id", router.query.id);
         if (error) throw error;
     };
-    const saveVideo = async (file, type = "webm") => {
+const saveVideo = async (file, type = "webm") => {
         setVideoLoading(true);
-        const url = "https://api.cloudinary.com/v1_1/dhd6m0fh3/video/upload";
+        const uploadApi = "/api/v1/videos/cloudinary";
         const blobFile = await blobUrlToBlob(file);
-        // Create a FormData object and append the file and api_key
+        // Create a FormData object and append the file
         const formData = new FormData();
         if (type === "mp4") {
             formData.append(
@@ -379,19 +373,23 @@ const Create: React.FC = () => {
                 `${user.id}-${Date.now()}-screen-record.webm`,
             ); // Append the video file
         }
-        formData.append("upload_preset", "videco");
 
         try {
-            const uploadedVideo: any = await axios.post(url, formData, {
+            const uploadedVideo: any = await axios.post(uploadApi, formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
             setVideoLoading(false);
-            startUpload(
-                uploadedVideo.data.secure_url,
-                new File([blobFile], "test").size / (1024 * 1024),
-            );
+            const publicUrl = uploadedVideo.data?.result?.publicUrl || uploadedVideo.data?.result?.public_url || uploadedVideo.data?.public_url || uploadedVideo.data?.result?.url;
+            if (publicUrl) {
+                startUpload(
+                    publicUrl,
+                    new File([blobFile], "test").size / (1024 * 1024),
+                );
+            } else {
+                console.error('Upload API did not return publicUrl', uploadedVideo.data);
+            }
         } catch (e) {
             console.log(e);
             setVideoLoading(false);
@@ -401,6 +399,7 @@ const Create: React.FC = () => {
     const confirmScriptAndGenerate = async () => {
         setReadyToGenerate(true);
         setLoading(false);
+
         const startJob = await createAIClone({
             video_id: router.query.id,
             voice_id: voiceID,
@@ -409,6 +408,48 @@ const Create: React.FC = () => {
             ai_video_id: "test_id",
             language: language,
         });
+
+        const response = startJob.data;
+
+        // New Muapi + OpenAI path support (2026)
+        if (response?.mode === "muapi" && response.result?.request_id) {
+            // Store the Muapi job id so the video edit page can poll for completion
+            await supabase
+                .from("videos")
+                .update({
+                    ai_preview: response.result.request_id,
+                    media_status: "in_progress",
+                })
+                .eq("id", router.query.id);
+
+            // Optionally kick off background polling via Edge (non-blocking)
+            fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                    action: "poll",
+                    request_id: response.result.request_id,
+                    video_id: router.query.id,
+                }),
+            }).catch(() => {}); // fire and forget
+
+            // UI feedback: notify user generation started
+            toast({
+                title: "AI generation started",
+                description: "Your AI clone generation has started and is running in the background.",
+                status: "info",
+                duration: 4000,
+                isClosable: true,
+            });
+        } else if (response?.url) {
+            // fallback: direct url returned (legacy)
+            await supabase.from("videos").update({ url: response.url, media_status: "completed" }).eq("id", router.query.id);
+            toast({ title: "AI clone ready", status: "success", duration: 3000 });
+        }
+
         setJobsGenerated(true);
     };
     const continueToNextStep = async () => {

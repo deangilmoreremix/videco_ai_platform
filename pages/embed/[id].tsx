@@ -158,22 +158,15 @@ const Edit: React.FC = ({ videoData }: any) => {
     }, [router.query, videoRest.name]);
     return (
         <>
-            <Head>
-                <title>{videoData.title ?? "Videco"}</title>
-                <meta name="description" content={videoData.desc ?? "Videco"} />
-                <meta
-                    property="og:title"
-                    content={videoData.title ?? "Videco"}
-                />
-                <meta
-                    property="og:image"
-                    content={`https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoData.url
-                        .split("/")
-                        .pop()
-                        .replace(".m3u8", ".gif")
-                        .replace(".mp4", ".gif")}`}
-                />
-            </Head>
+             <Head>
+                 <title>{videoData.title ?? "Videco"}</title>
+                 <meta name="description" content={videoData.desc ?? "Videco"} />
+                 <meta
+                     property="og:title"
+                     content={videoData.title ?? "Videco"}
+                 />
+                 <meta property="og:image" content={(function(){ try{ const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoData.url); } catch(e){ return '/default_thumb.png'; } })()} />
+             </Head>
             {!router.query.method && (
                 <Box bg="#FCFCFC" py={4}>
                     <Box

@@ -1,161 +1,207 @@
-const MUAPI_BASE_URL = 'https://api.muapi.io/v1';
-const MUAPI_API_KEY = process.env.MUAPI_API_KEY;
+/**
+ * Muapi Integration Layer
+ * Replaces Sync.so + Cloudinary video gen + parts of media processing.
+ *
+ * Docs: https://muapi.ai/docs
+ * Pattern: submit -> {request_id} -> poll /predictions/{id}/result -> outputs[]
+ */
+
+import axios from "axios";
+
+const MUAPI_BASE = "https://api.muapi.ai/api/v1";
+const MUAPI_KEY = process.env.MUAPI_API_KEY;
+
+if (!MUAPI_KEY && process.env.NODE_ENV !== "test") {
+  console.warn("[muapi] MUAPI_API_KEY not set - AI generation will fail");
+}
 
 export interface MuapiSubmitResponse {
-  id: string;
-  status: string;
-  created_at: string;
+  request_id: string;
+  status: "processing" | "completed" | "failed" | string;
+  [key: string]: any;
 }
 
-export interface MuapiJobStatus {
-  id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  output_url?: string;
+export interface MuapiResultResponse {
+  request_id: string;
+  status: "processing" | "completed" | "failed" | string;
+  outputs?: Array<{ url: string; [key: string]: any }>;
   error?: string;
+  [key: string]: any;
 }
 
-export interface MuapiT2VRequest {
-  prompt: string;
-  duration?: number;
-  aspect_ratio?: string;
-  model?: string;
-}
+const client = axios.create({
+  baseURL: MUAPI_BASE,
+  headers: {
+    "x-api-key": MUAPI_KEY || "",
+    "Content-Type": "application/json",
+  },
+  timeout: 30000,
+});
 
-export interface MuapiI2VRequest {
-  image_url: string;
-  prompt?: string;
-  duration?: number;
-  model?: string;
-}
-
-export interface MuapiLipsyncRequest {
-  video_url: string;
-  audio_url: string;
-  model?: string;
-}
-
-export async function submitMuapiJob(
-  endpoint: string,
-  data: MuapiT2VRequest | MuapiI2VRequest | MuapiLipsyncRequest
-): Promise<MuapiSubmitResponse> {
-  const response = await fetch(`${MUAPI_BASE_URL}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${MUAPI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Muapi API error: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-export async function pollMuapiJob(jobId: string): Promise<MuapiJobStatus> {
-  const response = await fetch(`${MUAPI_BASE_URL}/jobs/${jobId}`, {
-    headers: {
-      'Authorization': `Bearer ${MUAPI_API_KEY}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Muapi poll error: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-export async function waitForMuapiJob(
-  jobId: string,
-  intervalMs: number = 2000,
-  maxAttempts: number = 150
-): Promise<MuapiJobStatus> {
-  for (let i = 0; i < maxAttempts; i++) {
-    const status = await pollMuapiJob(jobId);
-    if (status.status === 'completed' || status.status === 'failed') {
-      return status;
+// Log usage helper (client-side fire-and-forget)
+export async function logMuapiUsage(userId: string | null, model: string, action: string, details: any = {}, cost = 0) {
+  try {
+    // attempt server-side usage logging endpoint if exists
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      await fetch('/api/usage/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, model, provider: 'muapi', action, details, cost_estimate: cost })
+      });
     }
-    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  } catch (e) {
+    console.warn('logMuapiUsage failed', e.message || e);
   }
-  throw new Error('Muapi job timed out');
 }
 
-export async function generateTextToVideo(
-  prompt: string,
-  options?: { duration?: number; aspectRatio?: string; model?: string }
+
+/**
+ * Submit a generation request to any Muapi model.
+ * Example models: "veo3-fast-text-to-video", "kling-master", "sd-2-omni-reference", "flux-dev", etc.
+ */
+export async function submitPrediction(
+  model: string,
+  payload: Record<string, any>,
+  options?: { webhook?: string }
+): Promise<MuapiSubmitResponse> {
+  const url = options?.webhook
+    ? `/${model}?webhook=${encodeURIComponent(options.webhook)}`
+    : `/${model}`;
+
+  const { data } = await client.post(url, payload);
+  return data;
+}
+
+/** Verify webhook signature using MUAPI_WEBHOOK_SECRET if present */
+export function verifyWebhookSignature(payload: string, signature?: string) {
+  const secret = process.env.MUAPI_WEBHOOK_SECRET;
+  if (!secret) return true; // no secret configured
+  if (!signature) return false;
+  try {
+    const crypto = require('crypto');
+    const hmac = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    return hmac === signature;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Poll until completion or failure. Throws on timeout or error.
+ */
+export async function pollResult(
+  requestId: string,
+  opts: { maxAttempts?: number; intervalMs?: number; timeoutMs?: number } = {}
+): Promise<MuapiResultResponse> {
+  const { maxAttempts = 120, intervalMs = 3000, timeoutMs = 300000 } = opts;
+  const start = Date.now();
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Muapi poll timeout for ${requestId}`);
+    }
+
+    const { data } = await client.get(`/predictions/${requestId}/result`);
+    if (data.status === "completed") return data;
+    if (data.status === "failed") {
+      throw new Error(data.error || `Muapi generation failed: ${requestId}`);
+    }
+
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  throw new Error(`Muapi poll exceeded max attempts for ${requestId}`);
+}
+
+/**
+ * Upload a file (Buffer, Blob, or public URL) to Muapi storage.
+ * Returns hosted URL usable in subsequent generations.
+ */
+export async function uploadFile(
+  fileOrUrl: string | Buffer | Blob,
+  filename = "upload.bin"
 ): Promise<string> {
-  const response = await submitMuapiJob('/generate/text-to-video', {
-    prompt,
-    duration: options?.duration ?? 5,
-    aspect_ratio: options?.aspectRatio ?? '16:9',
-    model: options?.model ?? 'muapi-1.0',
+  if (typeof fileOrUrl === "string" && fileOrUrl.startsWith("http")) {
+    // Muapi can often accept remote URLs directly; this is convenience
+    return fileOrUrl;
+  }
+
+  const form = new FormData();
+  if (Buffer.isBuffer(fileOrUrl)) {
+    form.append("file", new Blob([fileOrUrl]), filename);
+  } else if (fileOrUrl instanceof Blob) {
+    form.append("file", fileOrUrl, filename);
+  } else {
+    throw new Error("uploadFile expects Buffer, Blob, or http URL");
+  }
+
+  const { data } = await axios.post(`${MUAPI_BASE}/upload_file`, form, {
+    headers: {
+      "x-api-key": MUAPI_KEY || "",
+      // Let axios set multipart boundary
+    },
   });
 
-  const finalStatus = await waitForMuapiJob(response.id);
-  if (finalStatus.status === 'failed') {
-    throw new Error(finalStatus.error || 'T2V generation failed');
-  }
-
-  return finalStatus.output_url!;
+  return data.url || data.public_url || data;
 }
 
+/**
+ * Convenience: generate video from text prompt using a recommended fast model.
+ */
+export async function generateTextToVideo(prompt: string, opts?: { webhook?: string, userId?: string }) {
+  const res = await submitPrediction("veo3-fast-text-to-video", { prompt }, opts);
+  // log usage (best-effort)
+  try { await logMuapiUsage(opts?.userId || null, MUAPI_MODELS.FAST_T2V || 'veo3-fast-text-to-video', 'text-to-video', { prompt_length: (prompt||'').length }, 0); } catch(e){}
+  return pollResult(res.request_id);
+}
+
+/**
+ * Convenience: image-to-video (animate still image).
+ */
 export async function generateImageToVideo(
   imageUrl: string,
-  options?: { prompt?: string; duration?: number; model?: string }
-): Promise<string> {
-  const response = await submitMuapiJob('/generate/image-to-video', {
-    image_url: imageUrl,
-    prompt: options?.prompt,
-    duration: options?.duration ?? 5,
-    model: options?.model ?? 'muapi-1.0',
-  });
-
-  const finalStatus = await waitForMuapiJob(response.id);
-  if (finalStatus.status === 'failed') {
-    throw new Error(finalStatus.error || 'I2V generation failed');
-  }
-
-  return finalStatus.output_url!;
+  prompt: string,
+  opts?: { webhook?: string, userId?: string }
+) {
+  const res = await submitPrediction(
+    "kling-o1-standard-image-to-video",
+    { prompt, image_url: imageUrl },
+    opts
+  );
+  try { await logMuapiUsage(opts?.userId || null, MUAPI_MODELS.HIGH_QUALITY_I2V || 'kling-o1-standard-image-to-video', 'image-to-video', { prompt_length: (prompt||'').length }, 0); } catch(e){}
+  return pollResult(res.request_id);
 }
 
-export async function generateLipsync(
-  videoUrl: string,
-  audioUrl: string,
-  model: string = 'lipsync-v1'
-): Promise<string> {
-  const response = await submitMuapiJob('/generate/lipsync', {
-    video_url: videoUrl,
-    audio_url: audioUrl,
-    model,
-  });
+/**
+ * Webhook signature verification stub (implement when Muapi publishes spec).
+ */
+import crypto from "crypto";
 
-  const finalStatus = await waitForMuapiJob(response.id);
-  if (finalStatus.status === 'failed') {
-    throw new Error(finalStatus.error || 'Lipsync generation failed');
+export function verifyWebhookSignature(payload: string, signature: string): boolean {
+  const secret = process.env.MUAPI_WEBHOOK_SECRET;
+  if (!secret) {
+    // No secret configured; accept by default but log a warning
+    if (process.env.NODE_ENV !== "test") console.warn("[muapi] MUAPI_WEBHOOK_SECRET not set - skipping signature verification");
+    return true;
   }
 
-  return finalStatus.output_url!;
-}
-
-export async function uploadToMuapi(file: Buffer | File): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await fetch(`${MUAPI_BASE_URL}/upload`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${MUAPI_API_KEY}`,
-    },
-    body: formData,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Muapi upload error: ${response.statusText}`);
+  try {
+    const hmac = crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
+    // Some providers prefix signature with sha256=...; support both raw hex and prefixed
+    const normalized = signature?.startsWith("sha256=") ? signature.split("=")[1] : signature;
+    const verified = crypto.timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(normalized || "", "hex"));
+    return verified;
+  } catch (err) {
+    console.error("[muapi] signature verification error", err);
+    return false;
   }
-
-  const result = await response.json();
-  return result.url;
 }
+
+export const MUAPI_MODELS = {
+  FAST_T2V: "veo3-fast-text-to-video",
+  HIGH_QUALITY_T2V: "veo3-text-to-video",
+  FAST_I2V: "seedance-lite-i2v",
+  HIGH_QUALITY_I2V: "kling-o1-standard-image-to-video",
+  OMNI_REFERENCE: "sd-2-omni-reference",
+  LIPSYNC: "ai-video-lipsync", // placeholder - verify exact endpoint in Muapi catalog
+} as const;

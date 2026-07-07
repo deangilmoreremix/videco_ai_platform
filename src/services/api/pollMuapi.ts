@@ -1,45 +1,47 @@
-export async function pollMuapiJob(jobId: string): Promise<{
-  id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  output_url?: string;
-  error?: string;
-}> {
-  const response = await fetch(`/api/v1/videos/poll`, {
-    method: 'POST',
+import axios from "axios";
+
+/**
+ * Client helper to poll Muapi job status via our Supabase Edge orchestrator.
+ * Use this from the editor/player when a video has ai_preview = muapi request_id
+ * and media_status is still "in_progress".
+ */
+export const pollMuapiJob = async (requestId: string, videoId: string | number) => {
+  const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`;
+
+  const { data } = await axios.post(edgeUrl, {
+    action: "poll",
+    request_id: requestId,
+    video_id: videoId,
+  }, {
     headers: {
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
     },
-    body: JSON.stringify({ job_id: jobId }),
   });
 
-  if (!response.ok) {
-    throw new Error('Failed to poll Muapi job');
-  }
+  return data;
+};
 
-  return response.json();
-}
-
-export async function pollUntilComplete(
-  jobId: string,
-  onProgress?: (status: string) => void,
-  intervalMs: number = 2000,
-  maxAttempts: number = 150
-): Promise<string> {
+/**
+ * Convenience: keep polling until completed or failed.
+ */
+export const pollUntilComplete = async (
+  requestId: string,
+  videoId: string | number,
+  onUpdate?: (status: string, finalUrl?: string) => void,
+  maxAttempts = 60,
+  intervalMs = 5000
+) => {
   for (let i = 0; i < maxAttempts; i++) {
-    const status = await pollMuapiJob(jobId);
+    const res = await pollMuapiJob(requestId, videoId);
 
-    onProgress?.(status.status);
+    if (onUpdate) onUpdate(res.status, res.final_url);
 
-    if (status.status === 'completed' && status.output_url) {
-      return status.output_url;
+    if (res.status === "completed" || res.status === "failed") {
+      return res;
     }
 
-    if (status.status === 'failed') {
-      throw new Error(status.error || 'Job failed');
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    await new Promise((r) => setTimeout(r, intervalMs));
   }
 
-  throw new Error('Job timed out');
-}
+  throw new Error("Timed out waiting for Muapi generation");
+};

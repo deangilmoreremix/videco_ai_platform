@@ -1,8 +1,9 @@
 {
-    "functions": {
-      "pages/api/*": {
-        "maxDuration": 60
-      }
+  "functions": {
+    "pages/api/*": {
+      "maxDuration": 60
     }
-  }
+  },
+  "_comment": "Migration 2026: Primary deployment moved to Netlify (see netlify.toml). This file kept for transition/rollback only."
+}
   

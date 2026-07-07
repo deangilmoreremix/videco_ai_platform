@@ -42,11 +42,9 @@ export const OnBoardingVideo: FC<{
                 setOnboardingVideo(data.onboarding_video);
             }
 
-            if (!data.onboarding_video) {
-                setOnboardingVideo(
-                    "https://res.cloudinary.com/dhd6m0fh3/video/upload/v1739281468/videcoteam_kuwe0v.mov",
-                );
-            }
+             if (!data.onboarding_video) {
+                 setOnboardingVideo("v1739281468/videcoteam_kuwe0v.mov");
+             }
         } catch (error) {
             console.log(error);
         }

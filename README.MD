@@ -60,25 +60,14 @@ yarn start
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js, React, Chakra UI
-- **Backend**: Next.js API Routes, Supabase Edge Functions
-- **Storage**: Supabase Storage
-- **AI Services**: Muapi (video/image generation), OpenAI (TTS, scripting)
+- **Backend**: Next.js API Routes (served via Netlify), Supabase (Auth, DB, Realtime, Edge Functions, Storage)
+- **AI Services (2026)**: Muapi.ai (image/video/lipsync), OpenAI (Responses, Realtime, LLM scripting & TTS)
+- **Legacy (transitional)**: Sync.so, Cloudinary, Speechify, Inngest
+- **Hosting**: Netlify (replacing Vercel)
 - **Payment**: Stripe
 - **Analytics**: PostHog, Usetiful
-- **Hosting**: Netlify
 - **State Management**: Zustand
 - **Internationalization**: next-i18next
-
-## Migration Notes
-
-This platform has been migrated from Sync.so/Cloudinary/Mux/Inngest to use:
-- Muapi for AI video/image generation and lipsync
-- Supabase Storage for media storage
-- Supabase Edge Functions for background processing
-- Netlify for hosting and serverless functions
-- OpenAI for script personalization and TTS
-
-See `DEPLOYMENT.md` for setup instructions.
 
 ## 📚 Learn More
 
@@ -139,6 +128,30 @@ GitHub Actions makes it easy to automate all your software workflows, now with w
 
 
 
+
+## 🤝 Contributing
+
+## 🚀 2026 Tech Stack Migration (In Progress)
+
+The platform is being rebuilt on:
+- **Supabase** Edge Functions + Storage + Auth
+- **Muapi.ai** for all image/video generation, lipsync, and effects (replacing Sync.so + Cloudinary heavy usage)
+- **Netlify** for hosting + serverless functions
+- **OpenAI** Responses + Realtime APIs + LLM for personalized scripting and voice
+
+**Key changes for developers:**
+- New integration modules: `src/lib/muapi.ts`, `src/lib/openai.ts`, `src/lib/storage.ts`
+- Supabase Edge Function: `supabase/functions/ai-orchestrator`
+- Netlify config: `netlify.toml` + `netlify/functions/`
+- Feature flag: `NEXT_PUBLIC_USE_MUAPI_AI=true` enables new AI paths (legacy paths remain for rollback)
+- See detailed plan: `.kilo/plans/1779745006493-.md`
+
+Run with the new stack:
+```bash
+netlify dev
+# or
+yarn dev   # still works (hybrid during migration)
+```
 
 ## 🤝 Contributing
 

@@ -1,20 +1,22 @@
 [build]
-  command = "npm run build"
+  command = "yarn build"
   publish = ".next"
-
-[build.environment]
-  NODE_ENV = "production"
-  NPM_FLAGS = "--legacy-peer-deps"
-  NODE_VERSION = "18"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
 
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
 
-[[redirects]]
-  from = "/api/stripe/webhooks"
-  to = "/.netlify/functions/stripe-webhook"
-  status = 200
-  force = true
+# Optional: increase timeout for long-running API routes during transition (Netlify default 10s, can be higher on paid)
+# [functions."*"]
+#   timeout = 26
+
+[dev]
+  command = "next dev"
+  port = 3000
+  publish = ".next"
+
+# Example redirect if needed for SPA or API
+# [[redirects]]
+#   from = "/api/*"
+#   to = "/.netlify/functions/:splat"
+#   status = 200

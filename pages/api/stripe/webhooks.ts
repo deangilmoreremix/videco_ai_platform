@@ -114,3 +114,14 @@ async function handleWebhookEvent(req, res) {
 }
 
 export default handleWebhookEvent;
+
+/**
+ * MIGRATION NOTE (2026):
+ * Primary webhook handler moved to Netlify Function:
+ *   netlify/functions/stripe-webhook.ts
+ *
+ * Update Stripe Dashboard webhook URL to:
+ *   https://<your-netlify-site>/.netlify/functions/stripe-webhook
+ *
+ * This file remains for local dev / Vercel transition period only.
+ */

@@ -1,75 +1,61 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Supabase Storage Helpers
+ * Gradual replacement for Cloudinary direct uploads.
+ *
+ * Buckets recommended:
+ * - user-uploads (private or public)
+ * - ai-generated (public)
+ */
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const BUCKET_USER_UPLOADS = process.env.NEXT_PUBLIC_SUPABASE_UPLOAD_BUCKET || 'user-uploads';
-const BUCKET_AI_ASSETS = process.env.NEXT_PUBLIC_SUPABASE_AI_BUCKET || 'ai-assets';
+const supabase = createClientComponentClient();
 
 export async function uploadToSupabaseStorage(
-  file: Buffer | File,
-  path: string,
-  bucket: string = BUCKET_USER_UPLOADS
-): Promise<{ publicUrl: string; path: string }> {
-  const { data, error } = await supabaseAdmin.storage
+  file: File | Blob,
+  bucket = "user-uploads",
+  path?: string
+): Promise<string> {
+  const fileName = path || `${Date.now()}-${(file as File).name || "file"}`;
+  const { data, error } = await supabase.storage
     .from(bucket)
-    .upload(path, file, {
-      contentType: 'auto-detect',
+    .upload(fileName, file, {
+      cacheControl: "3600",
       upsert: true,
     });
 
   if (error) throw error;
 
-  const { data: urlData } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
+  const { data: publicUrl } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(data.path);
 
-  return {
-    publicUrl: urlData.publicUrl,
-    path: path,
-  };
+  return publicUrl.publicUrl;
 }
 
 export async function getSignedUrl(
+  bucket: string,
   path: string,
-  bucket: string = BUCKET_USER_UPLOADS,
-  expiresIn: number = 3600
-): Promise<string> {
-  const { data, error } = await supabaseAdmin.storage
+  expiresInSeconds = 3600
+) {
+  const { data, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(path, expiresIn);
+    .createSignedUrl(path, expiresInSeconds);
 
   if (error) throw error;
   return data.signedUrl;
 }
 
-export async function deleteFromStorage(
-  path: string,
-  bucket: string = BUCKET_USER_UPLOADS
-): Promise<void> {
-  const { error } = await supabaseAdmin.storage.from(bucket).remove([path]);
+export async function deleteFromStorage(bucket: string, path: string) {
+  const { error } = await supabase.storage.from(bucket).remove([path]);
   if (error) throw error;
 }
 
-export function uploadVideo(
-  file: Buffer | File,
-  userId: string,
-  filename: string
-): Promise<{ publicUrl: string; path: string }> {
-  const path = `${userId}/videos/${filename}`;
-  return uploadToSupabaseStorage(file, path, BUCKET_USER_UPLOADS);
-}
+/**
+ * Convenience for video files (uses same logic).
+ */
+export const uploadVideo = (file: File | Blob, path?: string) =>
+  uploadToSupabaseStorage(file, "user-uploads", path);
 
-export function uploadAiAsset(
-  file: Buffer | File,
-  userId: string,
-  filename: string
-): Promise<{ publicUrl: string; path: string }> {
-  const path = `${userId}/ai/${filename}`;
-  return uploadToSupabaseStorage(file, path, BUCKET_AI_ASSETS);
-}
+export const uploadAiAsset = (file: File | Blob, path?: string) =>
+  uploadToSupabaseStorage(file, "ai-generated", path);

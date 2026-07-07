@@ -1,120 +1,80 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { logUsage } from '../../../lib/log';
-import { generatePersonalizationScript, generateSpeech } from '../../../lib/openai';
-import { supabaseAdmin } from '../../../lib/storage';
-import { JOB_DETAILS } from '../../../services/inngest';
+import { inngest, JOB_DETAILS } from "src/services/inngest";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-const USE_MUAPI_AI = process.env.NEXT_PUBLIC_USE_MUAPI_AI === 'true';
-const MUAPI_API_KEY = process.env.MUAPI_API_KEY!;
+const USE_MUAPI = process.env.NEXT_PUBLIC_USE_MUAPI_AI === "true" || process.env.USE_MUAPI_AI === "true";
 
-async function callMuapiT2V(prompt: string, model: string = 'muapi-1.0') {
-  const response = await fetch('https://api.muapi.io/v1/generate/text-to-video', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${MUAPI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt,
-      model,
-      duration: 5,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Muapi error: ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const supabase = createClientComponentClient();
-  const {
-    greeting,
-    language,
-    ai_video_id,
-    voice_id,
-    text,
-    background,
-    website,
-    og_video_public_id,
-    video_id,
-  } = req.body;
-
-  const { data: jobData, error } = await supabase
-    .from('jobs')
-    .insert([
-      {
-        job_details: {
-          ai_video_id: ai_video_id,
-        },
-        status: JOB_DETAILS.pending,
-      },
-    ])
-    .select('id')
-    .single();
-
-  if (!USE_MUAPI_AI) {
-    const event = {
-      name: 'ai/process',
-      data: {
-        ai_video_id,
-        job_id: jobData.id,
-        text,
-        language,
-        voice_id,
+export default async function handler(req, res) {
+    const supabase = createClientComponentClient();
+    const {
         greeting,
+        language,
+        ai_video_id,
+        voice_id,
+        text,
         background,
-        og_video_public_id,
         website,
-      },
-    };
+        voiceCloningEnabled = true,
+        og_video_public_id,
+    } = req.body;
 
-    return res.status(200).json({
-      success: true,
-      legacy: true,
-      event,
-      message: 'Legacy Inngest path (set NEXT_PUBLIC_USE_MUAPI_AI=true to use Muapi)',
+    if (USE_MUAPI) {
+        // For full process (voice + background + combine) we dispatch to Edge Function
+        try {
+            const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`;
+            const result = await fetch(edgeUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                },
+                body: JSON.stringify({
+                    action: "process",
+                    ai_video_id,
+                    text,
+                    voice_id,
+                    language,
+                    og_video_public_id,
+                    website,
+                    voiceCloningEnabled,
+                    greeting,
+                    background,
+                }),
+            }).then((r) => r.json());
+
+            return res.status(200).json({ success: true, mode: "muapi", result });
+        } catch (err: any) {
+            console.error("[process] Muapi path failed, falling back:", err.message);
+        }
+    }
+
+    const { data, error } = await supabase
+        .from("jobs")
+        .insert([
+            {
+                job_details: {
+                    ai_video_id: ai_video_id,
+                },
+                status: JOB_DETAILS.pending,
+            },
+        ])
+        .select("id")
+        .single();
+    // Trigger the workflow (legacy)
+    const event = await inngest.send({
+        name: "ai/process",
+        data: {
+            ai_video_id: ai_video_id,
+            job_id: data.id,
+            text: text,
+            language: language,
+            voice_id: voice_id,
+            greeting: greeting,
+            background: background,
+            og_video_public_id: og_video_public_id,
+            website: website,
+            voiceCloningEnabled: voiceCloningEnabled,
+        },
     });
-  }
 
-  try {
-    const scriptResult = await generatePersonalizationScript(text, {
-      company: background?.company || '',
-      name: background?.name || '',
-    });
-
-    const t2vResult = await callMuapiT2V(scriptResult.script);
-
-    await supabaseAdmin
-      .from('videos')
-      .update({
-        ai_preview: t2vResult.id,
-        media_status: 'in_progress',
-      })
-      .eq('id', video_id);
-
-    await logUsage({
-      user_id: ai_video_id,
-      model: 'muapi-1.0',
-      provider: 'muapi',
-      action: 'text-to-video',
-      details: { video_id, template: background?.template },
-      cost_estimate: 0.2,
-    });
-
-    return res.status(200).json({ success: true, job_id: t2vResult.id });
-  } catch (error: any) {
-    console.error('Process error:', error);
-    return res.status(500).json({ error: error.message });
-  }
+    res.status(200).json({ success: true, mode: "legacy", event });
 }

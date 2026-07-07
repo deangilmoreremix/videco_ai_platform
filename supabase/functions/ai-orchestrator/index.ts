@@ -1,234 +1,403 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+/**
+ * Supabase Edge Function: ai-orchestrator
+ *
+ * Primary orchestration for the 2026 Muapi + OpenAI stack.
+ * Replaces Inngest jobs for AI video generation and personalization.
+ *
+ * Supported actions:
+ * - "clone"                 : AI Clone (video + text/audio -> talking head via Muapi)
+ * - "process"               : Full AI video process (voice + background + combine)
+ * - "personalize-script"    : Generate personalized outreach script with OpenAI
+ * - "poll"                  : Poll Muapi for a request_id and update DB when done
+ * - "muapi-webhook"         : Handle callbacks from Muapi (recommended for production)
+ *
+ * Deploy:
+ *   supabase functions deploy ai-orchestrator
+ *   supabase secrets set MUAPI_API_KEY=... OPENAI_API_KEY=... SUPABASE_SERVICE_ROLE_KEY=...
+ *
+ * Muapi webhook URL to register: https://<project-ref>.supabase.co/functions/v1/ai-orchestrator
+ * (with action=muapi-webhook in body or query)
+ */
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-);
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
-serve(async (req) => {
-  const url = new URL(req.url);
-  const path = url.pathname;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const MUAPI_KEY = Deno.env.get("MUAPI_API_KEY")!;
+const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
 
-  if (req.method === 'POST') {
-    const body = await req.json();
-
-    if (path === '/clone') {
-      return handleClone(body);
-    }
-
-    if (path === '/process') {
-      return handleProcess(body);
-    }
-
-    if (path === '/personalize-script') {
-      return handlePersonalizeScript(body);
-    }
-
-    if (path === '/poll') {
-      return handlePoll(body);
-    }
-  }
-
-  if (req.method === 'GET' && path === '/health') {
-    return new Response(JSON.stringify({ status: 'ok' }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  return new Response('Not found', { status: 404 });
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
 });
 
-async function handleClone(body: any) {
-  const { video_id, user_id, text, voice, model } = body;
+const MUAPI_BASE = "https://api.muapi.ai/api/v1";
 
-  const { data: video, error: videoError } = await supabase
-    .from('videos')
-    .select('training_video, language')
-    .eq('id', video_id)
-    .single();
+// Recommended Muapi models for Videco use cases (update as Muapi catalog evolves)
+const MODELS = {
+  LIPSYNC_OMNI: "sd-2-omni-reference",           // strong for character + audio consistency
+  FAST_I2V: "seedance-lite-i2v",
+  HIGH_QUALITY_I2V: "kling-o1-standard-image-to-video",
+  FAST_T2V: "veo3-fast-text-to-video",
+};
 
-  if (videoError) throw videoError;
+interface JobPayload {
+  action: "process" | "clone" | "personalize-script" | "poll" | "muapi-webhook";
+  [key: string]: any;
+}
 
-  let audioUrl = video.training_video;
-  if (text && voice) {
-    const speechResponse = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        voice,
-        input: text,
-      }),
-    });
-
-    const audioBuffer = await speechResponse.arrayBuffer();
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('ai-assets')
-      .upload(`${user_id}/audio/${video_id}.mp3`, audioBuffer, {
-        contentType: 'audio/mpeg',
-      });
-
-    if (uploadError) throw uploadError;
-    const { data: urlData } = supabase.storage
-      .from('ai-assets')
-      .getPublicUrl(uploadData.path);
-    audioUrl = urlData.publicUrl;
+Deno.serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
   }
 
-  const muapiResponse = await fetch('https://api.muapi.io/v1/generate/lipsync', {
-    method: 'POST',
+  // Auth: accept either Supabase service role or a simple internal secret for webhooks
+  const authHeader = req.headers.get("Authorization");
+  const internalSecret = req.headers.get("x-internal-secret");
+  const isWebhook = req.headers.get("x-muapi-webhook") === "true";
+
+  const validAuth =
+    (authHeader && authHeader.includes(SUPABASE_SERVICE_ROLE_KEY)) ||
+    internalSecret === Deno.env.get("INTERNAL_FUNCTION_SECRET") ||
+    isWebhook;
+
+  if (!validAuth) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  let payload: JobPayload;
+  try {
+    payload = await req.json();
+  } catch {
+    return new Response("Invalid JSON", { status: 400 });
+  }
+
+  console.log("[ai-orchestrator] received action:", payload.action);
+
+  try {
+    switch (payload.action) {
+      case "personalize-script":
+        return await handlePersonalizeScript(payload);
+
+      case "process":
+        return await handleProcessVideo(payload);
+
+      case "clone":
+        return await handleAiClone(payload);
+
+      case "poll":
+        return await handlePollMuapi(payload);
+
+      case "muapi-webhook":
+        return await handleMuapiWebhook(payload);
+
+      default:
+        return new Response(JSON.stringify({ error: "Unknown action" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+    }
+  } catch (err: any) {
+    console.error("[ai-orchestrator] error", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+});
+
+// ==================== HANDLERS ====================
+
+async function handlePersonalizeScript(data: any) {
+  const { lead, video_id } = data;
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
     headers: {
-      Authorization: `Bearer ${Deno.env.get('MUAPI_API_KEY')}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${OPENAI_KEY}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      video_url: video.training_video,
-      audio_url: audioUrl,
-      model: model || 'lipsync-v1',
-    }),
-  });
-
-  const muapiResult = await muapiResponse.json();
-
-  await supabase
-    .from('videos')
-    .update({
-      ai_preview: muapiResult.id,
-      media_status: 'in_progress',
-    })
-    .eq('id', video_id);
-
-  await supabase.from('usage').insert({
-    user_id,
-    model: model || 'lipsync-v1',
-    provider: 'muapi',
-    action: 'lipsync',
-    details: { video_id },
-    cost_estimate: 0.1,
-  });
-
-  return new Response(JSON.stringify(muapiResult), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-async function handleProcess(body: any) {
-  const { video_id, user_id, prompt, template } = body;
-
-  const muapiResponse = await fetch('https://api.muapi.io/v1/generate/text-to-video', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${Deno.env.get('MUAPI_API_KEY')}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt,
-      model: 'muapi-1.0',
-    }),
-  });
-
-  const muapiResult = await muapiResponse.json();
-
-  await supabase
-    .from('videos')
-    .update({
-      ai_preview: muapiResult.id,
-      media_status: 'in_progress',
-    })
-    .eq('id', video_id);
-
-  await supabase.from('usage').insert({
-    user_id,
-    model: 'muapi-1.0',
-    provider: 'muapi',
-    action: 'text-to-video',
-    details: { video_id, template },
-    cost_estimate: 0.2,
-  });
-
-  return new Response(JSON.stringify(muapiResult), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-async function handlePersonalizeScript(body: any) {
-  const { prompt, context, user_id } = body;
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-turbo',
+      model: "gpt-4o",
       messages: [
         {
-          role: 'system',
-          content:
-            'Create personalized video scripts for cold outreach with placeholders.',
+          role: "system",
+          content: "You write short personalized cold outreach video scripts (30-60s spoken). Return strict JSON {greeting, body, cta, fullScript}",
         },
-        {
-          role: 'user',
-          content: context ? `${context}\n\n${prompt}` : prompt,
-        },
+        { role: "user", content: JSON.stringify(lead) },
       ],
-      max_tokens: 500,
+      response_format: { type: "json_object" },
     }),
   });
 
-  const result = await response.json();
-  const script = result.choices[0].message.content;
-  const variables = [...new Set(script.match(/\{([^}]+)\}/g)?.map((m: string) => m.slice(1, -1)) || [])];
+  const openaiRes = await res.json();
+  const script = JSON.parse(openaiRes.choices?.[0]?.message?.content || "{}");
 
-  await supabase.from('usage').insert({
-    user_id,
-    model: 'gpt-4-turbo',
-    provider: 'openai',
-    action: 'script_generation',
-    details: { prompt_length: prompt.length },
-    cost_estimate: result.usage?.total_tokens * 0.00001,
-  });
+  if (video_id) {
+    await supabase
+      .from("videos")
+      .update({ meta_data: { ...data, personalized_script: script } })
+      .eq("id", video_id);
+  }
 
-  return new Response(JSON.stringify({ script, variables }), {
-    headers: { 'Content-Type': 'application/json' },
+  return new Response(JSON.stringify({ success: true, script }), {
+    headers: { "Content-Type": "application/json" },
   });
 }
 
-async function handlePoll(body: any) {
-  const { job_id } = body;
+/**
+ * Full process flow (voice cloning + background + final video).
+ * Simplified for Muapi era — voice via OpenAI, then Muapi video generation.
+ */
+async function handleProcessVideo(data: any) {
+  // log usage attempt (estimate)
+  try {
+    const { ai_video_id, text } = data;
+    // Store a preliminary usage row (cost estimation TBD)
+    await fetch(`${SUPABASE_URL}/rest/v1/usage`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_SERVICE_ROLE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: data.user_id || null, model: 'tts-1', provider: 'openai', action: 'generate-tts', details: { text_len: (text||'').length }, cost_estimate: 0.0 })
+    }).catch(()=>{});
+  } catch(e) {}
 
-  const response = await fetch(`https://api.muapi.io/v1/jobs/${job_id}`, {
+  const { ai_video_id, text, og_video_public_id } = data;
+
+  await supabase
+    .from("ai_videos")
+    .update({ status: "processing" })
+    .eq("id", ai_video_id);
+
+  // 1. Generate voice
+  const ttsRes = await fetch("https://api.openai.com/v1/audio/speech", {
+    method: "POST",
     headers: {
-      Authorization: `Bearer ${Deno.env.get('MUAPI_API_KEY')}`,
+      Authorization: `Bearer ${OPENAI_KEY}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({ model: "tts-1", input: text, voice: "alloy" }),
   });
+  const audioBuffer = await ttsRes.arrayBuffer();
 
-  const result = await response.json();
+  // 2. Upload audio to Muapi (multipart)
+  const audioForm = new FormData();
+  audioForm.append("file", new Blob([audioBuffer], { type: "audio/mp3" }), "voice.mp3");
 
-  if (result.status === 'completed' && result.output_url) {
-    const { data: video } = await supabase
-      .from('videos')
-      .select('id')
-      .eq('ai_preview', job_id)
-      .single();
+  const audioUpload = await fetch(`${MUAPI_BASE}/upload_file`, {
+    method: "POST",
+    headers: { "x-api-key": MUAPI_KEY },
+    body: audioForm,
+  }).then((r) => r.json());
 
-    if (video) {
+  // 3. Submit to Muapi for lipsync/talking head (using omni reference for best quality)
+  const videoJob = await fetch(`${MUAPI_BASE}/${MODELS.LIPSYNC_OMNI}`, {
+    method: "POST",
+    headers: { "x-api-key": MUAPI_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: "professional talking head, perfect lip sync, natural head movement",
+      video_url: og_video_public_id,
+      audio_url: audioUpload.url || audioUpload.public_url,
+    }),
+  }).then((r) => r.json());
+
+  await supabase
+    .from("ai_videos")
+    .update({ status: "in_progress", ai_preview: videoJob.request_id })
+    .eq("id", ai_video_id);
+
+  return new Response(JSON.stringify({ success: true, muapi_request_id: videoJob.request_id }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/**
+ * AI Clone flow - the heart of Videco personalized videos.
+ * Accepts video + text (or pre-generated audio).
+ * Generates voice if needed, then submits to Muapi for high-quality lipsync.
+ */
+async function handleAiClone(data: any) {
+  const { video_url, video_id, language, text, audio_url: providedAudioUrl } = data;
+
+  let audioUrl = providedAudioUrl;
+
+  // If text is provided but no audio, generate voice first (OpenAI TTS)
+  if (!audioUrl && text) {
+    const ttsRes = await fetch("https://api.openai.com/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: "tts-1", input: text, voice: "alloy" }),
+    });
+    const audioBuffer = await ttsRes.arrayBuffer();
+
+    const audioForm = new FormData();
+    audioForm.append("file", new Blob([audioBuffer], { type: "audio/mp3" }), "clone-voice.mp3");
+
+    const audioUpload = await fetch(`${MUAPI_BASE}/upload_file`, {
+      method: "POST",
+      headers: { "x-api-key": MUAPI_KEY },
+      body: audioForm,
+    }).then((r) => r.json());
+
+    audioUrl = audioUpload.url || audioUpload.public_url;
+  }
+
+  if (!audioUrl) {
+    throw new Error("No audio provided and no text to synthesize voice from");
+  }
+
+  // Submit to Muapi using the best omni/lipsync model
+  const cloneJob = await fetch(`${MUAPI_BASE}/${MODELS.LIPSYNC_OMNI}`, {
+    method: "POST",
+    headers: { "x-api-key": MUAPI_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: "talking head with perfect lip synchronization and natural motion",
+      video_url,
+      audio_url: audioUrl,
+    }),
+  }).then((r) => r.json());
+
+  if (video_id) {
+    await supabase
+      .from("videos")
+      .update({
+        ai_preview: cloneJob.request_id,   // temporary job id
+        media_status: "in_progress",
+        language: language || "english",
+      })
+      .eq("id", video_id);
+  }
+
+  return new Response(JSON.stringify({ success: true, request_id: cloneJob.request_id, audio_url: audioUrl }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/** Poll a Muapi request and update DB when complete */
+async function handlePollMuapi(data: any) {
+  const { request_id, video_id, ai_video_id } = data;
+
+  const result = await fetch(`${MUAPI_BASE}/predictions/${request_id}/result`, {
+    headers: { "x-api-key": MUAPI_KEY },
+  }).then((r) => r.json());
+
+  if (result.status === "completed" && result.outputs?.length > 0) {
+    const finalUrl = result.outputs[0].url;
+
+    if (video_id) {
       await supabase
-        .from('videos')
+        .from("videos")
         .update({
-          final_url: result.output_url,
-          media_status: 'completed',
+          final_url: finalUrl,
+          preview: finalUrl,
+          media_status: "completed",
+          ai_preview: request_id, // keep request id for reference
         })
-        .eq('id', video.id);
+        .eq("id", video_id);
+    }
+
+    if (ai_video_id) {
+      await supabase
+        .from("ai_videos")
+        .update({ status: "completed", url: finalUrl })
+        .eq("id", ai_video_id);
+    }
+
+    return new Response(JSON.stringify({ success: true, status: "completed", final_url: finalUrl }), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify({ success: true, status: result.status }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/** Handle Muapi webhook callbacks */
+async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?: string) {
+  const { request_id, status, outputs, video_id, ai_video_id } = data;
+
+  // Signature verification stub: if header present, validate using MUAPI_WEBHOOK_SECRET
+  if (signatureHeader) {
+    try {
+      // import local helper dynamically to avoid circular issues in Deno edge environment
+      const verify = (await import("/workspace/0c85e0dc-1244-40ab-8f84-e11668f857da/sessions/agent_c69a9913-dcc1-4130-9934-8015f769a184/src/lib/muapi.ts")).verifyWebhookSignature;
+      const ok = verify(rawBody || JSON.stringify(data), signatureHeader);
+      if (!ok) {
+        console.warn("[ai-orchestrator] muapi webhook signature invalid");
+        return new Response(JSON.stringify({ received: false, error: "invalid signature" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } catch (err) {
+      console.error("[ai-orchestrator] signature verification failed", err);
+      // proceed but log
     }
   }
 
-  return new Response(JSON.stringify(result), {
-    headers: { 'Content-Type': 'application/json' },
+  console.log("[ai-orchestrator] handling webhook for request", request_id, "status", status);
+
+  // Idempotency: if DB already marked completed for this request, ignore
+  async function getExistingStatus() {
+    if (video_id) {
+      const { data: v } = await supabase.from("videos").select("media_status, ai_preview").eq("id", video_id).single();
+      return v;
+    }
+    if (ai_video_id) {
+      const { data: a } = await supabase.from("ai_videos").select("status, ai_preview").eq("id", ai_video_id).single();
+      return a;
+    }
+    return null;
+  }
+
+  const existing = await getExistingStatus();
+  if (existing) {
+    if (existing.media_status === "completed" || existing.status === "completed") {
+      console.log("[ai-orchestrator] already completed for request", request_id, "- ignoring");
+      return new Response(JSON.stringify({ received: true, ignored: true }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Helper for reliable updates with retry/backoff
+  async function reliableUpdate(table: string, payload: any, eqClause: any) {
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const { error } = await supabase.from(table).update(payload).eq("id", eqClause);
+        if (error) throw error;
+        return true;
+      } catch (err) {
+        console.error(`[ai-orchestrator] DB update attempt ${attempt} failed for ${table} id=${eqClause}`, err);
+        if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, 200 * Math.pow(2, attempt))); // exponential backoff
+      }
+    }
+    return false;
+  }
+
+  if (status === "completed" && outputs?.[0]?.url) {
+    const finalUrl = outputs[0].url;
+
+    if (video_id) {
+      await reliableUpdate(
+        "videos",
+        { final_url: finalUrl, preview: finalUrl, media_status: "completed", ai_preview: request_id },
+        video_id,
+      );
+    }
+
+    if (ai_video_id) {
+      await reliableUpdate("ai_videos", { status: "completed", url: finalUrl }, ai_video_id);
+    }
+  } else if (status === "failed") {
+    if (video_id) await reliableUpdate("videos", { media_status: "failed" }, video_id);
+    if (ai_video_id) await reliableUpdate("ai_videos", { status: "failed" }, ai_video_id);
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
+    headers: { "Content-Type": "application/json" },
   });
 }

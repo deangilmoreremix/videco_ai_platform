@@ -1,8 +1,13 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import axios from "axios";
 import { Inngest } from "inngest";
-import { v2 as cloudinary } from "cloudinary";
 import { makeAIVoice, makeTextToVoice } from "./api/aiVoice";
+
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
 
 export const JOB_DETAILS = {
     pending: "pending",
@@ -13,12 +18,6 @@ export const JOB_DETAILS = {
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "my-app" });
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-const supabase = createClientComponentClient();
 
 export const processAIVideos = inngest.createFunction(
     { id: "ai-process" },

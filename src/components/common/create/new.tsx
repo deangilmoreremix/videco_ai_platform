@@ -259,12 +259,12 @@ const New: React.FC = () => {
                                     bg="black"
                                     p={1}
                                 >
-                                    <video
-                                        autoPlay={true}
-                                        loop
-                                        muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1733740543/qnpsgtdubqgtylmuvpmu.webm"
-                                    />
+                                     <video
+                                         autoPlay={true}
+                                         loop
+                                         muted
+                                         src="v1733740543/qnpsgtdubqgtylmuvpmu.webm"
+                                     />
                                 </Box>
                                 <Box mt={6}>
                                     <Text

@@ -27,57 +27,45 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
     const [search, setSearch] = useState("");
     const [copiedProvider, setCopiedProvider] = useState(null);
 
-    const handleCopy = (provider) => {
-        const container = document.createElement("div");
-        container.innerHTML = getEmailEmbedCodeForSimpleVideos(
-            `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-            `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
-                .split("/")
-                .pop()
-                .replace(".mp4", ".gif")
-                .replace(".mov", ".gif")
-                .replace(".m3u8", ".gif")
-                .replace(".webm", ".gif")}`,
-            provider.value,
-        );
+             const handleCopy = (provider) => {
+         const container = document.createElement("div");
+         container.innerHTML = getEmailEmbedCodeForSimpleVideos(
+             `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
+             (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(ogURL); } catch (e) { return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })(),
+             provider.value,
+         );
 
-        if (provider.value === "brevo") {
-            navigator.clipboard.writeText(
-                getEmailEmbedCodeForSimpleVideos(
-                    `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-                    `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
-                        .split("/")
-                        .pop()
-                        .replace(".mp4", ".gif")
-                        .replace(".mov", ".gif")
-                        .replace(".m3u8", ".gif")
-                        .replace(".webm", ".gif")}`,
-                    provider.value,
-                ),
-            );
-        } else {
-            document.body.appendChild(container);
+         if (provider.value === "brevo") {
+             navigator.clipboard.writeText(
+                 getEmailEmbedCodeForSimpleVideos(
+                     `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
+                     (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(ogURL); } catch (e) { return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })(),
+                     provider.value,
+                 ),
+             );
+         } else {
+             document.body.appendChild(container);
 
-            // Copy the rendered content
-            const range = document.createRange();
-            range.selectNode(container);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            document.execCommand("copy");
+             // Copy the rendered content
+             const range = document.createRange();
+             range.selectNode(container);
+             const selection = window.getSelection();
+             selection.removeAllRanges();
+             selection.addRange(range);
+             document.execCommand("copy");
 
-            // Cleanup
-            document.body.removeChild(container);
-            selection.removeAllRanges();
-        }
+             // Cleanup
+             document.body.removeChild(container);
+             selection.removeAllRanges();
+         }
 
-        setCopiedProvider(provider.value);
+         setCopiedProvider(provider.value);
 
-        // Reset text back to "Copy code" after 2 seconds
-        setTimeout(() => {
-            setCopiedProvider(null);
-        }, 9000);
-    };
+         // Reset text back to "Copy code" after 2 seconds
+         setTimeout(() => {
+             setCopiedProvider(null);
+         }, 9000);
+     };
 
     const filteredProviders = emailProvidersList().filter((provider) =>
         provider.label.toLowerCase().includes(search.toLowerCase()),
