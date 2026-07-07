@@ -9,3 +9,12 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/stripe/webhooks"
+  to = "/.netlify/functions/stripe-webhook"
+  status = 200
+  force = true

@@ -32,6 +32,7 @@
     "@chakra-ui/react": "^2.5.1",
     "@cloudinary/react": "^1.13.0",
     "@cloudinary/url-gen": "^1.20.0",
+    "openai": "^4.52.0",
     "@emotion/react": "^11.1.4",
     "@emotion/styled": "^11.0.0",
     "@ffmpeg/ffmpeg": "^0.12.10",
