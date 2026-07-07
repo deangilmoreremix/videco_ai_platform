@@ -1,21 +1,13 @@
-import axios from "axios";
+import { uploadToStorage } from "src/services";
 
-export const uploadVideosTocloudinary = (theFormData) => {
-    try {
-        return axios.post("/api/v1/videos/cloudinary", theFormData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-    } catch (e) {
-        console.log(e);
-    }
-};
-
-async function blobUrlToBlob(blobUrl) {
-    const response = await fetch(blobUrl);
-    const blob = await response.blob();
-    return blob;
+export async function uploadVideosTocloudinaryDirectly(file: File | Blob): Promise<{ data: { public_id: string; url: string } }> {
+  const result = await uploadToStorage(file as File, "uploads", "default");
+  return {
+    data: {
+      public_id: result.path,
+      url: result.url,
+    },
+  };
 }
 
 // Upload via our server API so we can store in Supabase Storage

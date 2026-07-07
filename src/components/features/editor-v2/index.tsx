@@ -22,7 +22,7 @@ import { FileUploader } from "react-drag-drop-files";
 import ElementsLog from "../player/elements-log";
 import { rem } from "polished";
 import { PagePreview } from "./page-preview";
-import axios from "axios";
+// Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 import { PageAiVideos } from "./page-aivideos";
 import { blobUrlToBlob } from "src/utils/video";
 import { useWorkspaces } from "src/store/workspace";
@@ -68,8 +68,8 @@ export const Editor: React.FC = () => {
     } = useEditorStore();
     const [settingsDuration, setSettingsDuration] = useState(0);
     const [activeTimeLineValue, setActiveTimeLineValue] = useState(3);
-    const handleSetSettingsDuration = (value) =>
-        setSettingsDuration(settingsDuration);
+    const handleSetSettingsDuration = (value: number) =>
+        setSettingsDuration(value);
 
     const session = useSession();
     const toast = useToast();
@@ -298,35 +298,16 @@ export const Editor: React.FC = () => {
         setLoading(true);
         const url = "/api/v1/videos/cloudinary"; // legacy name kept; this route now stores files in Supabase Storage and returns { result: { publicUrl, path } }
         const blobFile = await blobUrlToBlob(file);
-        // Create a FormData object and append the file and api_key
-        const formData = new FormData();
-        if (type === "mp4") {
-            formData.append(
-                "file",
-                file[0],
-                `${user.id}-${Date.now()}-screen-record.mp4`,
-            );
-        } else {
-            formData.append(
-                "file",
-                new File(
-                    [blobFile],
-                    `${user.id}-${Date.now()}-screen-record.webm`,
-                    {
-                        type: "video/webm",
-                    },
-                ),
-                `${user.id}-${Date.now()}-screen-record.webm`,
-            ); // Append the video file
-        }
-        formData.append("upload_preset", "videco");
+        // Upload to Supabase Storage (stack: Supabase only, no Cloudinary)
+        const fileName = `${user.id}-${Date.now()}-screen-record.${type}`;
+        const fileToUpload = new File([blobFile], fileName, {
+            type: type === "mp4" ? "video/mp4" : "video/webm",
+        });
 
         try {
-            const uploadedVideo: any = await axios.post(url, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const { uploadFile } = await import("src/services");
+            const result = await uploadFile(fileToUpload, "videos", user.id);
+
             setLoading(false);
             const publicUrl = uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.public_url || uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.secure_url || uploadedVideo?.data?.secure_url;
             if (router.query.id) {
@@ -344,7 +325,7 @@ export const Editor: React.FC = () => {
                 url: publicUrl,
                 passthrough_id: "",
                 name: "",
-                size: new File([blobFile], "test").size / (1024 * 1024),
+                size: blobFile.size / (1024 * 1024),
             });
         } catch (e) {
             console.log(e);

@@ -21,12 +21,9 @@ import { motion, m } from "framer-motion";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { isTrialExpired } from "src/utils/isTrialExpierd";
-import { sendEmail } from "src/services/api/sendEmail";
+import { generateScript, submitTextToVideo, pollJob, supabase } from "src/services";
 import { FiArrowRight } from "react-icons/fi";
 import { useRouter } from "next/router";
-import { processOnboardingVideo } from "src/services/api/createAIPreview";
-import { startTrial } from "src/services/api/startTrial";
-import { internalAPIRequest } from "src/services/api/stripe-event";
 
 type OnboardingProps = {
     pageTitle?: string;
@@ -176,24 +173,17 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
             })
             .select();
 
-        const startJob = await processOnboardingVideo({
-            og_video_public_id: "jdgx4ief93digpesea69",
-            voice_id: "e3cfb432-e548-4145-b7b7-d93da78b8a9c",
-            background: "website",
+        const prompt = `Hi ${fullname}, welcome to videco! ${website ? `Website: ${website}` : ""}`;
+        const { job } = await submitTextToVideo(prompt, {
+            tenant_id: user?.app_metadata?.tenant_id,
             user_id: user.id,
-            language: "english",
-            greeting: "Hello",
-            text: fullname,
-            website: website,
-            voiceCloningEnabled: true,
         });
-        await sendEmail("/api/mail/welcome", {
-            email: user.email,
-            name: fullname,
-        });
-        await startTrial("/api/brevo/start-trial", {
-            user_email: user?.email,
-            plan_name: "growth",
+        if (job?.id) {
+            pollJob(job.id).catch(() => {});
+        }
+        await generateScript(`Welcome ${fullname}`, {
+            tenant_id: user?.app_metadata?.tenant_id,
+            user_id: user.id,
         });
         if (error) {
             console.log(error);
@@ -204,9 +194,6 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
             setShowVideo(true);
         }
         getUserplan();
-        await internalAPIRequest("/api/credits/deduct", {
-            user_id: user.id,
-        });
         router.reload();
         setShowOnboarding(false);
     };

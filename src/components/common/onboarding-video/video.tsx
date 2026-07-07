@@ -233,7 +233,7 @@ export const OnBoardingVideoFrame: FC<{
                             >
                                 <CardBody p={0}>
                                     <Image
-                                        src="assets/avatar.png"
+                                        src="/assets/avatar.png"
                                         height="160px"
                                         alt="Create your first campaign"
                                         borderRadius="lg"

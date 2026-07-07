@@ -1,8 +1,8 @@
 import { render } from "@testing-library/react";
-import { Logo } from "./index";
+import { Editor } from "./index";
 
-describe("Logo component testing with testing-library", () => {
-    const component = render(<Logo />);
+describe("Editor component testing with testing-library", () => {
+    const component = render(<Editor />);
 
     it("renders without crashing", () => {
         expect(component).toBeTruthy();

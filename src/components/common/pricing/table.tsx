@@ -12,17 +12,8 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import {
-    Elements,
-    PaymentElement,
-    useStripe,
-    useElements,
-} from "@stripe/react-stripe-js";
 import { PiCheckCircleFill } from "react-icons/pi";
-import getStripe from "src/utils/load-stripe";
-import { startTrial } from "src/services/api/startTrial";
 import { CloseIcon } from "@chakra-ui/icons";
-import { internalAPIRequest } from "src/services/api/stripe-event";
 import { planSelector } from "src/utils/plans";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
@@ -31,45 +22,31 @@ interface PricingTableProps {
     user: any;
     expanded?: any;
 }
-const stripePromise = getStripe();
 
 export const PricingTable = ({ user, expanded }: PricingTableProps) => {
     const [selectedPlan, setSelectedPlan] = useState("growth");
-    const [showPaymentElement, setShowPaymentElement] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [promoCode, setPromoCode] = useState("");
     const supabase = createClientComponentClient();
     const [frequency, setFrequency] = useState("month");
-    const [clientSecret, setClientSecret] = useState(null);
-    const handleClose = () => {
-        setShowPaymentElement(false); // Hide the Payment Element
-    };
 
     const handleBuy = async () => {
         setIsLoading(true);
         await handleSubscriptions();
     };
     const handleSubscriptions = async () => {
-        //check if user selected scale plan
+        // Stack is Supabase + Muapi + OpenAI only (no Stripe).
+        // Persist the user's selected plan to their profile for visibility.
         const isScalePlan = selectedPlan === "scale";
-        const customer = await internalAPIRequest("/api/stripe/customer", {
-            email: user.email,
-            user_id: user.id,
-        });
         if (!isScalePlan) {
-            const subscribtion = await internalAPIRequest(
-                "/api/stripe/subscribe",
-                {
-                    customer: customer.data.id,
-                    user_id: user.id,
-                    stripe_plan_id: planSelector(selectedPlan, frequency),
+            await supabase
+                .from("profiles")
+                .update({
+                    desired_plan: planSelector(selectedPlan, frequency),
                     plan_name: selectedPlan,
-                    promoCode: promoCode,
-                },
-            );
-
-            setClientSecret(subscribtion.data.clientSecret);
-            setShowPaymentElement(true); // Show the Payment Element
+                })
+                .eq("id", user.id);
+            alert("Plan preference saved. Billing is handled separately from this build.");
             setIsLoading(false);
         } else {
             setIsLoading(false);
@@ -530,146 +507,6 @@ export const PricingTable = ({ user, expanded }: PricingTableProps) => {
             >
                 Need more? Book a meeting with us
             </Link>
-
-            {showPaymentElement && clientSecret && (
-                <Box
-                    position="fixed"
-                    bg="white"
-                    width={expanded ? "100%" : "65%"}
-                    boxShadow="lg"
-                    border="1px solid"
-                    rounded="md"
-                    zIndex={999}
-                    p={12}
-                    pt={32}
-                    height="full"
-                    w="full"
-                    left={0}
-                    top={0}
-                >
-                    <Input
-                        display="flex"
-                        maxW="md"
-                        margin="12px auto"
-                        width={expanded ? "50%" : "85%"}
-                        type="text"
-                        placeholder="Promo Code"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                    />
-                    <PaymentElementWrapper
-                        handleClose={handleClose}
-                        clientSecret={clientSecret}
-                        expanded={expanded}
-                    />
-                </Box>
-            )}
         </Flex>
     );
 };
-export default function PaymentForm({ handleClose, expanded }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
-    const toast = useToast();
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-
-        if (!stripe || !elements) {
-            toast({
-                title: "Stripe has not loaded yet. Please try again later.",
-                status: "error",
-                duration: 500,
-                isClosable: true,
-            });
-            setLoading(false);
-            return;
-        }
-
-        const { error } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                return_url: `${window.location.origin}/campaign`, // Optional success page
-            },
-        });
-
-        if (error) {
-            toast({
-                title: error.message,
-                status: "error",
-                duration: 500,
-                isClosable: true,
-            });
-        } else {
-            setMessage("Payment succeeded!");
-        }
-
-        setLoading(false);
-    };
-
-    return (
-        <Box maxW="4xl" m="0 auto">
-            {/* Close Button */}
-            <Button
-                onClick={handleClose}
-                position="absolute"
-                left={10}
-                top={10}
-            >
-                <CloseIcon />
-            </Button>
-
-            <form
-                onSubmit={handleSubmit}
-                style={{
-                    width: expanded ? "50%" : "85%",
-                    margin: expanded ? "0 auto" : "auto",
-                }}
-            >
-                <PaymentElement />
-                <Button
-                    zIndex={999}
-                    outline={0}
-                    px={20}
-                    className="buy-button"
-                    w="80%"
-                    py={6}
-                    fontWeight="normal"
-                    colorScheme="teal"
-                    bg="#05405A"
-                    rounded="full"
-                    fontSize="20px"
-                    display="flex"
-                    margin="32px auto"
-                    _hover={{
-                        bgGradient: "linear(to-l, #7928CA, #FF0080)",
-                    }}
-                    color="white"
-                    type="submit"
-                    disabled={!stripe || loading}
-                >
-                    {loading ? "Processing..." : "Pay and start creating"}
-                </Button>
-                {message && <div>{message}</div>}
-            </form>
-        </Box>
-    );
-}
-// Wrapper to pass clientSecret to the PaymentForm
-export function PaymentElementWrapper({ clientSecret, handleClose, expanded }) {
-    const options = {
-        clientSecret,
-        defaultValues: {
-            email: "", // Leave email blank to disable Link
-        },
-    };
-
-    return (
-        <Elements stripe={stripePromise} options={options}>
-            <PaymentForm handleClose={handleClose} expanded={expanded} />
-        </Elements>
-    );
-}

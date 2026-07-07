@@ -17,7 +17,7 @@ import {
     FiVolumeX,
 } from "react-icons/fi";
 import ReactPlayer from "react-player";
-import { submitFormData } from "src/services/api/submitFormData";
+import { submitForm, submitFeedback } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { SettingsHover } from "./settings-hover";
 import { useAnalytics } from "src/hooks/useAnalytics";
@@ -232,7 +232,9 @@ export const Player = ({
                                             }
                                             element={element}
                                             isLargerThan800={isLargerThan800}
-                                            submitFormData={submitFormData}
+                                            submitFormData={async (_endpoint, data) => {
+                                                await submitFeedback(data);
+                                            }}
                                             id={id}
                                             setAnswerSubmitted={
                                                 setAnswerSubmitted
@@ -256,7 +258,9 @@ export const Player = ({
                                         element={element}
                                         isLargerThan800={isLargerThan800}
                                         setFormSubmitting={setFormSubmitting}
-                                        submitFormData={submitFormData}
+                                        submitFormData={async (_endpoint, data) => {
+                                            await submitForm(data);
+                                        }}
                                         id={id}
                                         setFormSubmitted={setFormSubmitted}
                                         setHideForm={setHideForm}

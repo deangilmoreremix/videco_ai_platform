@@ -1,10 +1,10 @@
 import { render } from "@testing-library/react";
 
-import { Footer } from "./index";
+import { Sidebar } from "./index";
 
-describe("Footer component testing with testing-library", () => {
+describe("Sidebar component testing with testing-library", () => {
     it("renders without crashing", () => {
-        const component = render(<Footer />);
+        const component = render(<Sidebar></Sidebar>);
 
         expect(component).toBeTruthy();
     });

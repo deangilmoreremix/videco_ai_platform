@@ -117,7 +117,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
 
                     // Construct the GIF URL
                     const previewGif = videoId
-                        ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_200,fps_15,du_3,fl_lossy/e_loop/l_text:Arial_40_bold:Hi%20${encodeURIComponent(
+                        ? `${encodeURIComponent(
                               item.contact.fname,
                           )},g_south,x_0,b_black,co_white,fl_layer_apply,y_10/${videoId}.gif`
                         : "";
@@ -244,7 +244,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                     alt="Preview"
                                                     height={230}
                                                     width={500}
-                                                    src={`https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoUrl
+                                                    src={`${videoUrl
                                                         .split("/")
                                                         .pop()
                                                         .replace(".mp4", ".gif")
@@ -284,7 +284,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                                 navigator.clipboard.writeText(
                                                                     getEmailEmbedCode(
                                                                         `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}`,
-                                                                        `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoUrl
+                                                                        `${videoUrl
                                                                             .split(
                                                                                 "/",
                                                                             )
@@ -385,7 +385,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                             videoUrl &&
                                             !videoUrl.includes("videco.s3.") &&
                                             !videoUrl.includes("youtube")
-                                                ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl
+                                                ? `${videoUrl
                                                       .split("/")
                                                       .pop()
                                                       .replace(".mp4", ".gif")
@@ -441,7 +441,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                         navigator.clipboard.writeText(
                                                             getEmailEmbedCode(
                                                                 `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}`,
-                                                                `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${videoUrl
+                                                                `${videoUrl
                                                                     .split("/")
                                                                     .pop()
                                                                     .replace(

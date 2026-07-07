@@ -1,74 +1,9 @@
+// Stack-only: Supabase + Muapi + OpenAI
+// No Cloudinary, no Brevo, no Stripe. Embeds are plain iframe/video tags.
+
 export const emailProvidersList = () => [
-    {
-        value: "apollo",
-        label: "Apollo",
-        fileType: "png",
-    },
-    {
-        value: "activecampaign",
-        label: "ActiveCampaign",
-        fileType: "png",
-    },
-    {
-        value: "aweber",
-        label: "AWeber",
-        fileType: "svg",
-    },
-    {
-        value: "brevo",
-        label: "Brevo",
-        fileType: "png",
-    },
-    {
-        value: "hubspot",
-        label: "Hubspot",
-        fileType: "svg",
-    },
-    {
-        value: "lemlist",
-        label: "Lemlist",
-        fileType: "png",
-    },
-    {
-        value: "lagrowthmachine",
-        label: "La Growth Machine",
-        fileType: "png",
-    },
-    {
-        value: "mailchimp",
-        label: "Mailchimp",
-        fileType: "svg",
-    },
-    {
-        value: "nethunt",
-        label: "Nethunt",
-        fileType: "png",
-    },
-    {
-        value: "gohighlevel",
-        label: "Go High Level",
-        fileType: "png",
-    },
-    {
-        value: "smartlead",
-        label: "Smart Lead",
-        fileType: "png",
-    },
-    {
-        value: "salesflow",
-        label: "Sales Flow",
-        fileType: "png",
-    },
-    {
-        value: "woodpecker",
-        label: "Woodpecker",
-        fileType: "png",
-    },
-    {
-        value: "other",
-        label: "Other",
-        fileType: "webp",
-    },
+  { value: "html", label: "HTML", description: "Plain HTML embed code" },
+  { value: "mjml", label: "MJML", description: "MJML markup for email clients" },
 ];
 
 const generateGif = (og_url: string, fname: string) => {
@@ -95,28 +30,25 @@ export const getEmailEmbedCode = (
 ) => {
     const gifUrl = (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(og_url); } catch(e) { return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${og_url.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })();
 
-    const mailchimp = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-<a href="${url}?fname=*|FNAME|*&lname=*|LNAME|*&email=*|EMAIL|*&phone=*|PHONE|*" style="display: inline-block;">
-    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
-    <br />
-    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
-</a>
-</div>`;
+  if (provider === "html") {
+    return `
+      <div style="position: relative; display: inline-block; padding: 5px; background: white;">
+        <video controls src="${url}" poster="${ogUrl}" style="max-width: 480px; border-radius: 8px;"></video>
+        <p style="font-family: Arial; color: #05405A; margin: 0; padding-top: 5px;">${fname}</p>
+      </div>
+    `;
+  }
 
-    const brevo = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{FIRSTNAME}}&lname={{LASTNAME}}&ai_email={{contact.EMAIL}}" style="display: inline-block;">
-                    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
-                    <br />
-                    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
-                </a>
-            </div>`;
-    const woodpecker = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{FIRST_NAME}}&lname={{LAST_NAME}}&ai_email={{EMAIL}}" style="display: inline-block;">
-                    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
-                    <br />
-                    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
-                </a>
-            </div>`;
+  if (provider === "mjml") {
+    return `
+      <mj-section>
+        <mj-column>
+          <mj-image src="${url}" alt="${fname}" border-radius="8px" />
+          <mj-text align="center" color="#05405A">${fname}</mj-text>
+        </mj-column>
+      </mj-section>
+    `;
+  }
 
     const hubspot = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
 <a href="${url}?fname={{contact.firstname}}&lname={{contact.lastname}}&ai_email={{contact.email}}" style="display: inline-block;">
@@ -262,28 +194,25 @@ export const getEmailEmbedCodeForSimpleVideos = (
 ) => {
     const gifUrl = (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(og_url); } catch(e) { return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${og_url.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })();
 
-    const mailchimp = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-<a href="${url}?fname=*|FNAME|*&lname=*|LNAME|*&email=*|EMAIL|*&phone=*|PHONE|*" style="display: inline-block;">
-    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
-    <br />
-    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
-</a>
-</div>`;
+  if (provider === "html") {
+    return `
+      <div style="position: relative; display: inline-block; padding: 5px; background: white;">
+        <video controls src="${url}" poster="${ogUrl}" style="max-width: 480px; border-radius: 8px;"></video>
+        <p style="font-family: Arial; color: #05405A; margin: 0; padding-top: 5px;">${fname}</p>
+      </div>
+    `;
+  }
 
-    const brevo = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{FIRSTNAME}}&lname={{LASTNAME}}" style="display: inline-block;">
-                    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
-                    <br />
-                    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
-                </a>
-            </div>`;
-    const woodpecker = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{FIRST_NAME}}&lname={{LAST_NAME}}" style="display: inline-block;">
-                    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
-                    <br />
-                    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
-                </a>
-            </div>`;
+  if (provider === "mjml") {
+    return `
+      <mj-section>
+        <mj-column>
+          <mj-image src="${url}" alt="${fname}" border-radius="8px" />
+          <mj-text align="center" color="#05405A">${fname}</mj-text>
+        </mj-column>
+      </mj-section>
+    `;
+  }
 
     const hubspot = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
 <a href="${url}?fname={{contact.firstname}}&lname={{contact.lastname}}" style="display: inline-block;">

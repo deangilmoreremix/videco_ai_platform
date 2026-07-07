@@ -1,35 +1,17 @@
-import axios from "axios";
+import { callMuapi } from "src/services";
 
-export const createAIPreview = async (data: any) => {
-    return await axios
-        .post("/api/v1/videos/create-intro", {
-            ...data,
-            key: process.env.VIDECO_SECRET_KEY,
-        })
-        .then((response) => response);
-};
+export async function createAIPreview(data: Record<string, unknown>) {
+  return callMuapi("videos/preview", { ...data });
+}
 
-export const processAIVideos = async (data: any) => {
-    return await axios
-        .post("/api/v1/videos/process", {
-            ...data,
-            key: process.env.VIDECO_SECRET_KEY,
-        })
-        .then((response) => response);
-};
-export const processOnboardingVideo = async (data: any) => {
-    return await axios
-        .post("/api/v1/videos/onboarding", {
-            ...data,
-            key: process.env.VIDECO_SECRET_KEY,
-        })
-        .then((response) => response);
-};
-export const createAIClone = async (data: any) => {
-    return await axios
-        .post("/api/v1/videos/clone", {
-            ...data,
-            key: process.env.VIDECO_SECRET_KEY,
-        })
-        .then((response) => response);
-};
+export async function createAIClone(data: Record<string, unknown>) {
+  return callMuapi("videos/clone", { ...data });
+}
+
+export async function processAIVideos(data: Record<string, unknown>) {
+  return callMuapi("videos/process", { ...data });
+}
+
+export async function processOnboardingVideo(data: Record<string, unknown>) {
+  return callMuapi("videos/onboarding", { ...data });
+}

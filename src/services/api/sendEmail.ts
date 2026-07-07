@@ -1,10 +1,6 @@
-import axios from "axios";
-
-export const sendEmail = async (api: string, data: any) => {
-    return await axios
-        .post(api, {
-            ...data,
-            key: process.env.VIDECO_SECRET_KEY,
-        })
-        .then((response) => response);
-};
+export async function sendEmail(endpoint: string, data: Record<string, unknown>) {
+  // Email sending was removed from the stack (Brevo/SendGrid).
+  // Stubbed to keep the account-deletion flow from throwing.
+  console.log("sendEmail stub", endpoint, data);
+  return Promise.resolve({ ok: true });
+}

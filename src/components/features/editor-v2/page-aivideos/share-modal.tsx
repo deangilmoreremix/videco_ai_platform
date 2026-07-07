@@ -30,7 +30,7 @@ const ShareModal = ({ videoId, ogURL }) => {
         const container = document.createElement("div");
         container.innerHTML = getEmailEmbedCode(
             `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-            `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
+            `${ogURL
                 .split("/")
                 .pop()
                 .replace(".mp4", ".gif")
@@ -40,11 +40,11 @@ const ShareModal = ({ videoId, ogURL }) => {
             provider.value,
         );
 
-        if (provider.value === "brevo") {
+        if (provider.value === "html") {
             navigator.clipboard.writeText(
                 getEmailEmbedCode(
                     `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
-                    `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${ogURL
+                    `${ogURL
                         .split("/")
                         .pop()
                         .replace(".mp4", ".gif")

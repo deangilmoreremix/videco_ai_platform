@@ -1,11 +1,7 @@
 import React from "react";
-import { Spacer, Flex } from "@chakra-ui/react";
+
 const Home: React.FC = () => {
-    return (
-        <Flex direction="column" minH="100vh">
-            <Spacer />
-        </Flex>
-    );
+    return null;
 };
 
 export default Home;
@@ -18,8 +14,9 @@ export const getServerSideProps = async (ctx: any) => {
     res.end();
 
     return {
-        props: {
-            data: [],
+        redirect: {
+            destination: '/dashboard',
+            permanent: false,
         },
     };
 };

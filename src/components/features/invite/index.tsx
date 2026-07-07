@@ -18,7 +18,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Formik, Form, Field } from "formik";
 import React from "react";
-import { sendEmail } from "src/services/api/sendEmail";
+import { supabase } from "src/services";
 import { useWorkspaces } from "src/store/workspace";
 
 export const Invite: React.FC<InviteProps> = ({
@@ -65,9 +65,11 @@ export const Invite: React.FC<InviteProps> = ({
             //     role: "owner",
             // });
             if (error) throw error;
-            await sendEmail("/api/mail/invite", {
-                email: email,
-                name: name,
+            // Use Supabase Auth invite (sends a magic-link invitation email via Supabase Auth).
+            // The stack is Supabase + Muapi + OpenAI only, so we delegate to Supabase's built-in invite.
+            await supabase.auth.admin.inviteUserByEmail(email, {
+                data: { full_name: name, tenant_id: workspace?.id },
+                redirectTo: `${window.location.origin}/auth/login`,
             });
             setInviteSent(true);
             setInviteUpdated(true);

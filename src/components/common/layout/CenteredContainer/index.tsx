@@ -25,5 +25,5 @@ export const CenteredContainer: FC<CenteredContainerProps> = ({
 
 type CenteredContainerProps = FlexProps & {
     imageSrc?: string;
-    imageProtrailSrc?: string;
+    imagePortraitSrc?: string;
 };

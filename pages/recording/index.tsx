@@ -1,9 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Box, Flex, Link, Spinner } from "@chakra-ui/react";
+import React, { useEffect, useState } from "react";
+import { Box, Link, Spinner } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
-import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
@@ -11,13 +9,15 @@ const Recording: React.FC = () => {
     const session = useSession();
     const [plan, setPlan] = React.useState<any>();
     const user = session?.user;
-    const router = useRouter();
     const [teamMembers, setTeamMembers] = useState<any>();
     const { getTeamUserIds, getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
     const supabase = createClientComponentClient();
     const [videos, setVideos] = React.useState<any>(0);
     const [videoSize, setVideoSize] = React.useState<any>(0);
+
+    const recordingUrl =
+        process.env.NEXT_PUBLIC_RECORDING_URL || "http://localhost:5173/";
 
     const getFullTeamMembers = async () => {
         const team = await getTeamUserIds();
