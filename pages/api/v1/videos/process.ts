@@ -1,7 +1,8 @@
-import { inngest, JOB_DETAILS } from "src/services/inngest";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-const USE_MUAPI = process.env.NEXT_PUBLIC_USE_MUAPI_AI === "true" || process.env.USE_MUAPI_AI === "true";
+const USE_MUAPI =
+    process.env.NEXT_PUBLIC_USE_MUAPI_AI === "true" ||
+    process.env.USE_MUAPI_AI === "true";
 
 export default async function handler(req, res) {
     const supabase = createClientComponentClient();
@@ -18,14 +19,16 @@ export default async function handler(req, res) {
     } = req.body;
 
     if (USE_MUAPI) {
-        // For full process (voice + background + combine) we dispatch to Edge Function
         try {
             const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`;
             const result = await fetch(edgeUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                    Authorization: `Bearer ${
+                        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+                        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+                    }`,
                 },
                 body: JSON.stringify({
                     action: "process",
@@ -41,9 +44,12 @@ export default async function handler(req, res) {
                 }),
             }).then((r) => r.json());
 
-            return res.status(200).json({ success: true, mode: "muapi", result });
+            return res
+                .status(200)
+                .json({ success: true, mode: "muapi", result });
         } catch (err: any) {
-            console.error("[process] Muapi path failed, falling back:", err.message);
+            console.error("[process] Muapi path failed:", err.message);
+            return res.status(500).json({ success: false, error: err.message });
         }
     }
 
@@ -54,27 +60,20 @@ export default async function handler(req, res) {
                 job_details: {
                     ai_video_id: ai_video_id,
                 },
-                status: JOB_DETAILS.pending,
+                status: "pending",
             },
         ])
         .select("id")
         .single();
-    // Trigger the workflow (legacy)
-    const event = await inngest.send({
-        name: "ai/process",
-        data: {
-            ai_video_id: ai_video_id,
-            job_id: data.id,
-            text: text,
-            language: language,
-            voice_id: voice_id,
-            greeting: greeting,
-            background: background,
-            og_video_public_id: og_video_public_id,
-            website: website,
-            voiceCloningEnabled: voiceCloningEnabled,
-        },
+
+    if (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+
+    console.log("[process] Accepted AI video processing request", {
+        jobId: data.id,
+        ai_video_id,
     });
 
-    res.status(200).json({ success: true, mode: "legacy", event });
+    res.status(200).json({ success: true, mode: "stub", job_id: data.id });
 }

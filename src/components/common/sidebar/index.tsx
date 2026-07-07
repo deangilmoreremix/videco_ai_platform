@@ -519,7 +519,9 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                             </MenuItem>
                             <MenuItem fontSize={14}>
                                 <Link
-                                    href={process.env.NEXT_PUBLIC_SLACK_INVITE_URL}
+                                    href={
+                                        process.env.NEXT_PUBLIC_SLACK_INVITE_URL
+                                    }
                                     target="_blank"
                                     display="flex"
                                     alignItems="center"
@@ -537,7 +539,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                             <MenuItem fontSize={14}>
                                 <Link
                                     href="#"
-                                    data-productlift-widget={process.env.NEXT_PUBLIC_PRODUCTLIFT_WIDGET_ID}
+                                    data-productlift-widget={
+                                        process.env
+                                            .NEXT_PUBLIC_PRODUCTLIFT_WIDGET_ID
+                                    }
                                     onClick={handleClick}
                                     target="_blank"
                                     display="flex"
@@ -556,7 +561,10 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                             <MenuItem fontSize={14}>
                                 <Link
                                     href="#"
-                                    data-productlift-widget={process.env.NEXT_PUBLIC_PRODUCTLIFT_SIDEBAR_ID}
+                                    data-productlift-widget={
+                                        process.env
+                                            .NEXT_PUBLIC_PRODUCTLIFT_SIDEBAR_ID
+                                    }
                                     onClick={handleClick}
                                 >
                                     <SupportIcon

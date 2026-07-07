@@ -46,7 +46,9 @@ export const PricingTable = ({ user, expanded }: PricingTableProps) => {
                     plan_name: selectedPlan,
                 })
                 .eq("id", user.id);
-            alert("Plan preference saved. Billing is handled separately from this build.");
+            alert(
+                "Plan preference saved. Billing is handled separately from this build.",
+            );
             setIsLoading(false);
         } else {
             setIsLoading(false);

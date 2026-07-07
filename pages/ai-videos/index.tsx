@@ -180,18 +180,7 @@ const Videos: React.FC = () => {
                                                                 borderRadius:
                                                                     "12px",
                                                             }}
-                                                            src={`https://res.cloudinary.com/${
-                                                                process.env
-                                                                    .NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-                                                            }/video/upload/c_fill,h_200,w_300/fl_splice,l_video:${video.og_video_url
-                                                                .split("/")
-                                                                .pop()
-                                                                .replace(
-                                                                    ".m3u8",
-                                                                    "",
-                                                                )}/c_fill,h_200,w_300/fl_layer_apply/${video.url
-                                                                .split("/")
-                                                                .pop()}`}
+                                                            src={video.url}
                                                             controls
                                                         ></video>
                                                         <Flex

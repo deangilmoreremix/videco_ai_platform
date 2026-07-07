@@ -206,7 +206,6 @@ export const Player = ({
                     elements?.map((element) =>
                         Number(element?.time) <=
                             Number(playerRef.current?.getCurrentTime()) &&
-                        // @TODO: end time
                         Number(element?.endTime) >=
                             Number(playerRef.current?.getCurrentTime()) ? (
                             <>
@@ -232,7 +231,10 @@ export const Player = ({
                                             }
                                             element={element}
                                             isLargerThan800={isLargerThan800}
-                                            submitFormData={async (_endpoint, data) => {
+                                            submitFormData={async (
+                                                _endpoint,
+                                                data,
+                                            ) => {
                                                 await submitFeedback(data);
                                             }}
                                             id={id}
@@ -258,7 +260,10 @@ export const Player = ({
                                         element={element}
                                         isLargerThan800={isLargerThan800}
                                         setFormSubmitting={setFormSubmitting}
-                                        submitFormData={async (_endpoint, data) => {
+                                        submitFormData={async (
+                                            _endpoint,
+                                            data,
+                                        ) => {
                                             await submitForm(data);
                                         }}
                                         id={id}

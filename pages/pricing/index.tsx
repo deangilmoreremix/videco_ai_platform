@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
-import { Box, Flex, Text, chakra, useToast } from "@chakra-ui/react";
+import { Box, Flex, Text, chakra } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useUserPlan } from "src/hooks/useUserPlan";
-import { PricingTable } from "@components/common/pricing/table";
 const Pricing: React.FC = () => {
     const [plan, setPlan] = React.useState<any>();
     const session = useSession();
@@ -64,14 +63,17 @@ const Pricing: React.FC = () => {
                                 }}
                             >
                                 Discover how Videco can improve your B2B
-                                company’s engagement, conversions, and revenue
+                                company's engagement, conversions, and revenue
                                 with interactive video and easy to use platform.
                             </chakra.p>
-                            <PricingTable
-                                expanded
-                                freeLitePlan={false}
-                                user={user}
-                            />
+                            <Text
+                                textAlign="center"
+                                fontSize="md"
+                                color="gray.500"
+                            >
+                                Plans are managed by your account administrator.
+                                Contact us to upgrade or change your plan.
+                            </Text>
                         </Box>
                     </Box>
                 </Flex>

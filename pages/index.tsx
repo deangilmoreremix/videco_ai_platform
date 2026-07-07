@@ -1,6 +1,15 @@
 import React from "react";
 
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+
 const Home: React.FC = () => {
+    const router = useRouter();
+
+    useEffect(() => {
+        router.replace("/dashboard");
+    }, [router]);
+
     return null;
 };
 
@@ -15,7 +24,7 @@ export const getServerSideProps = async (ctx: any) => {
 
     return {
         redirect: {
-            destination: '/dashboard',
+            destination: "/dashboard",
             permanent: false,
         },
     };

@@ -104,7 +104,9 @@ const Integrations: React.FC = () => {
                             <zapier-workflow
                                 sign-up-email={user.email}
                                 sign-up-first-name={fullname}
-                                client-id={process.env.NEXT_PUBLIC_ZAPIER_CLIENT_ID}
+                                client-id={
+                                    process.env.NEXT_PUBLIC_ZAPIER_CLIENT_ID
+                                }
                                 intro-copy-display="show"
                                 guess-zap-display="show"
                             />

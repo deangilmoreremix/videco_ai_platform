@@ -151,11 +151,20 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
             setLoading(false);
         }
     };
-     const copyEmailToClipboard = (videoUrl: string) => {
-         const gifUrl = (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoUrl); } catch(e) { return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })();
-         const container = document.createElement("div");
+    const copyEmailToClipboard = (videoUrl: string) => {
+        const gifUrl = (function () {
+            try {
+                const { getGifPreviewUrl } =
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    require("src/utils/media");
+                return getGifPreviewUrl(videoUrl);
+            } catch (e) {
+                return "/default_thumb.png";
+            }
+        })();
+        const container = document.createElement("div");
 
-         container.innerHTML = `
+        container.innerHTML = `
              <div style="position: relative; display: inline-block; padding: 15px;">
                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}" style="display: inline-block;">
                      <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;" />
@@ -164,28 +173,28 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                  </a>
              </div>
          `;
-         document.body.appendChild(container);
+        document.body.appendChild(container);
 
-         // Copy the rendered content
-         const range = document.createRange();
-         range.selectNode(container);
-         const selection = window.getSelection();
-         selection.removeAllRanges();
-         selection.addRange(range);
-         document.execCommand("copy");
+        // Copy the rendered content
+        const range = document.createRange();
+        range.selectNode(container);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.execCommand("copy");
 
-         // Cleanup
-         document.body.removeChild(container);
-         selection.removeAllRanges();
+        // Cleanup
+        document.body.removeChild(container);
+        selection.removeAllRanges();
 
-         toast({
-             title: "E-mail code copied.",
-             description: "You can now paste the code into your e-mail.",
-             status: "success",
-             duration: 1000,
-             isClosable: true,
-         });
-     };
+        toast({
+            title: "E-mail code copied.",
+            description: "You can now paste the code into your e-mail.",
+            status: "success",
+            duration: 1000,
+            isClosable: true,
+        });
+    };
     return (
         <Box
             bg="#ffffff"

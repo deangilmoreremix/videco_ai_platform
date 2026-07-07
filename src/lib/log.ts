@@ -1,18 +1,18 @@
-import { logger } from './log';
+import { logger } from "./log";
 
 interface UsageLog {
-  user_id?: string;
-  model?: string;
-  provider?: string;
-  action?: string;
-  details?: Record<string, any>;
-  cost_estimate?: number;
+    user_id?: string;
+    model?: string;
+    provider?: string;
+    action?: string;
+    details?: Record<string, any>;
+    cost_estimate?: number;
 }
 
 export async function logUsage(entry: UsageLog): Promise<void> {
-  try {
-    logger.info('Usage log', { ...entry });
-  } catch (error) {
-    console.error('Usage logging error:', error);
-  }
+    try {
+        logger.info("Usage log", { ...entry });
+    } catch (error) {
+        console.error("Usage logging error:", error);
+    }
 }

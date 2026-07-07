@@ -43,7 +43,7 @@ import {
     FiMic,
 } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
-import { uploadVideosTocloudinaryDirectly } from "src/services/api/combineVideos";
+import { uploadVideoToStorageDirect } from "src/services/api/combineVideos";
 import { createAIPreview } from "src/services/api/createAIPreview";
 import { rem } from "polished";
 import { UploadV2 } from "@components/features/editor-v2/upload/v2";
@@ -185,9 +185,14 @@ const Start: React.FC = () => {
         const url = URL.createObjectURL(blob);
         setUserAudio(url);
         try {
-            const result = await uploadVideosTocloudinaryDirectly(url);
+            const result = await uploadVideoToStorageDirect(url);
             const startJob = await createAIPreview({
-                audio: result.data?.publicUrl ? result.data.publicUrl.replace(/\.(mp4|webm|mov|m3u8)$/, '.mp3') : result.data?.publicUrl || '',
+                audio: result.data?.public_url
+                    ? result.data.public_url.replace(
+                          /\.(mp4|webm|mov|m3u8)$/,
+                          ".mp3",
+                      )
+                    : result.data?.public_url || "",
                 video_id: router.query.id,
                 language: language,
                 userId: user.id,
@@ -197,7 +202,7 @@ const Start: React.FC = () => {
                 text: the_text(language),
             });
             if (startJob) {
-                runningJobID.current = startJob.data.job_id;
+                runningJobID.current = (startJob as { data: { job_id: string } }).data.job_id;
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -322,13 +327,7 @@ const Start: React.FC = () => {
                 status: "draft",
                 media_status: "in_progress",
                 passthrough_id: "no",
-                preview: `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/dl_200,vs_30/${url
-                    .split("/")
-                    .pop()
-                    .replace(".m3u8", ".gif")
-                    .replace(".mov", ".gif")
-                    .replace(".mp4", ".gif")
-                    .replace(".webm", ".gif")}`,
+                preview: "/default_thumb.png",
                 url: url,
                 platform: "videco",
                 type: "Personalized Campaign",
@@ -363,47 +362,38 @@ const Start: React.FC = () => {
             .eq("id", router.query.id);
         if (error) throw error;
     };
-const saveVideo = async (file, type = "webm") => {
+    const saveVideo = async (file, type = "webm") => {
         setVideoLoading(true);
-        const uploadApi = "/api/v1/videos/cloudinary";
         const blobFile = await blobUrlToBlob(file);
         // Create a FormData object and append the file
-        const formData = new FormData();
-        if (type === "mp4") {
-            formData.append(
-                "file",
-                file[0],
-                `${user.id}-${Date.now()}-screen-record.mp4`,
-            );
-        } else {
-            formData.append(
-                "file",
-                new File(
-                    [blobFile],
-                    `${user.id}-${Date.now()}-screen-record.webm`,
-                    {
-                        type: "video/webm",
-                    },
-                ),
-                `${user.id}-${Date.now()}-screen-record.webm`,
-            ); // Append the video file
-        }
+        const videoFile =
+            type === "mp4"
+                ? file[0]
+                : new File(
+                      [blobFile],
+                      `${user.id}-${Date.now()}-screen-record.webm`,
+                      { type: "video/webm" },
+                  );
 
         try {
-            const uploadedVideo: any = await axios.post(uploadApi, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const { uploadToStorage } = await import("src/services");
+            const result = await uploadToStorage(
+                videoFile,
+                "uploads",
+                "default",
+            );
+            const publicUrl = result.url;
             setVideoLoading(false);
-            const publicUrl = uploadedVideo.data?.result?.publicUrl || uploadedVideo.data?.result?.public_url || uploadedVideo.data?.public_url || uploadedVideo.data?.result?.url;
             if (publicUrl) {
                 startUpload(
                     publicUrl,
                     new File([blobFile], "test").size / (1024 * 1024),
                 );
             } else {
-                console.error('Upload API did not return publicUrl', uploadedVideo.data);
+                console.error(
+                    "Upload API did not return publicUrl",
+                    uploadedVideo.data,
+                );
             }
         } catch (e) {
             console.log(e);
@@ -437,7 +427,7 @@ const saveVideo = async (file, type = "webm") => {
                 .upsert({
                     user_id: user.id,
                     og_video_id: router.query.id,
-                    og_video_url: "TODO",
+                    og_video_url: "",
                     url: "",
                     preview: "",
                     status: "pending",
@@ -767,9 +757,7 @@ const saveVideo = async (file, type = "webm") => {
                                 rounded="md"
                                 cursor="pointer"
                                 onClick={() =>
-                                    handleDownload(
-                                        "https://res.cloudinary.com/dhd6m0fh3/video/upload/v1738443138/Videco_final_pk2pjt.mp4",
-                                    )
+                                    handleDownload("/default_thumb.mp4")
                                 }
                             >
                                 Use example video
@@ -1335,7 +1323,7 @@ const saveVideo = async (file, type = "webm") => {
                                     </Box>
                                 </Flex>
 
-<Box mt={4}>
+                                <Box mt={4}>
                                     <Text>
                                         Select the greeting AI will use to
                                         address your prospects (Beta):
@@ -1370,70 +1358,13 @@ const saveVideo = async (file, type = "webm") => {
                                                     alignItems="center"
                                                 >
                                                     <Text mr={2}>
-                                                        {myGreeting} ||FNAME|| {" "}
+                                                        {myGreeting} ||FNAME||{" "}
                                                     </Text>
                                                     {myGreeting ===
                                                         greeting && (
                                                         <FiCheck color="#4991A1" />
                                                     )}
                                                 </Box>
-                                            ))}
-                                        {language === "french" &&
-                                            greetings.fr.map((myGreeting) => (
-                                                <Box
-                                                    border="1px solid #4991A1"
-                                                    rounded="md"
-                                                    py={2}
-                                                    onClick={() =>
-                                                        setGreeting(myGreeting)
-                                                    }
-                                                    px={3}
-                                                    mr={2}
-                                                    fontSize="16px"
-                                                    bg="#F7F9FA"
-                                                    cursor="pointer"
-                                                    display="flex"
-                                                    justifyContent="center"
-                                                    alignItems="center"
-                                                >
-                                                    <Text mr={2}>
-                                                        {myGreeting} ||FNAME|| {" "}
-                                                    </Text>
-                                                    {myGreeting ===
-                                                        greeting && (
-                                                        <FiCheck color="#4991A1" />
-                                                    )}
-                                                </Box>
-                                            ))}
-                                        {language === "spanish" &&
-                                            greetings.sp.map((myGreeting) => (
-                                                <Box
-                                                    border="1px solid #4991A1"
-                                                    rounded="md"
-                                                    py={2}
-                                                    px={3}
-                                                    mr={2}
-                                                    onClick={() =>
-                                                        setGreeting(myGreeting)
-                                                    }
-                                                    fontSize="16px"
-                                                    bg="#F7F9FA"
-                                                    cursor="pointer"
-                                                    display="flex"
-                                                    justifyContent="center"
-                                                    alignItems="center"
-                                                >
-                                                    <Text mr={2}>
-                                                        {myGreeting} ||FNAME|| {" "}
-                                                    </Text>
-                                                    {myGreeting ===
-                                                        greeting && (
-                                                        <FiCheck color="#4991A1" />
-                                                    )}
-                                                </Box>
-                                            ))}
-                                    </Flex>
-                                </Box>
                                             ))}
                                         {language === "french" &&
                                             greetings.fr.map((myGreeting) => (

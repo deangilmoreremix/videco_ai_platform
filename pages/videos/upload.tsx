@@ -175,7 +175,7 @@ const Upload: React.FC = () => {
                                 autoPlay={true}
                                 loop
                                 muted
-                                src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1726747536/Live_pjfajv.mp4"
+                                src="/default_thumb.mp4"
                             />
                         </Box>
                         <Flex p={12} flexDir="column" mx={8}>

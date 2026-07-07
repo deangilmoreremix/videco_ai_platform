@@ -89,18 +89,28 @@ export const OnBoardingVideoFrame: FC<{
                     This video is an example of how campaigns work!
                 </Text>
 
-                 <Box maxW="652" margin="15px auto">
-                     <video
-                         src={(function(){ try { const { normalizeMediaUrl } = require('src/utils/media'); return normalizeMediaUrl(video); } catch(e) { return video; } })()}
-                         controls
-                         style={{
-                             borderRadius: "20px",
-                             border: "1px solid #DADADA",
-                         }}
-                         poster="assets/avatar.png"
-                         width="100%"
-                     />
-                 </Box>
+                <Box maxW="652" margin="15px auto">
+                    <video
+                        src={(function () {
+                            try {
+                                    const {
+                                        normalizeMediaUrl,
+                                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                                    } = require("src/utils/media");
+                                return normalizeMediaUrl(video);
+                            } catch (e) {
+                                return video;
+                            }
+                        })()}
+                        controls
+                        style={{
+                            borderRadius: "20px",
+                            border: "1px solid #DADADA",
+                        }}
+                        poster="assets/avatar.png"
+                        width="100%"
+                    />
+                </Box>
                 <Box
                     mt={5}
                     display="flex"

@@ -36,7 +36,6 @@ import { useRouter } from "next/router";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
-import { sendEmail } from "src/services/api/sendEmail";
 import axios from "axios";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { InviteList } from "@components/features/invite/list";
@@ -115,10 +114,7 @@ const Settings: React.FC = () => {
 
     const deleteUser = async () => {
         try {
-            await sendEmail("/api/mail/delete", {
-                email: user?.email,
-                user_id: user?.id,
-            });
+            await supabase.auth.signOut();
             setDeleted(true);
             toast({
                 title: "Account deletion requested",
@@ -335,122 +331,6 @@ const Settings: React.FC = () => {
                                                     textAlign="left"
                                                 >
                                                     Brand Kit{" "}
-                                                    <ExternalLinkIcon
-                                                        fontSize="sm"
-                                                        ml={1}
-                                                        mb={1}
-                                                        fontWeight="normal"
-                                                    />
-                                                </Link>
-                                                <Link
-                                                    onClick={() =>
-                                                        axios
-                                                            .post(
-                                                                "/api/stripe/portal",
-                                                                {
-                                                                    stipe_customer:
-                                                                        stipeId,
-                                                                },
-                                                            )
-                                                            .then((res) =>
-                                                                router.push(
-                                                                    res.data
-                                                                        .url,
-                                                                ),
-                                                            )
-                                                    }
-                                                    color="#383F40"
-                                                    mt="4"
-                                                    _hover={{
-                                                        textDecor: "none",
-                                                        bg: "#DADADA",
-                                                    }}
-                                                    mr={4}
-                                                    px={4}
-                                                    py={2}
-                                                    rounded="md"
-                                                    border=".5px solid #383F40"
-                                                    shadow="sm"
-                                                    textAlign="left"
-                                                >
-                                                    Billing{" "}
-                                                    <ExternalLinkIcon
-                                                        fontSize="sm"
-                                                        ml={1}
-                                                        mb={1}
-                                                        fontWeight="normal"
-                                                    />
-                                                </Link>
-                                            </Box>
-                                            <Heading
-                                                size="sm"
-                                                mt={10}
-                                                color="#F06B6B"
-                                                fontWeight="semibold"
-                                            >
-                                                Danger Zone
-                                            </Heading>
-                                            <Text
-                                                color="#F06B6B"
-                                                mt={1}
-                                                fontSize="sm"
-                                                as="span"
-                                            >
-                                                Your account managment
-                                            </Text>
-                                            <Divider mt={2} />
-                                            <Box mt="6">
-                                                <Link
-                                                    onClick={() =>
-                                                        router.push(
-                                                            "/auth/login?reset=true",
-                                                        )
-                                                    }
-                                                    color="#383F40"
-                                                    mt="4"
-                                                    _hover={{
-                                                        textDecor: "none",
-                                                        bg: "#F06B6B",
-                                                        color: "white",
-                                                        borderCOlor: "#F06B6B",
-                                                    }}
-                                                    mr={4}
-                                                    px={4}
-                                                    py={2}
-                                                    rounded="md"
-                                                    border=".5px solid #383F40"
-                                                    shadow="sm"
-                                                    textAlign="left"
-                                                >
-                                                    Reset password{" "}
-                                                    <ExternalLinkIcon
-                                                        fontSize="sm"
-                                                        ml={1}
-                                                        mb={1}
-                                                        fontWeight="normal"
-                                                    />
-                                                </Link>
-
-                                                <Link
-                                                    onClick={onOpen}
-                                                    color="#383F40"
-                                                    mt="4"
-                                                    _hover={{
-                                                        textDecor: "none",
-                                                        bg: "#F06B6B",
-                                                        color: "white",
-                                                        borderCOlor: "#F06B6B",
-                                                    }}
-                                                    mr={4}
-                                                    px={4}
-                                                    py={2}
-                                                    rounded="md"
-                                                    border=".5px solid #383F40"
-                                                    shadow="sm"
-                                                    textAlign="left"
-                                                >
-                                                    {" "}
-                                                    Delete account{" "}
                                                     <ExternalLinkIcon
                                                         fontSize="sm"
                                                         ml={1}

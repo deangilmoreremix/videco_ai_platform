@@ -210,27 +210,7 @@ const Videos: React.FC = () => {
                                                                 !video?.url.includes(
                                                                     "sync.so",
                                                                 )
-                                                                    ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${video?.url
-                                                                          .split(
-                                                                              "/",
-                                                                          )
-                                                                          .pop()
-                                                                          .replace(
-                                                                              ".mp4",
-                                                                              ".gif",
-                                                                          )
-                                                                          .replace(
-                                                                              ".mov",
-                                                                              ".gif",
-                                                                          )
-                                                                          .replace(
-                                                                              ".m3u8",
-                                                                              ".gif",
-                                                                          )
-                                                                          .replace(
-                                                                              ".webm",
-                                                                              ".gif",
-                                                                          )}`
+                                                                    ? "/default_thumb.png"
                                                                     : "/default_thumb.png"
                                                             }
                                                             height={[

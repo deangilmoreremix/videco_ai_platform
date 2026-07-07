@@ -65,15 +65,6 @@ const Integrations: React.FC = () => {
             icon: "/assets/intagrations/aweber.png",
         },
         {
-            name: "Brevo",
-            dec: "Add your videos into Brevo email campaigns/landing pages and/or use their forms to track interactions and analyze your audience.",
-            isActive: true,
-            helpLink:
-                "https://roadmap.videco.io/t/knowledgebase#13787-integrations",
-            configLink: "",
-            icon: "/assets/intagrations/brevo.png",
-        },
-        {
             name: "Lemlist",
             dec: "Add your videos into Lemlist email campaigns/landing pages and/or use their forms to track interactions and analyze your audience.",
             isActive: true,

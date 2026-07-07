@@ -403,7 +403,9 @@ export const Header: FC<HeaderProps> = (props) => {
                         rounded="full"
                         alignItems="center"
                         fontWeight="normal"
-                        data-productlift-sidebar={process.env.NEXT_PUBLIC_PRODUCTLIFT_SIDEBAR_ID}
+                        data-productlift-sidebar={
+                            process.env.NEXT_PUBLIC_PRODUCTLIFT_SIDEBAR_ID
+                        }
                         onClick={handleClick}
                     >
                         <FiHelpCircle

@@ -1,14 +1,9 @@
 import React, { ReactElement } from "react";
-import {
-    render as baseRender,
-    RenderOptions,
-    RenderResult,
-} from "@testing-library/react";
 
 import { ChakraProvider } from "@chakra-ui/react";
 
 /**
- * Custom renderer example with @testing-library/react
+ * Custom renderer example
  * You can customize it to your needs.
  *
  * To learn more about customizing renderer,
@@ -23,11 +18,5 @@ export const AllTheProviders = ({ children }: any) => {
     );
 };
 
-const render = (ui: ReactElement, options?: Omit<RenderOptions, "queries">) =>
-    baseRender(ui, { wrapper: AllTheProviders, ...options }) as RenderResult;
+export { AllTheProviders };
 
-// re-export everything
-export * from "@testing-library/react";
-
-// override render method
-export { render };

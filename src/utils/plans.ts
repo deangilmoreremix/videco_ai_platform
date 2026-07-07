@@ -4,53 +4,34 @@ export const plans = [
             name: "Starter",
             description: "Starter Plan",
             price: "€19/month",
-            stripePriceId: "price_1OFMoBBV627Dgso64OERRQsE",
         },
         {
             name: "Premium",
             description: "Premium Plan",
             price: "€59/month",
-            stripePriceId: "price_1OFMoVBV627Dgso6gPajHjpF",
         },
     ],
 ];
 
 export const planSelector = (plan_name: string, frequency: string) => {
-    let stripe_plan_id;
+    let plan_id;
     switch (plan_name) {
         case "trial":
-            stripe_plan_id =
-                process.env.NEXT_PUBLIC_PLAN_GROWTH_TRIAL ??
-                "price_1R8O6EAcgHuoZ5np2Nu75nEz";
+            plan_id = "trial";
             break;
         case "lite":
-            stripe_plan_id =
-                frequency === "month"
-                    ? process.env.NEXT_PUBLIC_PLAN_LITE_MONTH ??
-                      "price_1R8O6EAcgHuoZ5np2Nu75nEz"
-                    : process.env.NEXT_PUBLIC_PLAN_LITE_YEAR ??
-                      "price_1R8O6EAcgHuoZ5npCHSaS1iu";
+            plan_id = frequency === "month" ? "lite_month" : "lite_year";
             break;
         case "growth":
-            stripe_plan_id =
-                frequency === "month"
-                    ? process.env.NEXT_PUBLIC_PLAN_GROWTH_MONTH ??
-                      "price_1R8O6CAcgHuoZ5npDDPX70Io"
-                    : process.env.NEXT_PUBLIC_PLAN_GROWTH_YEAR ??
-                      "price_1R8O6BAcgHuoZ5npfQ0ji1Sa";
+            plan_id = frequency === "month" ? "growth_month" : "growth_year";
             break;
         case "scale":
-            stripe_plan_id =
-                frequency === "month"
-                    ? process.env.NEXT_PUBLIC_PLAN_SCALE_MONTH ??
-                      "price_1R8O68AcgHuoZ5npwet38tre"
-                    : process.env.NEXT_PUBLIC_PLAN_SCALE_YEAR ??
-                      "price_1R8O68AcgHuoZ5npwet38tre";
+            plan_id = frequency === "month" ? "scale_month" : "scale_year";
             break;
         default:
             break;
     }
-    return stripe_plan_id;
+    return plan_id;
 };
 export const planUsage = (plan_name: string) => {
     let planUsage: {

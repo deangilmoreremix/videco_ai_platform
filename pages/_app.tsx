@@ -6,6 +6,7 @@ import { useLanguageStore } from "src/store/language";
 import { ILanguage } from "src/store/types";
 import Head from "next/head";
 import { appWithTranslation } from "@i18n";
+import nextI18nextConfig from "../next-i18next.config";
 import { theme } from "src/utils/theme";
 import TagManager from "react-gtm-module";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -118,4 +119,4 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     );
 }
 
-export default appWithTranslation(MyApp);
+export default appWithTranslation(MyApp, nextI18nextConfig);

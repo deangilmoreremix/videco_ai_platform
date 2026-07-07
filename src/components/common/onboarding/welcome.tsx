@@ -21,7 +21,12 @@ import { motion, m } from "framer-motion";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { isTrialExpired } from "src/utils/isTrialExpierd";
-import { generateScript, submitTextToVideo, pollJob, supabase } from "src/services";
+import {
+    generateScript,
+    submitTextToVideo,
+    pollJob,
+    supabase,
+} from "src/services";
 import { FiArrowRight } from "react-icons/fi";
 import { useRouter } from "next/router";
 
@@ -173,13 +178,15 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
             })
             .select();
 
-        const prompt = `Hi ${fullname}, welcome to videco! ${website ? `Website: ${website}` : ""}`;
+        const prompt = `Hi ${fullname}, welcome to videco! ${
+            website ? `Website: ${website}` : ""
+        }`;
         const { job } = await submitTextToVideo(prompt, {
             tenant_id: user?.app_metadata?.tenant_id,
             user_id: user.id,
         });
         if (job?.id) {
-            pollJob(job.id).catch(() => {});
+            pollJob(job.id).catch((e) => console.warn("[onboarding] pollJob failed:", e));
         }
         await generateScript(`Welcome ${fullname}`, {
             tenant_id: user?.app_metadata?.tenant_id,
@@ -442,25 +449,25 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
                                         with AI-powered personalized videos that
                                         engage your prospects instantly
                                     </Text>
-                                         <Box
-                                         pos="absolute"
-                                         top={64}
-                                         left="33"
-                                         ml={7}
-                                         px={12}
-                                         opacity="0.6"
-                                     >
-                                         <video
-                                             src={(function(){ try { const { normalizeMediaUrl } = require('src/utils/media'); return normalizeMediaUrl('https://res.cloudinary.com/dhd6m0fh3/video/upload/v1738168015/Hey_First_name_2_snyiuw.mp4'); } catch(e) { return 'https://res.cloudinary.com/dhd6m0fh3/video/upload/v1738168015/Hey_First_name_2_snyiuw.mp4'; } })()}
-                                             muted
-                                             autoPlay
-                                             style={{
-                                                 borderRadius: "20px",
-                                                 border: "1px solid #DADADA",
-                                             }}
-                                             width={400}
-                                         />
-                                     </Box>
+                                    <Box
+                                        pos="absolute"
+                                        top={64}
+                                        left="33"
+                                        ml={7}
+                                        px={12}
+                                        opacity="0.6"
+                                    >
+                                        <video
+                                            src="/default_thumb.mp4"
+                                            muted
+                                            autoPlay
+                                            style={{
+                                                borderRadius: "20px",
+                                                border: "1px solid #DADADA",
+                                            }}
+                                            width={400}
+                                        />
+                                    </Box>
                                 </Box>
                             </Flex>
                         </ModalBody>

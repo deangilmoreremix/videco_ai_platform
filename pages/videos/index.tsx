@@ -211,10 +211,20 @@ const Videos: React.FC = () => {
                                                             "row",
                                                         ]}
                                                     >
-                                                         <Image
-                                                             src={
-                                                                 (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(video?.url); } catch(e) { return '/default_thumb.png'; } })()
-                                                             }
+                                                        <Image
+                                                            src={(function () {
+                                                                try {
+                                                                     const {
+                                                                         getGifPreviewUrl,
+                                                                         // eslint-disable-next-line @typescript-eslint/no-var-requires
+                                                                     } = require("src/utils/media");
+                                                                    return getGifPreviewUrl(
+                                                                        video?.url,
+                                                                    );
+                                                                } catch (e) {
+                                                                    return "/default_thumb.png";
+                                                                }
+                                                            })()}
                                                             height={[
                                                                 "124",
                                                                 "32",

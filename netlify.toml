@@ -1,14 +1,61 @@
-[build]
-  command = "yarn build"
-  publish = ".next"
-
+# Netlify Functions directory
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# Optional: increase timeout for long-running API routes during transition (Netlify default 10s, can be higher on paid)
-# [functions."*"]
-#   timeout = 26
+# Route each Netlify Function endpoint
+[[redirects]]
+  from = "/functions/v1/api/*"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/auth/*"
+  to = "/.netlify/functions/auth"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/images/*"
+  to = "/.netlify/functions/images"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/jobs/*"
+  to = "/.netlify/functions/jobs"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/leads/*"
+  to = "/.netlify/functions/leads"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/videos/*"
+  to = "/.netlify/functions/videos"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/webhooks/muapi"
+  to = "/.netlify/functions/ai-orchestrator"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/functions/v1/webhooks/muapi/*"
+  to = "/.netlify/functions/ai-orchestrator"
+  status = 200
+  force = true
+
+# Next.js app routing
+[build]
+  command = "yarn build"
+  publish = ".next"
 
 [dev]
   command = "next dev"

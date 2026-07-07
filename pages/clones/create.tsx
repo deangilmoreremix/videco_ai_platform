@@ -33,7 +33,7 @@ import {
     FiMic,
 } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
-import { uploadVideosTocloudinaryDirectly } from "src/services/api/combineVideos";
+import { uploadVideoToStorageDirect } from "src/services/api/combineVideos";
 import { createAIPreview } from "src/services/api/createAIPreview";
 import { rem } from "polished";
 import { UploadV2 } from "@components/features/editor-v2/upload/v2";
@@ -176,9 +176,14 @@ const Create: React.FC = () => {
         const url = URL.createObjectURL(blob);
         setUserAudio(url);
         try {
-            const result = await uploadVideosTocloudinaryDirectly(url);
+            const result = await uploadVideoToStorageDirect(url);
             const startJob = await createAIPreview({
-                audio: result.data?.publicUrl ? result.data.publicUrl.replace(/\.(mp4|webm|mov|m3u8)$/, '.mp3') : result.data?.publicUrl || '',
+                audio: result.data?.public_url
+                    ? result.data.public_url.replace(
+                          /\.(mp4|webm|mov|m3u8)$/,
+                          ".mp3",
+                      )
+                    : result.data?.public_url || "",
                 video_id: router.query.id,
                 language: language,
                 userId: user.id,
@@ -188,7 +193,7 @@ const Create: React.FC = () => {
                 text: the_text(language),
             });
             if (startJob) {
-                runningJobID.current = startJob.data.job_id;
+                runningJobID.current = (startJob as { data: { job_id: string } }).data.job_id;
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -313,7 +318,7 @@ const Create: React.FC = () => {
                 status: "draft",
                 media_status: "in_progress",
                 passthrough_id: "no",
-                 preview: url,
+                preview: url,
                 url: url,
                 platform: "videco",
                 type: videoTypes.clone,
@@ -348,47 +353,35 @@ const Create: React.FC = () => {
             .eq("id", router.query.id);
         if (error) throw error;
     };
-const saveVideo = async (file, type = "webm") => {
+    const saveVideo = async (file, type = "webm") => {
         setVideoLoading(true);
-        const uploadApi = "/api/v1/videos/cloudinary";
         const blobFile = await blobUrlToBlob(file);
         // Create a FormData object and append the file
-        const formData = new FormData();
-        if (type === "mp4") {
-            formData.append(
-                "file",
-                file[0],
-                `${user.id}-${Date.now()}-screen-record.mp4`,
-            );
-        } else {
-            formData.append(
-                "file",
-                new File(
-                    [blobFile],
-                    `${user.id}-${Date.now()}-screen-record.webm`,
-                    {
-                        type: "video/webm",
-                    },
-                ),
-                `${user.id}-${Date.now()}-screen-record.webm`,
-            ); // Append the video file
-        }
+        const videoFile =
+            type === "mp4"
+                ? file[0]
+                : new File(
+                      [blobFile],
+                      `${user.id}-${Date.now()}-screen-record.webm`,
+                      { type: "video/webm" },
+                  );
 
         try {
-            const uploadedVideo: any = await axios.post(uploadApi, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const { uploadToStorage } = await import("src/services");
+            const result = await uploadToStorage(
+                videoFile,
+                "uploads",
+                "default",
+            );
+            const publicUrl = result.url;
             setVideoLoading(false);
-            const publicUrl = uploadedVideo.data?.result?.publicUrl || uploadedVideo.data?.result?.public_url || uploadedVideo.data?.public_url || uploadedVideo.data?.result?.url;
             if (publicUrl) {
                 startUpload(
                     publicUrl,
                     new File([blobFile], "test").size / (1024 * 1024),
                 );
             } else {
-                console.error('Upload API did not return publicUrl', uploadedVideo.data);
+                console.error("Upload did not return publicUrl", result);
             }
         } catch (e) {
             console.log(e);
@@ -423,31 +416,42 @@ const saveVideo = async (file, type = "webm") => {
                 .eq("id", router.query.id);
 
             // Optionally kick off background polling via Edge (non-blocking)
-            fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            fetch(
+                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                    },
+                    body: JSON.stringify({
+                        action: "poll",
+                        request_id: response.result.request_id,
+                        video_id: router.query.id,
+                    }),
                 },
-                body: JSON.stringify({
-                    action: "poll",
-                    request_id: response.result.request_id,
-                    video_id: router.query.id,
-                }),
-            }).catch(() => {}); // fire and forget
+            ).catch((e) => console.warn("[clone] background generation failed:", e)); // fire and forget
 
             // UI feedback: notify user generation started
             toast({
                 title: "AI generation started",
-                description: "Your AI clone generation has started and is running in the background.",
+                description:
+                    "Your AI clone generation has started and is running in the background.",
                 status: "info",
                 duration: 4000,
                 isClosable: true,
             });
         } else if (response?.url) {
             // fallback: direct url returned (legacy)
-            await supabase.from("videos").update({ url: response.url, media_status: "completed" }).eq("id", router.query.id);
-            toast({ title: "AI clone ready", status: "success", duration: 3000 });
+            await supabase
+                .from("videos")
+                .update({ url: response.url, media_status: "completed" })
+                .eq("id", router.query.id);
+            toast({
+                title: "AI clone ready",
+                status: "success",
+                duration: 3000,
+            });
         }
 
         setJobsGenerated(true);
@@ -462,8 +466,7 @@ const saveVideo = async (file, type = "webm") => {
     };
 
     async function handleDownload() {
-        const url =
-            "https://res.cloudinary.com/dhd6m0fh3/video/upload/v1735901958/rd9i1bbccgmqa0uk4tsw.mp4";
+        const url = "/default_thumb.mp4";
 
         try {
             startUpload(url, "12");

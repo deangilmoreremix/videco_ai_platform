@@ -127,9 +127,10 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                                 method: "GET",
                                 headers: {
                                     "Content-Type": "application/json",
-                                    "x-tenant-id": user?.app_metadata?.tenant_id || "",
+                                    "x-tenant-id":
+                                        user?.app_metadata?.tenant_id || "",
                                 },
-                            }
+                            },
                         );
                         const data = await res.json();
                         if (data.status === "completed" && data.outputs?.[0]) {
@@ -359,32 +360,40 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                                 />
                             </Box>
                         ) : (
-                                 <Player
-                                 platform={meta?.platform}
-                                 elements={interactiveElements}
-                                 videoUrl={latestUrl}
-                                 width="100%"
-                                 embeded={true}
-                                 isEditor={true}
-                                 endCTA={
-                                     {
-                                         link: meta.endCTAlink,
-                                         title: meta.endCTAtitle,
-                                         text: meta.endCTAtext,
-                                     } as any
-                                 }
-                                 preview={
-                                     (function(){ try { const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoUrl); } catch(e) { return '/default_thumb.png'; } })()
-                                 }
-                                 playerRef={playerRef}
-                                 videcoBrandingRemoved={
-                                     meta.remove_logo ?? false
-                                 }
-                                 playing={playing}
-                                 setDuration={setDuration}
-                                 setPlaying={setPlaying}
-                                 setVideo={setVideo}
-                                 />
+                            <Player
+                                platform={meta?.platform}
+                                elements={interactiveElements}
+                                videoUrl={latestUrl}
+                                width="100%"
+                                embeded={true}
+                                isEditor={true}
+                                endCTA={
+                                    {
+                                        link: meta.endCTAlink,
+                                        title: meta.endCTAtitle,
+                                        text: meta.endCTAtext,
+                                    } as any
+                                }
+                                preview={(function () {
+                                    try {
+                                        const {
+                                            getGifPreviewUrl,
+                                            // eslint-disable-next-line @typescript-eslint/no-var-requires
+                                        } = require("src/utils/media");
+                                        return getGifPreviewUrl(videoUrl);
+                                    } catch (e) {
+                                        return "/default_thumb.png";
+                                    }
+                                })()}
+                                playerRef={playerRef}
+                                videcoBrandingRemoved={
+                                    meta.remove_logo ?? false
+                                }
+                                playing={playing}
+                                setDuration={setDuration}
+                                setPlaying={setPlaying}
+                                setVideo={setVideo}
+                            />
                         )}
                     </Box>
                     <Box pos="absolute" right="-88px" id="player-edit">

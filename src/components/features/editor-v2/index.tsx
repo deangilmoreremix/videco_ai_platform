@@ -36,8 +36,6 @@ export const Editor: React.FC = () => {
     const [campaignName, setCampaignName] = useState<any>("");
     const [videoType, setVideoType] = useState("");
     const [videoId, setVideoId] = useState("");
-    // track video object for ai preview polling
-    const [video, setVideo] = useState<any>(null);
     const { workspace } = useWorkspaces();
     const [mediaStatus, setMediaStatus] = useState("");
     const [loading, setLoading] = useState(false);
@@ -134,15 +132,27 @@ export const Editor: React.FC = () => {
     // 2026: Auto-poll for Muapi-generated AI clones / personalized videos
     useEffect(() => {
         // Auto-poll using pollUntilComplete when video is still processing
-        if (mediaStatus === "in_progress" && videoId && (router.query.clone === "true" || router.query.aivideos)) {
+        if (
+            mediaStatus === "in_progress" &&
+            videoId &&
+            (router.query.clone === "true" || router.query.aivideos)
+        ) {
             const requestId = (video as any)?.ai_preview || meta?.preview; // ai_preview stores the Muapi request_id in new path
 
-            if (requestId && typeof requestId === "string" && requestId.length < 100) {
+            if (
+                requestId &&
+                typeof requestId === "string" &&
+                requestId.length < 100
+            ) {
                 let cancelled = false;
                 (async () => {
                     try {
                         const res = await pollUntilComplete(requestId, videoId);
-                        if (res.status === "completed" && res.final_url && !cancelled) {
+                        if (
+                            res.status === "completed" &&
+                            res.final_url &&
+                            !cancelled
+                        ) {
                             setVideoUrl(res.final_url);
                             setMediaStatus("completed");
                             // Refresh video data
@@ -296,7 +306,6 @@ export const Editor: React.FC = () => {
 
     const saveScreenRecordingToCloud = async (file, type = "webm") => {
         setLoading(true);
-        const url = "/api/v1/videos/cloudinary"; // legacy name kept; this route now stores files in Supabase Storage and returns { result: { publicUrl, path } }
         const blobFile = await blobUrlToBlob(file);
         // Upload to Supabase Storage (stack: Supabase only, no Cloudinary)
         const fileName = `${user.id}-${Date.now()}-screen-record.${type}`;
@@ -309,7 +318,12 @@ export const Editor: React.FC = () => {
             const result = await uploadFile(fileToUpload, "videos", user.id);
 
             setLoading(false);
-            const publicUrl = uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.public_url || uploadedVideo?.data?.result?.publicUrl || uploadedVideo?.data?.result?.secure_url || uploadedVideo?.data?.secure_url;
+            const publicUrl =
+                uploadedVideo?.data?.result?.publicUrl ||
+                uploadedVideo?.data?.result?.public_url ||
+                uploadedVideo?.data?.result?.publicUrl ||
+                uploadedVideo?.data?.result?.secure_url ||
+                uploadedVideo?.data?.secure_url;
             if (router.query.id) {
                 const theVideoId = router.query.id
                     ? router.query.id.toString()
@@ -340,7 +354,16 @@ export const Editor: React.FC = () => {
                 user_id: user?.id,
                 status: "draft",
                 url: videoOnboardReady.url,
-                 preview: (function(){ try{ const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoOnboardReady.url); }catch(e){ return '/default_thumb.png'; } })(),
+                preview: (function () {
+                    try {
+                        const { getGifPreviewUrl } =
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    require("src/utils/media");
+                        return getGifPreviewUrl(videoOnboardReady.url);
+                    } catch (e) {
+                        return "/default_thumb.png";
+                    }
+                })(),
                 platform: videoOnboardReady?.platform ?? "videco",
                 name: videoOnboardReady.name,
                 meta_data: { type: ".mp4" },
@@ -634,7 +657,8 @@ export const Editor: React.FC = () => {
                                         videoUrl &&
                                         !videoUrl.includes("videco.s3.") &&
                                         !videoUrl.includes("youtube")
-? (function(){ try{ const { normalizeMediaUrl } = require('src/utils/media'); const normalized = normalizeMediaUrl(videoUrl); return normalized.replace(/\.(mp4|mov|m3u8|webm)$/, '.gif'); }catch(e){ return `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl.split('/').pop().replace('.mp4', '.gif').replace('.mov', '.gif').replace('.m3u8', '.gif').replace('.webm', '.gif')}` } })() : "/default_thumb.png"
+                                            ? "/default_thumb.png"
+                                            : "/default_thumb.png"
                                     }
                                     playerRef={playerRef}
                                     videcoBrandingRemoved={

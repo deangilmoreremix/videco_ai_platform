@@ -148,13 +148,15 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
         fname: string,
         website: string,
     ) => {
-        const prompt = `${the_greeting(language, greeting)} ${fname} ${background === "website" ? website : ""}`.trim();
+        const prompt = `${the_greeting(language, greeting)} ${fname} ${
+            background === "website" ? website : ""
+        }`.trim();
         const { job } = await submitTextToVideo(prompt, {
             tenant_id: user?.app_metadata?.tenant_id,
             user_id: user?.id,
         });
         if (job?.id) {
-            pollJob(job.id).catch(() => {});
+            pollJob(job.id).catch((e) => console.warn("[generate] pollJob failed:", e));
         }
     };
     useEffect(() => {

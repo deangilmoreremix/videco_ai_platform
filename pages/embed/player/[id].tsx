@@ -266,18 +266,7 @@ const Edit: React.FC = () => {
                 <Box w="full" height="full" bg="transparent">
                     <Player
                         videcoBrandingRemoved={videoRest?.remove_logo ?? false}
-                        preview={
-                            !videoUrl.includes("videco.s3.") &&
-                            !videoUrl.includes("youtube")
-                                ? `https://res.cloudinary.com/dhd6m0fh3/video/upload/c_scale,h_400/e_loop/l_image:play-3-xxl_wefrsh.png,w_90,x_0,y_0,g_center/a_0/${videoUrl
-                                      .split("/")
-                                      .pop()
-                                      .replace(".mp4", ".gif")
-                                      .replace(".mov", ".gif")
-                                      .replace(".m3u8", ".gif")
-                                      .replace(".webm", ".gif")}`
-                                : "/default_thumb.png"
-                        }
+                        preview={"/default_thumb.png"}
                         embeded={true}
                         onPlayerPlay={onPlayerPlay}
                         height="100%"

@@ -4,7 +4,7 @@ import axios from "axios";
 const supabase = createClientComponentClient();
 export default async function handler(req, res) {
     if (req.method === "POST") {
-        let cloneData = null;
+        const cloneData = null;
         const getVideo = await supabase
             .from("videos")
             .select("ai_preview, media_status, url")
@@ -13,11 +13,19 @@ export default async function handler(req, res) {
         if (getVideo.data?.[0].media_status === "in_progress") {
             // Try Muapi status polling instead of Sync
             try {
-                const muapiRes = await axios.get(`https://api.muapi.ai/api/v1/predictions/${getVideo.data?.[0].ai_preview}/result`, {
-                    headers: { 'x-api-key': process.env.MUAPI_API_KEY || '' }
-                });
+                const muapiRes = await axios.get(
+                    `https://api.muapi.ai/api/v1/predictions/${getVideo.data?.[0].ai_preview}/result`,
+                    {
+                        headers: {
+                            "x-api-key": process.env.MUAPI_API_KEY || "",
+                        },
+                    },
+                );
 
-                if (muapiRes.data?.status === 'completed' && muapiRes.data.outputs?.[0]?.url) {
+                if (
+                    muapiRes.data?.status === "completed" &&
+                    muapiRes.data.outputs?.[0]?.url
+                ) {
                     const finalUrl = muapiRes.data.outputs[0].url;
                     // Save final URL to Supabase
                     const { data, error } = await supabase
@@ -40,7 +48,7 @@ export default async function handler(req, res) {
                     }
                 }
             } catch (e) {
-                console.log('muapi poll error', e.message || e);
+                console.log("muapi poll error", e.message || e);
             }
         }
 

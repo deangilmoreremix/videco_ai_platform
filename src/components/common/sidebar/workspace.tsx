@@ -167,7 +167,10 @@ export const WorkspaceSwitcher = () => {
                             initialValues={{ name: isUpdate && isUpdate.name }}
                             onSubmit={(values, actions) => {
                                 setTimeout(async () => {
-                                    await handleWorkspace(values.name, "/default_icon.png");
+                                    await handleWorkspace(
+                                        values.name,
+                                        "/default_icon.png",
+                                    );
                                     actions.setSubmitting(false);
                                 }, 1000);
                             }}

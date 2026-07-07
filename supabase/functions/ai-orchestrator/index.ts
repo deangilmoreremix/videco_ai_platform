@@ -20,11 +20,13 @@
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import crypto from "crypto";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const MUAPI_KEY = Deno.env.get("MUAPI_API_KEY")!;
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY")!;
+const MUAPI_WEBHOOK_SECRET = Deno.env.get("MUAPI_WEBHOOK_SECRET");
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
@@ -318,13 +320,13 @@ async function handlePollMuapi(data: any) {
 async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?: string) {
   const { request_id, status, outputs, video_id, ai_video_id } = data;
 
-  // Signature verification stub: if header present, validate using MUAPI_WEBHOOK_SECRET
-  if (signatureHeader) {
+  // Signature verification: validate using MUAPI_WEBHOOK_SECRET if present
+  if (signatureHeader && MUAPI_WEBHOOK_SECRET) {
     try {
-      // import local helper dynamically to avoid circular issues in Deno edge environment
-      const verify = (await import("/workspace/0c85e0dc-1244-40ab-8f84-e11668f857da/sessions/agent_c69a9913-dcc1-4130-9934-8015f769a184/src/lib/muapi.ts")).verifyWebhookSignature;
-      const ok = verify(rawBody || JSON.stringify(data), signatureHeader);
-      if (!ok) {
+      const hmac = crypto.createHmac("sha256", MUAPI_WEBHOOK_SECRET).update(rawBody || JSON.stringify(data), "utf8").digest("hex");
+      const normalized = signatureHeader.startsWith("sha256=") ? signatureHeader.split("=")[1] : signatureHeader;
+      const verified = crypto.timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(normalized, "hex"));
+      if (!verified) {
         console.warn("[ai-orchestrator] muapi webhook signature invalid");
         return new Response(JSON.stringify({ received: false, error: "invalid signature" }), {
           status: 200,
@@ -333,8 +335,13 @@ async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?:
       }
     } catch (err) {
       console.error("[ai-orchestrator] signature verification failed", err);
-      // proceed but log
+      return new Response(JSON.stringify({ received: false, error: "signature_error" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
+  } else if (signatureHeader && !MUAPI_WEBHOOK_SECRET) {
+    console.warn("[ai-orchestrator] muapi webhook signature present but MUAPI_WEBHOOK_SECRET not configured");
   }
 
   console.log("[ai-orchestrator] handling webhook for request", request_id, "status", status);

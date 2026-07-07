@@ -54,9 +54,7 @@ export const Upload: React.FC<UploadProps> = ({
     const { getData } = useFetchTeamData();
     const { type, varient } = router.query;
 
-    const client = createClient(
-        process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY!,
-    );
+    const client = createClient(process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY!);
 
     useEffect(() => {
         const plan = async () => {

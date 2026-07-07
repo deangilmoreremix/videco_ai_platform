@@ -1,12 +1,21 @@
 # npm
 node_modules
+# yarn
+yarn.lock
 # next.js build files
 .next
 # environment variables
 .env
+.env.*.local
+.env.local
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+# OS
+.DS_Store
+# build
 build
-.env.*
-!.env.example
+!/.env.example
 
 # Sentry
 next.config.original.js

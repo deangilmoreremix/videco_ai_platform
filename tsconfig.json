@@ -67,8 +67,7 @@
       {
         "name": "next"
       }
-    ],
-    "types": []  // Add this line to explicitly set the types array to empty
+    ]
   },
   "include": [
     "next-env.d.ts",
@@ -79,6 +78,10 @@
   ],
   "exclude": [
     "node_modules",
-    "test/*"
+    "test/*",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }

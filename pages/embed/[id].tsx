@@ -158,15 +158,28 @@ const Edit: React.FC = ({ videoData }: any) => {
     }, [router.query, videoRest.name]);
     return (
         <>
-             <Head>
-                 <title>{videoData.title ?? "Videco"}</title>
-                 <meta name="description" content={videoData.desc ?? "Videco"} />
-                 <meta
-                     property="og:title"
-                     content={videoData.title ?? "Videco"}
-                 />
-                 <meta property="og:image" content={(function(){ try{ const { getGifPreviewUrl } = require('src/utils/media'); return getGifPreviewUrl(videoData.url); } catch(e){ return '/default_thumb.png'; } })()} />
-             </Head>
+            <Head>
+                <title>{videoData.title ?? "Videco"}</title>
+                <meta name="description" content={videoData.desc ?? "Videco"} />
+                <meta
+                    property="og:title"
+                    content={videoData.title ?? "Videco"}
+                />
+                <meta
+                    property="og:image"
+                    content={(function () {
+                        try {
+                            const {
+                                getGifPreviewUrl,
+                                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                            } = require("src/utils/media");
+                            return getGifPreviewUrl(videoData.url);
+                        } catch (e) {
+                            return "/default_thumb.png";
+                        }
+                    })()}
+                />
+            </Head>
             {!router.query.method && (
                 <Box bg="#FCFCFC" py={4}>
                     <Box

@@ -213,7 +213,7 @@ const Start: React.FC = () => {
                                         autoPlay={true}
                                         loop
                                         muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1726760673/Grey_and_Ivory_Collage_Simple_Photo_Minimalist_Fashion_Collection_YouTube_Intro_2.mp4"
+                                        src="/default_thumb.mp4"
                                     />
                                 </Box>
                                 <Box mt={4}>
@@ -277,7 +277,7 @@ const Start: React.FC = () => {
                                         autoPlay={true}
                                         loop
                                         muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1726760673/Grey_and_Ivory_Collage_Simple_Photo_Minimalist_Fashion_Collection_YouTube_Intro_2.mp4"
+                                        src="/default_thumb.mp4"
                                     />
                                 </Box>
                                 <Box mt={4}>
@@ -346,7 +346,7 @@ const Start: React.FC = () => {
                                         autoPlay={true}
                                         loop
                                         muted
-                                        src="https://res.cloudinary.com/dhd6m0fh3/video/upload/v1726760673/Grey_and_Ivory_Collage_Simple_Photo_Minimalist_Fashion_Collection_YouTube_Intro_2.mp4"
+                                        src="/default_thumb.mp4"
                                     />
                                 </Box>
                                 <Box mt={4}>

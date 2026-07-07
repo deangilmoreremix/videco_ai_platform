@@ -43,10 +43,10 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src }) => {
                 .from("videos")
                 .update({
                     preview: uploadedData.url,
-                 })
-                 .update({
-                     preview: "",
-                 })
+                })
+                .update({
+                    preview: "",
+                })
                 .eq("id", router.query.id)
                 .select()
                 .then((res) => {
