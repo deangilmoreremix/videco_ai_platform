@@ -3,7 +3,7 @@ import { parseCookies } from "nookies";
 
 const cookies = parseCookies();
 export const axiosInstance = axios.create({
-    baseURL: `http://localhost:3000/`,
+    baseURL: "",
     timeout: 30000,
     headers: {
         post: {
