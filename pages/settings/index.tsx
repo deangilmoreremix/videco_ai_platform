@@ -33,19 +33,20 @@ import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import axios from "axios";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { InviteList } from "@components/features/invite/list";
+import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 
 function generateSecureKey() {
     const array = new Uint32Array(6);
     window.crypto.getRandomValues(array);
     return array.join("");
 }
-const Settings: React.FC = () => {
+const SettingsContent: React.FC = () => {
     const session = useSession();
     const [plan, setPlan] = React.useState<any>();
     const [stipeId, setStipeId] = React.useState<any>();
@@ -58,44 +59,90 @@ const Settings: React.FC = () => {
     const [deleted, setDeleted] = useState<any>(false);
     const { getTeamUserIds, getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const supabase = createClientComponentClient();
     const [videos, setVideos] = React.useState<any>(0);
     const [videoSize, setVideoSize] = React.useState<any>(0);
     const [show, setShow] = React.useState(false);
     const [key, setKey] = React.useState("");
+    const [apiKeyLoading, setApiKeyLoading] = React.useState(false);
     const handleAPIKeyClick = async () => {
-        if (plan !== "lite") {
-            try {
-                await supabase
-                    .from("apikey")
-                    .select()
-                    .eq("user_id", user?.id)
-                    .then((res) => {
-                        if (res.data.length > 0) {
-                            setKey(res.data[0].key);
-                            setShow(!show);
-                        } else {
-                            supabase
-                                .from("apikey")
-                                .upsert([
-                                    {
-                                        user_id: user?.id,
-                                        key: `api_${generateSecureKey()}_videco.io`,
-                                    },
-                                ])
-                                .eq("user_id", user?.id)
-                                .select()
-                                .then((res) => {
-                                    setKey(res.data[0].key);
-                                    setShow(!show);
-                                });
-                        }
-                    });
-            } catch (error) {
-                console.log("error..", error);
+        if (!user?.id) {
+            toast({
+                title: "Authentication required",
+                description: "Please sign in to manage your API key.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (plan === "lite") {
+            toast({
+                title: "Upgrade required",
+                description:
+                    "You need to be a Growth member to generate an API key.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        try {
+            setApiKeyLoading(true);
+            const { data: existingKeys, error: fetchError } = await supabase
+                .from("apikey")
+                .select("id, key")
+                .eq("user_id", user.id)
+                .limit(1);
+
+            if (fetchError) {
+                throw fetchError;
             }
-        } else {
-            alert("You need to be a growth member to generate API key");
+
+            if (existingKeys?.length) {
+                setKey(existingKeys[0].key);
+                setShow((prev) => !prev);
+                return;
+            }
+
+            const newKey = `api_${generateSecureKey()}_videco.io`;
+            const { data: insertedKeys, error: insertError } = await supabase
+                .from("apikey")
+                .insert([
+                    {
+                        user_id: user.id,
+                        tenant_id: user.user_metadata?.tenant_id ?? undefined,
+                        key: newKey,
+                    },
+                ])
+                .select("id, key");
+
+            if (insertError) {
+                throw insertError;
+            }
+
+            setKey(insertedKeys?.[0]?.key ?? newKey);
+            setShow((prev) => !prev);
+            toast({
+                title: "API key generated",
+                description:
+                    "Your API key has been created. Make sure to copy it now.",
+                status: "success",
+                duration: 3000,
+                isClosable: true,
+            });
+        } catch (error: any) {
+            console.error("Failed to generate API key", error);
+            toast({
+                title: "Failed to generate API key",
+                description: error?.message || "Please try again later.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        } finally {
+            setApiKeyLoading(false);
         }
     };
     const getFullTeamMembers = async () => {
@@ -370,6 +417,7 @@ const Settings: React.FC = () => {
                                                 }
                                                 placeholder="your API key"
                                                 value={key}
+                                                isReadOnly
                                             />
                                             <InputRightElement width="auto">
                                                 <Button
@@ -378,6 +426,7 @@ const Settings: React.FC = () => {
                                                     px={2}
                                                     size="xs"
                                                     onClick={handleAPIKeyClick}
+                                                    isLoading={apiKeyLoading}
                                                 >
                                                     {show
                                                         ? "Hide"
@@ -409,4 +458,10 @@ const Settings: React.FC = () => {
     );
 };
 
-export default Settings;
+const SettingsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <SettingsContent />
+    </AuthGuard>
+);
+
+export default SettingsWithAuth;

@@ -14,7 +14,7 @@ import {
     Image,
     Checkbox,
 } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useUserStore } from "src/store/user";
 import { motion, m } from "framer-motion";
@@ -44,7 +44,6 @@ const steps = [
 ];
 
 export const Onboarding: FC<OnboardingProps> = (props) => {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(false);
     const [fullname, setFullname] = useState(null);
     const [website, setWebsite] = useState(null);
@@ -457,14 +456,11 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
                                         px={12}
                                         opacity="0.6"
                                     >
-                                        <video
-                                            src="/default_thumb.mp4"
-                                            muted
-                                            autoPlay
-                                            style={{
-                                                borderRadius: "20px",
-                                                border: "1px solid #DADADA",
-                                            }}
+                                        <Image
+                                            src="/default_thumb.png"
+                                            alt="Onboarding preview"
+                                            borderRadius="20px"
+                                            border="1px solid #DADADA"
                                             width={400}
                                         />
                                     </Box>

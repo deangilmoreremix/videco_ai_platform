@@ -26,7 +26,7 @@ import { useRouter } from "next/router";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import {
     FiBarChart,
@@ -38,10 +38,10 @@ import {
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { videoTypes } from "src/utils/video";
 import { OnBoardingVideo } from "@components/common/onboarding-video";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 import { PiPlay, PiVideo } from "react-icons/pi";
 
-const Videos: React.FC = () => {
-    const supabase = createClientComponentClient();
+const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isLargerThan800] = useMediaQuery("(min-width: 1000px)");
     const [videoData, setVideoData] = useState<any>();
@@ -213,11 +213,7 @@ const Videos: React.FC = () => {
                                                         ]}
                                                     >
                                                         <Image
-                                                            src={
-                                                                video?.url
-                                                                    ? "/default_thumb.png"
-                                                                    : "/default_thumb.png"
-                                                            }
+                                                            src="/default_thumb.png"
                                                             height={[
                                                                 "124",
                                                                 "32",
@@ -569,4 +565,11 @@ const Videos: React.FC = () => {
         </>
     );
 };
-export default Videos;
+
+const CampaignVideosWithAuth: React.FC = () => (
+    <AuthGuard>
+        <VideosContent />
+    </AuthGuard>
+);
+
+export default CampaignVideosWithAuth;

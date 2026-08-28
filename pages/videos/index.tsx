@@ -33,8 +33,7 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
-import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { FiBarChart, FiDelete, FiEdit, FiShare } from "react-icons/fi";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
@@ -42,9 +41,10 @@ import { Banner } from "@components/common/banners";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { videoTypes } from "src/utils/video";
 import { OnBoardingVideo } from "@components/common/onboarding-video";
+import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 
-const Videos: React.FC = () => {
-    const supabase = createClientComponentClient();
+const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [videoData, setVideoData] = useState<any>();
     const [filterVideos, setFilterVideos] = useState<any>(videoTypes.video);
@@ -495,4 +495,11 @@ const Videos: React.FC = () => {
         </>
     );
 };
-export default Videos;
+
+const VideosWithAuth: React.FC = () => (
+    <AuthGuard>
+        <VideosContent />
+    </AuthGuard>
+);
+
+export default VideosWithAuth;

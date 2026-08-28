@@ -17,10 +17,10 @@ module.exports = {
     unoptimized: true,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   webpack: (config) => {
     config.resolve.extensions = [".ts", ".tsx", ".js", ".jsx"];

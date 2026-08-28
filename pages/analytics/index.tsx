@@ -15,16 +15,16 @@ import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import "ka-table/style.css";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 import { LatestAnalytics } from "@components/features/analytics/latest";
 import { TopAnalytics } from "@components/features/analytics/top";
 import Select from "react-select";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { ClickAnalytics } from "@components/features/analytics/click";
 import { FiArrowRight } from "react-icons/fi";
-const Analytics: React.FC = () => {
-    const supabase = createClientComponentClient();
+
+const AnalyticsContent: React.FC = () => {
     const router = useRouter();
     const [videoData, setVideoData] = useState<any>();
     const [videoViews, setVideoViews] = useState<number>(0);
@@ -412,4 +412,10 @@ const Analytics: React.FC = () => {
     );
 };
 
-export default Analytics;
+const AnalyticsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <AnalyticsContent />
+    </AuthGuard>
+);
+
+export default AnalyticsWithAuth;

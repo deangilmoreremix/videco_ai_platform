@@ -19,12 +19,6 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@definitions/*": [
-        "src/definitions/*"
-      ],
-      "@definitions": [
-        "src/definitions"
-      ],
       "@components/*": [
         "src/components/*"
       ],
@@ -36,18 +30,6 @@
       ],
       "@public": [
         "public"
-      ],
-      "@interfaces/*": [
-        "src/interfaces/*"
-      ],
-      "@interfaces": [
-        "src/interfaces"
-      ],
-      "@styles/*": [
-        "src/styles/*"
-      ],
-      "@styles": [
-        "src/styles"
       ],
       "@i18n": [
         "./i18n"

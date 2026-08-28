@@ -15,14 +15,13 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { Header } from "@components/common/header";
 import { FiArrowRight, FiCamera, FiUpload } from "react-icons/fi";
 
 const Upload: React.FC = () => {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [loadingCampaign, setLoadingCampaign] = useState(false);
     const [loadingUpload, setLoadingUpload] = useState(false);
@@ -171,11 +170,13 @@ const Upload: React.FC = () => {
                             bg="black"
                             p={1}
                         >
-                            <video
-                                autoPlay={true}
-                                loop
-                                muted
-                                src="/default_thumb.mp4"
+                            <Image
+                                src="/default_thumb.png"
+                                alt="Video preview"
+                                borderRadius="md"
+                                objectFit="cover"
+                                width="100%"
+                                height="auto"
                             />
                         </Box>
                         <Flex p={12} flexDir="column" mx={8}>

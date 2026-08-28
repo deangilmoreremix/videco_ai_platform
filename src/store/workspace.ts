@@ -14,7 +14,7 @@ export type WorkspaceState = {
 };
 
 const initialWorkspaceState = {
-    workspace: { name: "Default", id: 1, image: "/default_icon.png" },
+    workspace: undefined,
 };
 
 /**
@@ -33,7 +33,7 @@ export const useWorkspaces = create(
                     }));
                 },
                 clearWorkspace: () => {
-                    set(() => initialWorkspaceState);
+                    set(() => ({ workspace: undefined }));
                 },
             }),
             {

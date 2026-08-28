@@ -429,35 +429,6 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
                         </Text>
                     </Box>
                 </Box>
-
-                {/* <Box>
-                        <Button
-                            bg={"#ffffff"}
-                            color={"black"}
-                            size="sm"
-                            border={"2px solid #202020"}
-                            mr={4}
-                            fontSize="xs"
-                            mt={2}
-                            _hover={{
-                                bg: "#E5E5E5",
-                            }}
-                            onClick={() => {
-                                window.location.href = "/pricing";
-                            }}
-                        >
-                            <FaCrown
-                                style={{
-                                    marginRight: "5px",
-                                }}
-                            />{" "}
-                            {plan && plan === "growth"
-                                ? `Growth member`
-                                : plan === "light"
-                                ? `Lite member`
-                                : "Start your 14 day free trial"}
-                        </Button>
-                    </Box> */}
                 <Box>
                     <Menu computePositionOnMount={true}>
                         <Divider w="full" mt={3} ml={2} />

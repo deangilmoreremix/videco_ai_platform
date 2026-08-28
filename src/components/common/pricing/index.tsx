@@ -191,7 +191,7 @@ const Pricing = ({ hidePiricng }: PackageTierProps) => {
                             }}
                             mt={8}
                             w="full"
-                            onClick={() => (window.location.href = "/pricing")}
+                            onClick={() => router.push("/pricing")}
                             rightIcon={<FiArrowRight />}
                         >
                             See all plans

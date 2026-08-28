@@ -1,5 +1,4 @@
-import { Divider, Box, Text } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Divider, Box, Text, Spinner, Center } from "@chakra-ui/react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
@@ -12,6 +11,7 @@ import {
     YAxis,
     Area,
 } from "recharts";
+import { supabase } from "src/services";
 
 type VideoData = {
     filterById?: any;
@@ -21,53 +21,29 @@ export const LatestAnalytics: React.FC<VideoData> = ({
     filterById,
     range = 7,
 }) => {
-    const supabase = createClientComponentClient();
     const router = useRouter();
     const [videoData, setVideoData] = useState<any>([]);
     const [formattedVideoData, setFormattedVideoData] = useState<any>([]);
+    const [error, setError] = useState<string | null>(null);
     const session = useSession();
     const user = session?.user;
-    const data = [
-        {
-            name: "Mar 1",
-            views: 200,
-        },
-        {
-            name: "2",
-            views: 100,
-        },
-        {
-            name: "3",
-            views: 10,
-        },
-        {
-            name: "4",
-            views: 300,
-        },
-        {
-            name: "5",
-            views: 100,
-        },
-        {
-            name: "6",
-            views: 100,
-        },
-        {
-            name: "7",
-            views: 200,
-        },
-    ];
     const [loading, setLoading] = useState(true);
     const getProfile = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
+            if (!user?.id) {
+                setVideoData([]);
+                return;
+            }
+
             let query = supabase
                 .from("videos")
                 .select(
                     "name, id, size, status, analytics ( id, data, event, created_at )",
                 )
                 .neq("status", "deleted")
-                .eq("user_id", user?.id);
+                .eq("user_id", user.id);
 
             if (filterById) {
                 query = query.eq("id", filterById);
@@ -82,68 +58,57 @@ export const LatestAnalytics: React.FC<VideoData> = ({
             if (data) {
                 setVideoData(data ?? []);
             }
-        } catch (error) {
-            console.log(error);
+        } catch (err: any) {
+            console.error("Failed to load latest analytics", err);
+            setError(err?.message || "Failed to load analytics");
         } finally {
             setLoading(false);
         }
-    }, [user, supabase, filterById, range]);
+    }, [user, filterById, range]);
 
     useEffect(() => {
         getProfile();
-    }, [user, getProfile, filterById, range]);
+    }, [getProfile]);
     useEffect(() => {
         const processedVideoData = videoData.map((item) => ({
             ...item,
             analytics: item.analytics
-                .filter((item) => item.event === "view")
-                .map((analytic) => ({
+                .filter((item: any) => item.event === "view")
+                .map((analytic: any) => ({
                     ...analytic,
                 })),
-            count: item.analytics[0]?.data.count,
-            user_agent: item.analytics[0]?.data.user_agent,
         }));
-        // Initialize an object to hold the count of analytics events for each day
-        const analyticsCounts = {};
 
-        // Get today's date
-        const today: any = new Date();
+        const analyticsCounts: Record<string, number> = {};
 
-        // Iterate through each item in the data array
-        processedVideoData &&
-            processedVideoData.forEach((item) => {
-                // Iterate through the analytics array of the item
-                item.analytics.forEach((analytic) => {
-                    // Extract the date from the created_at field
-                    const createdDate: any = new Date(analytic.created_at);
+        const today = new Date();
 
-                    // Calculate the difference in days between today and the analytics date
-                    const dayDiff = Math.ceil(
-                        (today - createdDate) / (1000 * 60 * 60 * 24),
-                    );
-                    // Check if the analytics event occurred within the last 7 days
-                    if (dayDiff >= 1 && dayDiff <= 7) {
-                        // Get the date string in the format "YYYY-MM-DD"
-                        const dateString = createdDate
-                            .toISOString()
-                            .split("T")[0];
+        processedVideoData?.forEach((item: any) => {
+            item.analytics.forEach((analytic: any) => {
+                const createdDate = new Date(analytic.created_at);
 
-                        // Increment the count for the corresponding date in the analyticsCounts object
-                        analyticsCounts[dateString] =
-                            (analyticsCounts[dateString] || 0) + 1;
-                    }
-                });
+                if (Number.isNaN(createdDate.getTime())) {
+                    return;
+                }
+
+                const dayDiff = Math.ceil(
+                    (today.getTime() - createdDate.getTime()) /
+                        (1000 * 60 * 60 * 24),
+                );
+                if (dayDiff >= 1 && dayDiff <= range) {
+                    const dateString = createdDate.toISOString().split("T")[0];
+                    analyticsCounts[dateString] =
+                        (analyticsCounts[dateString] || 0) + 1;
+                }
             });
+        });
 
-        // Generate the data array based on the counted events for each day
         const finalData = [];
         for (let i = 0; i < range; i++) {
-            // Calculate the date for each of the last 7 days
             const date = new Date();
             date.setDate(today.getDate() - i);
             const dateString = date.toISOString().split("T")[0];
 
-            // Push an object representing the date and its corresponding views count
             finalData.push({
                 date: dateString,
                 name: dateString.split("-")[2],
@@ -151,7 +116,63 @@ export const LatestAnalytics: React.FC<VideoData> = ({
             });
         }
         setFormattedVideoData(finalData);
-    }, [user, getProfile, filterById, videoData, range]);
+    }, [user, filterById, videoData, range]);
+
+    if (loading) {
+        return (
+            <Box
+                shadow="sm"
+                rounded="md"
+                border="1px solid #dcdcdc"
+                w="full"
+                mr={4}
+                pt={6}
+                mb={6}
+            >
+                <Text
+                    as="h2"
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    mb={5}
+                    ml={5}
+                >
+                    Total views last {range} days
+                </Text>
+                <Divider mb={5} />
+                <Center py={10}>
+                    <Spinner />
+                </Center>
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Box
+                shadow="sm"
+                rounded="md"
+                border="1px solid #dcdcdc"
+                w="full"
+                mr={4}
+                pt={6}
+                mb={6}
+            >
+                <Text
+                    as="h2"
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    mb={5}
+                    ml={5}
+                >
+                    Total views last {range} days
+                </Text>
+                <Divider mb={5} />
+                <Text ml={6} mt={3} color="red.500">
+                    {error}
+                </Text>
+            </Box>
+        );
+    }
 
     return (
         <Box

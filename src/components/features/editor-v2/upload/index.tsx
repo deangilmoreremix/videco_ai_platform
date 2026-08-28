@@ -103,7 +103,7 @@ export const Upload: React.FC<UploadProps> = ({
             {showPricing ? (
                 <Pricing
                     hidePiricng={() => {
-                        window.location.href = "/videos";
+                        router.push("/videos");
                     }}
                 />
             ) : (

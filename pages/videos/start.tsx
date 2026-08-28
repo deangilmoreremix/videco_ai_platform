@@ -11,14 +11,13 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { FiArrowRight } from "react-icons/fi";
 import { videoTypes } from "src/utils/video";
 
 const Start: React.FC = () => {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [loadingCampaign, setLoadingCampaign] = useState(false);
     const [loadingUpload, setLoadingUpload] = useState(false);
@@ -79,14 +78,16 @@ const Start: React.FC = () => {
                     url: "",
                 })
                 .select("id");
-            window.location.href = `/campaign/steps/start?id=${data[0].id}`;
             if (error) throw error;
+            if (data?.[0]?.id) {
+                router.push(`/campaign/steps/start?id=${data[0].id}`);
+            }
         } catch (error) {
             console.log(error);
         } finally {
             setLoadingCampaign(false);
         }
-    }, [user, supabase]);
+    }, [user, supabase, router]);
 
     const createClone = useCallback(async () => {
         try {
@@ -102,14 +103,16 @@ const Start: React.FC = () => {
                     url: "",
                 })
                 .select("id");
-            window.location.href = `/clones/create?id=${data[0].id}`;
             if (error) throw error;
+            if (data?.[0]?.id) {
+                router.push(`/clones/create?id=${data[0].id}`);
+            }
         } catch (error) {
             console.log(error);
         } finally {
             setLoadingCampaign(false);
         }
-    }, [user, supabase]);
+    }, [user, supabase, router]);
 
     useEffect(() => {
         getProfile();
@@ -209,11 +212,13 @@ const Start: React.FC = () => {
                                     bg="black"
                                     p={1}
                                 >
-                                    <video
-                                        autoPlay={true}
-                                        loop
-                                        muted
-                                        src="/default_thumb.mp4"
+                                    <Image
+                                        src="/default_thumb.png"
+                                        alt="AI Clone preview"
+                                        borderRadius="md"
+                                        objectFit="cover"
+                                        width="100%"
+                                        height="auto"
                                     />
                                 </Box>
                                 <Box mt={4}>
@@ -273,11 +278,13 @@ const Start: React.FC = () => {
                                     bg="black"
                                     p={1}
                                 >
-                                    <video
-                                        autoPlay={true}
-                                        loop
-                                        muted
-                                        src="/default_thumb.mp4"
+                                    <Image
+                                        src="/default_thumb.png"
+                                        alt="Personalized campaign preview"
+                                        borderRadius="md"
+                                        objectFit="cover"
+                                        width="100%"
+                                        height="auto"
                                     />
                                 </Box>
                                 <Box mt={4}>
@@ -342,11 +349,13 @@ const Start: React.FC = () => {
                                     bg="black"
                                     p={1}
                                 >
-                                    <video
-                                        autoPlay={true}
-                                        loop
-                                        muted
-                                        src="/default_thumb.mp4"
+                                    <Image
+                                        src="/default_thumb.png"
+                                        alt="Upload video preview"
+                                        borderRadius="md"
+                                        objectFit="cover"
+                                        width="100%"
+                                        height="auto"
                                     />
                                 </Box>
                                 <Box mt={4}>

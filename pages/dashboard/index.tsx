@@ -44,16 +44,16 @@ import {
 } from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Invite } from "@components/features/invite";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { TopAnalytics } from "@components/features/analytics/top";
 import { LatestAnalytics } from "@components/features/analytics/latest";
 import Pricing from "@components/common/pricing";
+import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 
-const Dashboard: React.FC = () => {
-    const supabase = createClientComponentClient();
+const DashboardContent: React.FC = () => {
     const [isSSR, setIsSSR] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
     const [videoData, setVideoData] = useState<any>();
@@ -178,7 +178,11 @@ const Dashboard: React.FC = () => {
 
     return (
         <>
-            {!session ? (
+            {/* No-auth mode: render the dashboard directly even without a
+                Supabase session so users land straight on the dashboard.
+                The email-confirmation message is still shown when ?code is
+                present. */}
+            {!session && isConfirming ? (
                 <Box
                     textAlign="center"
                     alignItems="center"
@@ -187,20 +191,16 @@ const Dashboard: React.FC = () => {
                     height="full"
                     width="full"
                 >
-                    {isConfirming ? (
-                        <Box>
-                            Thank you for confirming your email,{" "}
-                            <Link
-                                textDecor="underline"
-                                href="/auth/login?mode=login"
-                            >
-                                Click here
-                            </Link>{" "}
-                            to login
-                        </Box>
-                    ) : (
-                        <Spinner size="xl" />
-                    )}
+                    <Box>
+                        Thank you for confirming your email,{" "}
+                        <Link
+                            textDecor="underline"
+                            href="/auth/login?mode=login"
+                        >
+                            Click here
+                        </Link>{" "}
+                        to login
+                    </Box>
                 </Box>
             ) : (
                 <Sidebar>
@@ -633,7 +633,9 @@ const Dashboard: React.FC = () => {
                                                                         <FiEdit
                                                                             cursor="pointer"
                                                                             onClick={() =>
-                                                                                (window.location.href = `/videos/edit?type=edit&id=${video.id}`)
+                                                                                router.push(
+                                                                                    `/videos/edit?type=edit&id=${video.id}`,
+                                                                                )
                                                                             }
                                                                             style={{
                                                                                 marginRight:
@@ -643,7 +645,9 @@ const Dashboard: React.FC = () => {
                                                                         <FiBarChart2
                                                                             cursor="pointer"
                                                                             onClick={() =>
-                                                                                (window.location.href = `/analytics?video_id=${video.id}`)
+                                                                                router.push(
+                                                                                    `/analytics?video_id=${video.id}`,
+                                                                                )
                                                                             }
                                                                         />
                                                                     </Flex>
@@ -676,4 +680,10 @@ const Dashboard: React.FC = () => {
     );
 };
 
-export default Dashboard;
+const DashboardWithAuth: React.FC = () => (
+    <AuthGuard>
+        <DashboardContent />
+    </AuthGuard>
+);
+
+export default DashboardWithAuth;

@@ -9,7 +9,7 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { v4 as uuidv4 } from "uuid";
@@ -31,7 +31,6 @@ import { pollMuapiJob, pollUntilComplete } from "src/services/api/pollMuapi";
 
 export const Editor: React.FC = () => {
     const router = useRouter();
-    const supabase = createClientComponentClient();
     const [videoUrl, setVideoUrl] = useState("");
     const [campaignName, setCampaignName] = useState<any>("");
     const [videoType, setVideoType] = useState("");
@@ -374,9 +373,9 @@ export const Editor: React.FC = () => {
             .select("id, url");
         if (data?.[0].id) {
             if (router.query.id && router.query.varient) {
-                window.location.href = `/campaign/steps/start?id=${router.query.id}`;
+                router.push(`/campaign/steps/start?id=${router.query.id}`);
             } else {
-                window.location.href = `/videos/edit?id=${data[0].id}&preview=true`;
+                router.push(`/videos/edit?id=${data[0].id}&preview=true`);
             }
         }
         if (error) throw error;
@@ -398,7 +397,7 @@ export const Editor: React.FC = () => {
             })
             .select("id, url");
         if (data?.[0].id) {
-            window.location.href = `/videos/edit?id=${data[0].id}`;
+            router.push(`/videos/edit?id=${data[0].id}`);
         }
         if (error) throw error;
     };

@@ -29,7 +29,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { AudioRecorder } from "react-audio-voice-recorder";
 import { processAIVideos } from "src/services/api/createAIPreview";
@@ -59,7 +59,6 @@ import { useWorkspaces } from "src/store/workspace";
 import { FaLinkedin } from "react-icons/fa";
 
 const Start: React.FC = () => {
-    const supabase = createClientComponentClient();
     const [plan, setPlan] = useState<any>();
     const [loading, setLoading] = useState(true);
     const [videoLoading, setVideoLoading] = useState(false);
@@ -757,7 +756,7 @@ const Start: React.FC = () => {
                                 rounded="md"
                                 cursor="pointer"
                                 onClick={() =>
-                                    handleDownload("/default_thumb.mp4")
+                                    handleDownload("/default_thumb.png")
                                 }
                             >
                                 Use example video

@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { AudioRecorder } from "react-audio-voice-recorder";
 import { createAIClone } from "src/services/api/createAIPreview";
@@ -46,9 +46,8 @@ import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { Templates } from "@components/features/ai-clone/templates";
 import { NotAllowed } from "@components/features/ai-clone/not-allowed";
 import { useWorkspaces } from "src/store/workspace";
-
-const Create: React.FC = () => {
-    const supabase = createClientComponentClient();
+import { AuthGuard } from "src/hoc/withAuthGuard";
+CreateContentContent: React.FC = () => {
     const [plan, setPlan] = useState<any>();
     const [loading, setLoading] = useState(true);
     const [videoLoading, setVideoLoading] = useState(false);
@@ -466,7 +465,7 @@ const Create: React.FC = () => {
     };
 
     async function handleDownload() {
-        const url = "/default_thumb.mp4";
+        const url = "/default_thumb.png";
 
         try {
             startUpload(url, "12");
@@ -1362,4 +1361,10 @@ const Create: React.FC = () => {
         </>
     );
 };
-export default Create;
+const CreateWithAuth: React.FC = () => (
+    <AuthGuard>
+        <CreateContent />
+    </AuthGuard>
+);
+
+export default CreateWithAuth;

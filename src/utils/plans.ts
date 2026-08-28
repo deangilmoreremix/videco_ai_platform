@@ -1,86 +1,95 @@
+export type PlanName = "trial" | "lite" | "growth" | "scale" | "enterprise";
+
+export const planDisplayNames: Record<PlanName, string> = {
+    trial: "Trial",
+    lite: "Lite",
+    growth: "Growth",
+    scale: "Scale",
+    enterprise: "Enterprise",
+};
+
 export const plans = [
-    [
-        {
-            name: "Starter",
-            description: "Starter Plan",
-            price: "€19/month",
-        },
-        {
-            name: "Premium",
-            description: "Premium Plan",
-            price: "€59/month",
-        },
-    ],
+    {
+        name: "Starter",
+        description: "Starter Plan",
+        price: "€19/month",
+        plan_name: "lite" as PlanName,
+    },
+    {
+        name: "Premium",
+        description: "Premium Plan",
+        price: "€59/month",
+        plan_name: "growth" as PlanName,
+    },
 ];
 
 export const planSelector = (plan_name: string, frequency: string) => {
-    let plan_id;
     switch (plan_name) {
         case "trial":
-            plan_id = "trial";
-            break;
+            return "trial";
         case "lite":
-            plan_id = frequency === "month" ? "lite_month" : "lite_year";
-            break;
+            return frequency === "month" ? "lite_month" : "lite_year";
         case "growth":
-            plan_id = frequency === "month" ? "growth_month" : "growth_year";
-            break;
+            return frequency === "month" ? "growth_month" : "growth_year";
         case "scale":
-            plan_id = frequency === "month" ? "scale_month" : "scale_year";
-            break;
+            return frequency === "month" ? "scale_month" : "scale_year";
         default:
-            break;
+            return plan_name;
     }
-    return plan_id;
 };
+
 export const planUsage = (plan_name: string) => {
-    let planUsage: {
-        dynamicVideos: any[];
-        seat: any[];
-        videos: number[];
-    } = {
-        dynamicVideos: [1500, 1500],
-        seat: [5, 5],
-        videos: [100, 100],
+    const baseUsage = {
+        dynamicVideos: [0, 1500] as [number, number],
+        seat: [1, 5] as [number, number],
+        videos: [0, 100] as [number, number],
     };
+
     switch (plan_name) {
         case "trial":
-            planUsage = {
-                dynamicVideos: [0, 1500],
-                seat: [1, 5],
-                videos: [0, 100],
+            return {
+                dynamicVideos: [0, 1500] as [number, number],
+                seat: [1, 5] as [number, number],
+                videos: [0, 100] as [number, number],
             };
-            break;
         case "lite":
-            planUsage = {
-                dynamicVideos: [0, 100],
-                seat: [1, 1],
-                videos: [0, 20],
+            return {
+                dynamicVideos: [0, 100] as [number, number],
+                seat: [1, 1] as [number, number],
+                videos: [0, 20] as [number, number],
             };
-            break;
         case "growth":
-            planUsage = {
-                dynamicVideos: [0, 1500],
-                seat: [1, 5],
-                videos: [0, 100],
+            return {
+                dynamicVideos: [0, 1500] as [number, number],
+                seat: [1, 5] as [number, number],
+                videos: [0, 100] as [number, number],
             };
-            break;
         case "scale":
-            planUsage = {
-                dynamicVideos: [0, 3000],
-                seat: [10, 10],
-                videos: [0, 250],
+            return {
+                dynamicVideos: [0, 3000] as [number, number],
+                seat: [10, 10] as [number, number],
+                videos: [0, 250] as [number, number],
             };
-            break;
         case "enterprise":
-            planUsage = {
-                dynamicVideos: [0, 5000],
-                seat: [10, 25],
-                videos: [0, 1000000],
+            return {
+                dynamicVideos: [0, 5000] as [number, number],
+                seat: [10, 25] as [number, number],
+                videos: [0, 1000000] as [number, number],
             };
-            break;
         default:
-            break;
+            return baseUsage;
     }
-    return planUsage;
+};
+
+export const isPlanAtLeast = (current: string, target: PlanName): boolean => {
+    const order: PlanName[] = [
+        "trial",
+        "lite",
+        "growth",
+        "scale",
+        "enterprise",
+    ];
+    const currentIndex = order.indexOf(current as PlanName);
+    const targetIndex = order.indexOf(target);
+    return currentIndex >= targetIndex;
 };

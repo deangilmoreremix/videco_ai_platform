@@ -14,14 +14,13 @@ import {
     Text,
     Link,
 } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
 import { FiPlay } from "react-icons/fi";
 
 export const TopAnalytics: React.FC = () => {
-    const supabase = createClientComponentClient();
     const router = useRouter();
     const [videoData, setVideoData] = useState<any>();
     const session = useSession();
@@ -146,16 +145,20 @@ export const TopAnalytics: React.FC = () => {
                                     </Tr>
                                 ))
                         ) : (
-                            <Text ml={6} mt={3}>
-                                No data available. Start{" "}
-                                <Link
-                                    textDecor="underline"
-                                    href="/videos/edit?type=upload"
-                                >
-                                    creating videos
-                                </Link>{" "}
-                                to see data here.
-                            </Text>
+                            <Tr>
+                                <Td colSpan={2}>
+                                    <Text ml={6} mt={3}>
+                                        No data available. Start{" "}
+                                        <Link
+                                            textDecor="underline"
+                                            href="/videos/edit?type=upload"
+                                        >
+                                            creating videos
+                                        </Link>{" "}
+                                        to see data here.
+                                    </Text>
+                                </Td>
+                            </Tr>
                         )}
                     </Tbody>
                 </Table>

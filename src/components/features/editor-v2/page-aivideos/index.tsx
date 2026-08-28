@@ -25,7 +25,7 @@ import { useBrandKit } from "src/hooks/getBrandKit";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import Image from "next/image";
 import { StepGenerate } from "./steps/generate";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import {
     emailProvidersList,
     getEmailEmbedCode,
@@ -63,7 +63,6 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
     meta,
 }) => {
     const router = useRouter();
-    const supabase = createClientComponentClient();
     const toast = useToast();
     const [emailProvider, setEmailProvider] = useState<any>();
     const { getBrandKit } = useBrandKit();
@@ -767,7 +766,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                         Upgrade to Grwoth and enjoy benifits of AI Videos
                     </Text>
                     <Button
-                        onClick={() => (window.location.href = "/pricing")}
+                        onClick={() => router.push("/pricing")}
                         mb={3}
                         bg="#05405A"
                         color="white"

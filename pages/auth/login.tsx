@@ -12,6 +12,7 @@ import {
     Box,
     Text,
     Heading,
+    Flex,
 } from "@chakra-ui/react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -23,20 +24,26 @@ const Login: any = () => {
     const session = useSession();
     const supabase = useSupabaseClient();
     const [resetPassword, setResetPassword] = React.useState("");
+    const [mode, setMode] = React.useState<"sign_in" | "sign_up">("sign_in");
     const router = useRouter();
 
     useEffect(() => {
-        session && !router.query.reset && router.push("/campaign");
-    }, [session]);
+        if (session && !router.query.reset) {
+            router.push("/campaign");
+        }
+    }, [session, router]);
+
     useEffect(() => {
-        // Wait for the input to be in the DOM, then prefill it
-        setTimeout(() => {
-            const emailInput: any = document.getElementById("email");
-            if (emailInput) {
-                emailInput.value = router.query.email ?? "";
-            }
-        }, 500);
-    }, [router.query]); // Run this effect once after the component mounts
+        const emailInput: any = document.getElementById("email");
+        if (emailInput) {
+            emailInput.value = router.query.email ?? "";
+        }
+    }, [router.query]);
+
+    const handleAuthError = (error: any) => {
+        console.error("Auth error:", error);
+        alert(error?.message || "Authentication failed");
+    };
 
     return (
         <Grid
@@ -78,18 +85,19 @@ const Login: any = () => {
                                 variant="solid"
                                 w="full"
                                 onClick={async () => {
-                                    const { error } =
-                                        await supabase.auth.updateUser({
-                                            password: resetPassword,
-                                        });
-                                    if (error) {
-                                        alert(
-                                            "Error updating password: " +
-                                                error.message,
-                                        );
-                                    } else {
-                                        alert("Password updated successfully");
-                                        router.push("/auth/login");
+                                    try {
+                                        const { error } =
+                                            await supabase.auth.updateUser({
+                                                password: resetPassword,
+                                            });
+                                        if (error) {
+                                            handleAuthError(error);
+                                        } else {
+                                            alert("Password updated successfully");
+                                            router.push("/auth/login");
+                                        }
+                                    } catch (e) {
+                                        handleAuthError(e);
                                     }
                                 }}
                             >
@@ -98,31 +106,29 @@ const Login: any = () => {
                         </Box>
                     ) : (
                         <Box>
-                            <Text
-                                fontSize="2xl"
-                                textAlign="left"
-                                mt={1}
-                                fontWeight="semibold"
-                            >
-                                Get Started Now
-                            </Text>
-                            <Text fontSize="sm" textAlign="left">
-                                Enter your credentials to access your account
-                            </Text>
+                            <Flex direction="column" mb={4}>
+                                <Heading as="h2" size="lg" mb={2}>
+                                    {mode === "sign_in"
+                                        ? "Welcome back"
+                                        : "Create your account"}
+                                </Heading>
+                                <Text fontSize="sm" textAlign="left">
+                                    {mode === "sign_in"
+                                        ? "Enter your credentials to access your account"
+                                        : "Get started with Videco today"}
+                                </Text>
+                            </Flex>
                             <Auth
                                 providers={["google"]}
                                 supabaseClient={supabase}
-                                view={
-                                    router.query.reset
-                                        ? "forgotten_password"
-                                        : "sign_up"
-                                }
+                                view={mode}
                                 queryParams={{
                                     prompt: "consent",
                                 }}
                                 redirectTo={
-                                    process.env.NEXT_PUBLIC_SITE_URL +
-                                    "/auth/login"
+                                    typeof window !== "undefined"
+                                        ? window.location.origin + "/campaign"
+                                        : "/campaign"
                                 }
                                 theme="default"
                                 appearance={{
@@ -139,6 +145,23 @@ const Login: any = () => {
                                     },
                                 }}
                             />
+                            <Box mt={4} textAlign="center">
+                                <Button
+                                    variant="link"
+                                    color="#05405A"
+                                    onClick={() =>
+                                        setMode(
+                                            mode === "sign_in"
+                                                ? "sign_up"
+                                                : "sign_in",
+                                        )
+                                    }
+                                >
+                                    {mode === "sign_in"
+                                        ? "Don't have an account? Sign up"
+                                        : "Already have an account? Sign in"}
+                                </Button>
+                            </Box>
                         </Box>
                     )}
                 </Container>
@@ -153,7 +176,6 @@ const Login: any = () => {
                 backdropBlur={5}
                 backgroundSize="cover !important"
                 bg="url('/assets/bg-login.png')"
-                // backgroundColor="red"
                 backgroundRepeat="no-repeat"
                 backgroundPosition="center"
             >
@@ -208,7 +230,7 @@ const Login: any = () => {
             </GridItem>
             <Script
                 id="partnero-integration"
-                strategy="afterInteractive" // Ensure it runs after page load
+                strategy="afterInteractive"
                 dangerouslySetInnerHTML={{
                     __html: `po('integration', 'universal', null);`,
                 }}
