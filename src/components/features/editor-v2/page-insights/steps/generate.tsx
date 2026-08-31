@@ -155,7 +155,9 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
             user_id: user?.id,
         });
         if (job?.id) {
-            pollJob(job.id).catch((e) => console.warn("[generate] pollJob failed:", e));
+            pollJob(job.id).catch((e) =>
+                console.warn("[generate] pollJob failed:", e),
+            );
         }
     };
     useEffect(() => {

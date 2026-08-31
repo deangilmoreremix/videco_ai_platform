@@ -156,7 +156,9 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
         });
         // Optionally poll in background or let user poll later
         if (job?.id) {
-            pollJob(job.id).catch((e) => console.warn("[generate] pollJob failed:", e));
+            pollJob(job.id).catch((e) =>
+                console.warn("[generate] pollJob failed:", e),
+            );
         }
     };
     useEffect(() => {

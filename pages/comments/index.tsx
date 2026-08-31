@@ -15,8 +15,9 @@ import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 
-const Comments: React.FC = () => {
+const CommentsContent: React.FC = () => {
     const [comments, setComments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -146,4 +147,10 @@ const Comments: React.FC = () => {
     );
 };
 
-export default Comments;
+const CommentsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <CommentsContent />
+    </AuthGuard>
+);
+
+export default CommentsWithAuth;

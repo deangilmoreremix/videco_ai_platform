@@ -4,7 +4,7 @@ import { Sidebar } from "@components/common/sidebar";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { plans, planDisplayNames, isPlanAtLeast, PlanName } from "src/utils/plans";
-
+import { AuthGuard } from "src/hoc/withAuthGuard";
 const PlanCard = ({ plan, isCurrentPlan }: { plan: typeof plans[0]; isCurrentPlan: boolean }) => (
     <Card shadow="md" borderWidth="1px" borderColor={isCurrentPlan ? "green.400" : "gray.200"} maxW="sm">
         <CardBody>
@@ -20,7 +20,7 @@ const PlanCard = ({ plan, isCurrentPlan }: { plan: typeof plans[0]; isCurrentPla
     </Card>
 );
 
-const Pricing: React.FC = () => {
+PricingContent: React.FC = () => {
     const [plan, setPlan] = React.useState<PlanName | null>(null);
     const [loading, setLoading] = React.useState(true);
     const session = useSession();
@@ -80,4 +80,10 @@ const Pricing: React.FC = () => {
     );
 };
 
-export default Pricing;
+const PricingWithAuth: React.FC = () => (
+    <AuthGuard>
+        <PricingContent />
+    </AuthGuard>
+);
+
+export default PricingWithAuth;

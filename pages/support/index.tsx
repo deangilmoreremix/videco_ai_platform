@@ -28,7 +28,7 @@ import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import {
-    FiBluetooth,
+import { AuthGuard } from "src/hoc/withAuthGuard";    FiBluetooth,
     FiDisc,
     FiFacebook,
     FiGitCommit,
@@ -37,7 +37,7 @@ import {
     FiTwitter,
     FiVoicemail,
 } from "react-icons/fi";
-const Leads: React.FC = () => {
+LeadsContent: React.FC = () => {
     const session = useSession();
     const router = useRouter();
     useEffect(() => {
@@ -329,4 +329,10 @@ const Leads: React.FC = () => {
     );
 };
 
-export default Leads;
+const LeadsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <LeadsContent />
+    </AuthGuard>
+);
+
+export default LeadsWithAuth;

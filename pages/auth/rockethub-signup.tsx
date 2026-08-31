@@ -12,14 +12,15 @@ import {
     FormErrorMessage,
     Box,
 } from "@chakra-ui/react";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { Formik, Form, Field, FormikHelpers } from "formik";
+import { supabase } from "src/services";
+
 const Login: any = () => {
     const session = useSession();
     const [error, setError] = React.useState(null);
-    const supabase = useSupabaseClient();
     const router = useRouter();
     interface FormValues {
         email: string;
@@ -131,13 +132,52 @@ const Login: any = () => {
                                                 password: values.password,
                                             });
 
-                                        if (!error) {
+                                        if (!error && data?.user) {
+                                            const tenantId = crypto.randomUUID();
+                                            const { error: tenantError } =
+                                                await supabase.from("tenants").insert([
+                                                    {
+                                                        id: tenantId,
+                                                        name: data.user.email ?? "Default Tenant",
+                                                    },
+                                                ]);
+
+                                            if (!tenantError) {
+                                                await supabase.auth.updateUser({
+                                                    data: {
+                                                        tenant_id: tenantId,
+                                                    },
+                                                });
+
+                                                await supabase.from("profiles").upsert(
+                                                    {
+                                                        id: data.user.id,
+                                                        tenant_id: tenantId,
+                                                        email: data.user.email,
+                                                        full_name: data.user.user_metadata?.full_name,
+                                                        onboard_completed: false,
+                                                    },
+                                                    {
+                                                        onConflict: "id",
+                                                    },
+                                                );
+
+                                                await supabase
+                                                    .from("workspace")
+                                                    .update({
+                                                        tenant_id: tenantId,
+                                                    })
+                                                    .eq("owner", data.user.id)
+                                                    .is("tenant_id", null);
+                                            }
+
                                             await supabase
                                                 .from("plan")
                                                 .upsert({
+                                                    tenant_id: tenantId,
                                                     plan_name:
                                                         code?.plan_type.toLowerCase(),
-                                                    user_id: data?.user.id,
+                                                    user_id: data.user.id,
                                                     status: "active",
                                                 })
                                                 .select();

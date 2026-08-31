@@ -5,7 +5,9 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
-const Recording: React.FC = () => {
+import { AuthGuard } from "src/hoc/withAuthGuard";
+
+const RecordingContent: React.FC = () => {
     const session = useSession();
     const [plan, setPlan] = React.useState<any>();
     const user = session?.user;
@@ -83,4 +85,10 @@ const Recording: React.FC = () => {
     );
 };
 
-export default Recording;
+const RecordingWithAuth: React.FC = () => (
+    <AuthGuard>
+        <RecordingContent />
+    </AuthGuard>
+);
+
+export default RecordingWithAuth;

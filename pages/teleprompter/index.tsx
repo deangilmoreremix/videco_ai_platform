@@ -26,8 +26,8 @@ import {
 } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { Templates } from "@components/features/ai-clone/templates";
-
-const Teleprompter: React.FC = () => {
+import { AuthGuard } from "src/hoc/withAuthGuard";
+TeleprompterContent: React.FC = () => {
     const [plan, setPlan] = useState<any>();
     const [loading, setLoading] = useState(true);
     const [started, setStarted] = useState(false);
@@ -281,4 +281,11 @@ const Teleprompter: React.FC = () => {
         </>
     );
 };
-export default Teleprompter;
+
+const TeleprompterWithAuth: React.FC = () => (
+    <AuthGuard>
+        <TeleprompterContent />
+    </AuthGuard>
+);
+
+export default TeleprompterWithAuth;

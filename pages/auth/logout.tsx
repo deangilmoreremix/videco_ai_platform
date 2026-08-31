@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
 import { Grid, GridItem, Image, Container, Heading } from "@chakra-ui/react";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-const Logout: any = () => {
-    const supabase = useSupabaseClient();
+import { supabase } from "src/services";
 
+const Logout: any = () => {
     const router = useRouter();
     useEffect(() => {
         supabase.auth.signOut().finally(() => {

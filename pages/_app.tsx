@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
 import { AppProps } from "next/app";
 import { Box, ChakraProvider } from "@chakra-ui/react";
 import { useLanguageStore } from "src/store/language";
@@ -73,6 +73,81 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     }, []);
     const AnyComponent = Component as any;
 
+    const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
+        const session = useSession();
+        const user = session?.user;
+
+        useEffect(() => {
+            if (!user || !supabase) return;
+
+            const ensureTenant = async () => {
+                const existingTenantId =
+                    (user.user_metadata?.tenant_id as string | undefined) ||
+                    (user.app_metadata?.tenant_id as string | undefined);
+
+                if (existingTenantId) {
+                    return;
+                }
+
+                const { data: existingProfile } = await supabase
+                    .from("profiles")
+                    .select("tenant_id")
+                    .eq("id", user.id)
+                    .maybeSingle();
+
+                if (existingProfile?.tenant_id) {
+                    return;
+                }
+
+                const tenantId = crypto.randomUUID();
+                const { error: tenantError } = await supabase
+                    .from("tenants")
+                    .insert([
+                        {
+                            id: tenantId,
+                            name: user.email ?? "Default Tenant",
+                        },
+                    ]);
+
+                if (tenantError) {
+                    console.error("Failed to create tenant", tenantError);
+                    return;
+                }
+
+                await supabase.auth.updateUser({
+                    data: {
+                        tenant_id: tenantId,
+                    },
+                });
+
+                await supabase.from("profiles").upsert(
+                    {
+                        id: user.id,
+                        tenant_id: tenantId,
+                        email: user.email,
+                        full_name: user.user_metadata?.full_name,
+                        onboard_completed: false,
+                    },
+                    {
+                        onConflict: "id",
+                    },
+                );
+
+                await supabase
+                    .from("workspace")
+                    .update({ tenant_id })
+                    .eq("owner", user.id)
+                    .is("tenant_id", null);
+            };
+
+            ensureTenant().catch((error) =>
+                console.error("Tenant initialization failed", error),
+            );
+        }, [user, supabase]);
+
+        return <>{children}</>;
+    };
+
     return (
         <Box
             sx={{
@@ -108,7 +183,9 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
                             <AlertIcon />
                             Get 60% off on all plans. Use code{" "}
                         </Alert> */}
-                        <AnyComponent {...pageProps} />
+                        <AuthInitializer>
+                            <AnyComponent {...pageProps} />
+                        </AuthInitializer>
                     </SessionContextProvider>
                 ) : (
                     <AnyComponent {...pageProps} />

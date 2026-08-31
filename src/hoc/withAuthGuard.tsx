@@ -35,7 +35,10 @@ export const AuthGuard = ({
     return <>{children}</>;
 };
 
-export const withAuthGuard = (Component: any, options?: Omit<AuthGuardProps, "children">) => {
+export const withAuthGuard = (
+    Component: any,
+    options?: Omit<AuthGuardProps, "children">,
+) => {
     return function WrappedComponent(props: any) {
         return (
             <AuthGuard {...options}>

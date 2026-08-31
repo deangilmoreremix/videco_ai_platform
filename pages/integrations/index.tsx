@@ -22,8 +22,8 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { FiHelpCircle, FiSearch, FiSettings } from "react-icons/fi";
 import { MdCreate } from "react-icons/md";
-
-const Integrations: React.FC = () => {
+import { AuthGuard } from "src/hoc/withAuthGuard";
+IntegrationsContent: React.FC = () => {
     const session = useSession();
     const [search, setSearch] = useState("");
     const router = useRouter();
@@ -380,4 +380,10 @@ const Integrations: React.FC = () => {
     );
 };
 
-export default Integrations;
+const IntegrationsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <IntegrationsContent />
+    </AuthGuard>
+);
+
+export default IntegrationsWithAuth;
