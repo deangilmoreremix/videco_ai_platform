@@ -162,13 +162,29 @@ const Login: any = () => {
                                                     },
                                                 );
 
-                                                await supabase
-                                                    .from("workspace")
-                                                    .update({
-                                                        tenant_id: tenantId,
-                                                    })
-                                                    .eq("owner", data.user.id)
-                                                    .is("tenant_id", null);
+                                                const { error: wsUpdateError, count } =
+                                                    await supabase
+                                                        .from("workspace")
+                                                        .update({
+                                                            tenant_id: tenantId,
+                                                        })
+                                                        .eq("owner", data.user.id)
+                                                        .is("tenant_id", null);
+
+                                                if (wsUpdateError) {
+                                                    console.error("workspace update failed", wsUpdateError);
+                                                }
+
+                                                if (!count) {
+                                                    await supabase.from("workspace").insert([
+                                                        {
+                                                            owner: data.user.id,
+                                                            tenant_id: tenantId,
+                                                            name: "Default",
+                                                            image: "/default_icon.png",
+                                                        },
+                                                    ]);
+                                                }
                                             }
 
                                             await supabase

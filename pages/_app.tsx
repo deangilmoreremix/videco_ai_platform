@@ -133,11 +133,26 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
                     },
                 );
 
-                await supabase
+                const { error: wsError, count } = await supabase
                     .from("workspace")
-                    .update({ tenant_id })
+                    .update({ tenant_id: tenantId })
                     .eq("owner", user.id)
                     .is("tenant_id", null);
+
+                if (wsError) {
+                    console.error("workspace update failed", wsError);
+                }
+
+                if (!count) {
+                    await supabase.from("workspace").insert([
+                        {
+                            owner: user.id,
+                            tenant_id: tenantId,
+                            name: "Default",
+                            image: "/default_icon.png",
+                        },
+                    ]);
+                }
             };
 
             ensureTenant().catch((error) =>
