@@ -20,13 +20,13 @@ import {
     useMediaQuery,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEditorStore } from "src/store/editor";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import { FiArrowRight } from "react-icons/fi";
 import { useBrandKit } from "src/hooks/getBrandKit";
 import { usePersonalizedContent } from "src/hooks/usePersonalizedContent";
 import Head from "next/head";
+import { supabase } from "src/services";
 
 const Edit: React.FC = ({ videoData }: any) => {
     const router = useRouter();
@@ -66,7 +66,6 @@ const Edit: React.FC = ({ videoData }: any) => {
     const handleInputChange = (e) => setInput(e.target.value);
 
     const [duration, setDuration] = useState(0);
-    const supabase = createClientComponentClient();
     const playerRef = useRef(null);
     const { setVideo, setInteractiveElements, interactiveElements, video } =
         useEditorStore();
@@ -393,7 +392,6 @@ const Edit: React.FC = ({ videoData }: any) => {
 export default Edit;
 
 export async function getServerSideProps({ params }) {
-    const supabase = createClientComponentClient();
     const data = await supabase
         .from("videos")
         .select(

@@ -15,7 +15,7 @@ import { useState } from "react";
 import { PiCheckCircleFill } from "react-icons/pi";
 import { CloseIcon } from "@chakra-ui/icons";
 import { planSelector } from "src/utils/plans";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 
 interface PricingTableProps {
     freeLitePlan: boolean;
@@ -27,7 +27,6 @@ export const PricingTable = ({ user, expanded }: PricingTableProps) => {
     const [selectedPlan, setSelectedPlan] = useState("growth");
     const [isLoading, setIsLoading] = useState(false);
     const [promoCode, setPromoCode] = useState("");
-    const supabase = createClientComponentClient();
     const [frequency, setFrequency] = useState("month");
 
     const handleBuy = async () => {

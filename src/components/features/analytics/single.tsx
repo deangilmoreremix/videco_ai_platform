@@ -1,5 +1,5 @@
 import { Divider, Box, Text } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
@@ -23,7 +23,6 @@ export const SingleAnalytics: React.FC<VideoData> = ({
     range = 7,
     plan,
 }) => {
-    const supabase = createClientComponentClient();
     const router = useRouter();
     const [videoData, setVideoData] = useState<any>([]);
     const [formattedVideoData, setFormattedVideoData] = useState<any>([]);

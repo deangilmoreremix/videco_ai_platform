@@ -23,13 +23,12 @@ import { BlockPicker, SketchPicker } from "react-color";
 
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { Formik, Form, Field } from "formik";
-
-const BrandKit: React.FC = () => {
-    const supabase = createClientComponentClient();
+import { AuthGuard } from "src/hoc/withAuthGuard";
+BrandKitContentContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [noBrandkit, setNoBrandkit] = useState(false);
     const [primaryColor, setPrimaryColor] = useState("#05405A");
@@ -272,4 +271,10 @@ const BrandKit: React.FC = () => {
         </>
     );
 };
-export default BrandKit;
+const BrandKitWithAuth: React.FC = () => (
+    <AuthGuard>
+        <BrandKitContent />
+    </AuthGuard>
+);
+
+export default BrandKitWithAuth;

@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import {
@@ -28,7 +28,6 @@ import { useUserPlan } from "src/hooks/useUserPlan";
 import { Templates } from "@components/features/ai-clone/templates";
 
 const Teleprompter: React.FC = () => {
-    const supabase = createClientComponentClient();
     const [plan, setPlan] = useState<any>();
     const [loading, setLoading] = useState(true);
     const [started, setStarted] = useState(false);

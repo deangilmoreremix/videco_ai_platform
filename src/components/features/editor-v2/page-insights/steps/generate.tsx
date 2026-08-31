@@ -31,7 +31,7 @@ import { IoIosRefresh } from "react-icons/io";
 import { submitTextToVideo, pollJob } from "src/services";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { FiCheck, FiInfo, FiPlayCircle, FiRefreshCcw } from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { greetings, the_greeting } from "src/utils/voice";
@@ -55,7 +55,6 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
     const [regenerateData, setRegenerateData] = useState<any>();
     const [language, setLanguage] = useState<string>("");
     const [originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
-    const supabase = createClientComponentClient();
     const session = useSession();
     const user = session?.user;
 

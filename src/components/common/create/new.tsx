@@ -13,15 +13,14 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEditorStore } from "src/store/editor";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { FiArrowRight, FiChrome, FiMonitor } from "react-icons/fi";
 import { videoTypes } from "src/utils/video";
 import { useUserPlan } from "src/hooks/useUserPlan";
+import { supabase } from "src/services";
 
 const New: React.FC = () => {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [loadingCampaign, setLoadingCampaign] = useState(false);
     const [loadingUpload, setLoadingUpload] = useState(false);
@@ -129,14 +128,16 @@ const New: React.FC = () => {
                     url: "",
                 })
                 .select("id");
-            window.location.href = `/campaign/steps/start?id=${data[0].id}`;
             if (error) throw error;
+            if (data?.[0]?.id) {
+                router.push(`/campaign/steps/start?id=${data[0].id}`);
+            }
         } catch (error) {
             console.log(error);
         } finally {
             setLoadingCampaign(false);
         }
-    }, [user, supabase]);
+    }, [user, supabase, router]);
 
     const createClone = useCallback(async () => {
         try {
@@ -152,14 +153,16 @@ const New: React.FC = () => {
                     url: "",
                 })
                 .select("id");
-            window.location.href = `/clones/create?id=${data[0].id}`;
             if (error) throw error;
+            if (data?.[0]?.id) {
+                router.push(`/clones/create?id=${data[0].id}`);
+            }
         } catch (error) {
             console.log(error);
         } finally {
             setLoadingCampaign(false);
         }
-    }, [user, supabase]);
+    }, [user, supabase, router]);
 
     useEffect(() => {
         getProfile();

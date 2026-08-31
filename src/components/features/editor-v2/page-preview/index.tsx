@@ -54,7 +54,7 @@ import { useUserPlan } from "src/hooks/useUserPlan";
 import { useEditorStore } from "src/store/editor";
 import ThemeSidebar from "../theme-siderbar";
 import { PlayerSettings } from "./player-settings";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 // Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 
 type PagePreviewProps = {
@@ -70,7 +70,6 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
         useEditorStore();
     const playerRef = useRef(null);
     const { getBrandKit } = useBrandKit();
-    const supabase = createClientComponentClient();
     const [duration, setDuration] = useState(0);
     const [latestMediaStatus, setLatestMediaStatus] = useState(mediaStatus);
     const [latestUrl, setLatestUrl] = useState(videoUrl);

@@ -1,8 +1,7 @@
 // Usage logger for Muapi/OpenAI usage tracking
 // Client-side usage logger (best-effort). Server-side logging uses src/lib/usageServer.ts
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 
-const supabase = createClientComponentClient();
 
 export async function logUsage({
     user_id,

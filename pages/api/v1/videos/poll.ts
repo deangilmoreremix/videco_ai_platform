@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { pollResult } from "src/lib/muapi";
 
 /**
@@ -13,7 +13,6 @@ export default async function handler(
     if (req.method !== "POST")
         return res.status(405).json({ error: "Method not allowed" });
 
-    const supabase = createClientComponentClient();
     const { request_id, video_id, ai_video_id } = req.body;
 
     if (!request_id)

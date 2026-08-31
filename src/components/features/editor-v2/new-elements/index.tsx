@@ -3,7 +3,7 @@ import { FiCalendar, FiDatabase, FiMessageSquare } from "react-icons/fi";
 import React, { useEffect } from "react";
 import { LinkIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -26,7 +26,6 @@ export const NewElements = ({
     const { getPlan } = useUserPlan();
     const [showPricing, setShowPricing] = React.useState<any>(false);
     const { setVideoMeta, meta } = useEditorStore();
-    const supabase = createClientComponentClient();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);

@@ -344,8 +344,9 @@ const Integrations: React.FC = () => {
                                                             <FiSettings />
                                                         }
                                                         onClick={() =>
-                                                            (window.location.href =
-                                                                item.configLink)
+                                                            router.push(
+                                                                item.configLink,
+                                                            )
                                                         }
                                                         variant="ghost"
                                                     >

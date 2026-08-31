@@ -1,13 +1,12 @@
 import { FC, useCallback, useEffect, useState } from "react";
 import { OnBoardingVideoLoader } from "./loader";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { OnBoardingVideoFrame } from "./video";
 
 export const OnBoardingVideo: FC<{
     helpOff?: boolean;
 }> = ({ helpOff = false }) => {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [onboardingVideo, setOnboardingVideo] = useState("");
     const [name, setName] = useState("There");

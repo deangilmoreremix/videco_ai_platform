@@ -29,12 +29,11 @@ import { useRouter } from "next/router";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { FiBarChart, FiShare } from "react-icons/fi";
-
-const Videos: React.FC = () => {
-    const supabase = createClientComponentClient();
+import { AuthGuard } from "src/hoc/withAuthGuard";
+VideosContentContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [AIVideos, setAIVideos] = useState([]);
     const session = useSession();
@@ -288,4 +287,10 @@ const Videos: React.FC = () => {
         </>
     );
 };
-export default Videos;
+const VideosWithAuth: React.FC = () => (
+    <AuthGuard>
+        <VideosContent />
+    </AuthGuard>
+);
+
+export default VideosWithAuth;

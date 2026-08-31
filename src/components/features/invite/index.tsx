@@ -14,7 +14,7 @@ import {
     Select,
     useToast,
 } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Formik, Form, Field } from "formik";
 import React from "react";
@@ -26,7 +26,6 @@ export const Invite: React.FC<InviteProps> = ({
     memberEmail,
     setInviteUpdated,
 }) => {
-    const supabase = createClientComponentClient();
     const [inviteSent, setInviteSent] = React.useState(false);
     const session = useSession();
     const toast = useToast();

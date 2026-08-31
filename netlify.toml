@@ -59,8 +59,9 @@
 
 [dev]
   command = "next dev"
-  port = 3000
-  publish = ".next"
+  # Note: do NOT set `port` here. Netlify's framework detector already
+  # detects Next.js on port 3000. Setting port = 3000 explicitly triggers
+  # "The 'port' option you specified conflicts with the port of your application".
 
 # Example redirect if needed for SPA or API
 # [[redirects]]

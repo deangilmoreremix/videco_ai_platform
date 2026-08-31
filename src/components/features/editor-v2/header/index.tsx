@@ -31,7 +31,7 @@ import {
 } from "@chakra-ui/react";
 import Select from "react-select";
 import Image from "next/image";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 // Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 import { useRouter } from "next/router";
 import { rem } from "polished";
@@ -75,7 +75,6 @@ export const Header: React.FC<HeaderProps> = ({
     const [creatingPreview, setCreatingPreview] = useState<boolean>(false);
     const { meta, setVideoMeta } = useEditorStore();
     const toast = useToast();
-    const supabase = createClientComponentClient();
     const router = useRouter();
     const embedCodeRef = React.useRef();
 

@@ -32,8 +32,12 @@ const ssrSafeStorage = () => {
     if (isServer) {
         return {
             getItem: () => null,
-            setItem: () => { /* no-op in SSR */ },
-            removeItem: () => { /* no-op in SSR */ },
+            setItem: () => {
+                /* no-op in SSR */
+            },
+            removeItem: () => {
+                /* no-op in SSR */
+            },
         };
     }
     return localStorage;

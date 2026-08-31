@@ -19,21 +19,19 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import Script from "next/script";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-const Integrations: React.FC = () => {
-    const supabase = createClientComponentClient();
+import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
+IntegrationsContentContent: React.FC = () => {
     const session = useSession();
     const [fullname, setFullname] = useState<any>("");
-    const [loading, setLoading] = useState(true);
     const user = session?.user;
     const getFullName = useCallback(async () => {
+        if (!user?.id) return;
         try {
-            setLoading(true);
             const { data, error, status } = await supabase
                 .from("profiles")
                 .select(`full_name, onboard_completed`)
-                .eq("id", user?.id)
+                .eq("id", user.id)
                 .single();
 
             if (error && status !== 406) {
@@ -41,23 +39,27 @@ const Integrations: React.FC = () => {
             }
             if (data.full_name) {
                 setFullname(data.full_name);
-                setLoading(false);
             }
         } catch (error) {
             console.log(error);
         }
     }, [user, supabase]);
+
+    useEffect(() => {
+        getFullName();
+    }, [getFullName]);
+
+    const zapierClientId = process.env.NEXT_PUBLIC_ZAPIER_CLIENT_ID;
+
     return (
         <>
             <Head>
-                {/* Load the Zapier Elements styles */}
                 <link
                     rel="stylesheet"
                     href="https://cdn.zapier.com/packages/partner-sdk/v0/zapier-elements/zapier-elements.css"
                 />
             </Head>
 
-            {/* Load the Zapier Elements script */}
             <Script
                 type="module"
                 src="https://cdn.zapier.com/packages/partner-sdk/v0/zapier-elements/zapier-elements.esm.js"
@@ -101,15 +103,46 @@ const Integrations: React.FC = () => {
                             p={4}
                             overflow="hidden"
                         >
-                            <zapier-workflow
-                                sign-up-email={user.email}
-                                sign-up-first-name={fullname}
-                                client-id={
-                                    process.env.NEXT_PUBLIC_ZAPIER_CLIENT_ID
-                                }
-                                intro-copy-display="show"
-                                guess-zap-display="show"
-                            />
+                            {zapierClientId ? (
+                                <zapier-workflow
+                                    sign-up-email={user.email}
+                                    sign-up-first-name={fullname}
+                                    client-id={zapierClientId}
+                                    intro-copy-display="show"
+                                    guess-zap-display="show"
+                                />
+                            ) : (
+                                <Box
+                                    textAlign="center"
+                                    py={10}
+                                    px={6}
+                                    bg="gray.50"
+                                    borderRadius="md"
+                                    border="1px solid #e2e2e2"
+                                >
+                                    <Heading size="md" mb={3} color="#383F40">
+                                        Automation is not configured yet
+                                    </Heading>
+                                    <Text color="gray.500" mb={4}>
+                                        Connect Zapier to automate your video
+                                        workflows. Add your Zapier client ID in
+                                        the environment variables to enable this
+                                        feature.
+                                    </Text>
+                                    <Button
+                                        colorScheme="teal"
+                                        bg="#05405A"
+                                        onClick={() =>
+                                            window.open(
+                                                "https://roadmap.videco.io/",
+                                                "_blank",
+                                            )
+                                        }
+                                    >
+                                        Learn more about integrations
+                                    </Button>
+                                </Box>
+                            )}
                         </Container>
                     </Box>
                 </Sidebar>
@@ -118,4 +151,10 @@ const Integrations: React.FC = () => {
     );
 };
 
-export default Integrations;
+const IntegrationsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <IntegrationsContent />
+    </AuthGuard>
+);
+
+export default IntegrationsWithAuth;

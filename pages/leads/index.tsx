@@ -22,15 +22,14 @@ import { useRouter } from "next/router";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { FiFilm, FiSettings, FiUpload, FiYoutube } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import Pricing from "@components/common/pricing";
-
-const Leads: React.FC = () => {
-    const supabase = createClientComponentClient();
+import { AuthGuard } from "src/hoc/withAuthGuard";
+LeadsContentContent: React.FC = () => {
     const [searchText, setSearchText] = useState("");
     const [loading, setLoading] = useState(true);
     const [leadsData, setLeadsData] = useState<any>();
@@ -307,4 +306,10 @@ const Leads: React.FC = () => {
         </>
     );
 };
-export default Leads;
+const LeadsWithAuth: React.FC = () => (
+    <AuthGuard>
+        <LeadsContent />
+    </AuthGuard>
+);
+
+export default LeadsWithAuth;

@@ -1,4 +1,4 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { createAIClone } from "src/services/aiClone";
 
 const USE_MUAPI =
@@ -6,7 +6,6 @@ const USE_MUAPI =
     process.env.USE_MUAPI_AI === "true";
 
 export default async function handler(req, res) {
-    const supabase = createClientComponentClient();
     const { video_url, language, ai_video_id, voice_id, text, video_id } =
         req.body;
 

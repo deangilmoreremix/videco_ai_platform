@@ -1,8 +1,6 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 
 export function useBrandKit() {
-    const supabase = createClientComponentClient();
-
     const getBrandKit = async (user_id: string) => {
         try {
             return await supabase

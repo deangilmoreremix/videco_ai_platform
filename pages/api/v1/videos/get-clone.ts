@@ -1,7 +1,6 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import axios from "axios";
 
-const supabase = createClientComponentClient();
 export default async function handler(req, res) {
     if (req.method === "POST") {
         const cloneData = null;

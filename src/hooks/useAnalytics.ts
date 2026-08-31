@@ -1,8 +1,6 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 
 export function useAnalytics() {
-    const supabase = createClientComponentClient();
-
     const updateClickAnalytics = async (
         video_id: any,
         element_name: string,

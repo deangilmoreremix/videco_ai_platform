@@ -2,7 +2,7 @@ import React, { use, useEffect, useState } from "react";
 import { Box, Button, Image, Progress } from "@chakra-ui/react";
 import { FaMagic } from "react-icons/fa";
 import { useS3Upload } from "next-s3-upload";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useRouter } from "next/router";
 
 interface VideoPreviewProps {
@@ -14,7 +14,6 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src }) => {
     const router = useRouter();
     const [preview, setPreview] = useState<string>("");
     const [url, setUrl] = useState<string>("");
-    const supabase = createClientComponentClient();
 
     const fetchPreview = async () => {
         try {

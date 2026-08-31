@@ -33,7 +33,7 @@ import {
 import { useEditorStore } from "src/store/editor";
 import { motion } from "framer-motion";
 import React from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useRouter } from "next/router";
 
 const ElementsLog = () => {
@@ -48,7 +48,6 @@ const ElementsLog = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const cancelRef = React.useRef();
     const router = useRouter();
-    const supabase = createClientComponentClient();
     const deleteVideoFromId = useCallback(async () => {
         try {
             await supabase

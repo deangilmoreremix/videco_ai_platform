@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Link, Spinner } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { useSession } from "@supabase/auth-helpers-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
 const Recording: React.FC = () => {
@@ -12,7 +12,6 @@ const Recording: React.FC = () => {
     const [teamMembers, setTeamMembers] = useState<any>();
     const { getTeamUserIds, getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const supabase = createClientComponentClient();
     const [videos, setVideos] = React.useState<any>(0);
     const [videoSize, setVideoSize] = React.useState<any>(0);
 

@@ -17,7 +17,7 @@ import {
     Tag,
 } from "@chakra-ui/react";
 import { LatestAnalytics } from "@components/features/analytics/latest";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import "ka-table/style.css";
 import { useRouter } from "next/router";
@@ -55,7 +55,6 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
         primary_text_color: "#ffffff",
         secondary_text_color: "#ffffff",
     });
-    const supabase = createClientComponentClient();
     const [plan, setPlan] = useState<any>();
     const session = useSession();
     const user = session?.user;

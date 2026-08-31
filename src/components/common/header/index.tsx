@@ -13,7 +13,7 @@ import {
     Image,
     useDisclosure,
 } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useUserStore } from "src/store/user";
 import { useUserPlan } from "src/hooks/useUserPlan";
@@ -36,7 +36,6 @@ type HeaderProps = {
     pageTitle: string;
 };
 export const Header: FC<HeaderProps> = (props) => {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [fullname, setFullname] = useState(null);
     const create = useDisclosure();
@@ -300,9 +299,7 @@ export const Header: FC<HeaderProps> = (props) => {
                                         colorScheme="blue"
                                         mt={8}
                                         w="full"
-                                        onClick={() =>
-                                            (window.location.href = "/pricing")
-                                        }
+                                        onClick={() => router.push("/pricing")}
                                         rightIcon={<FiArrowRight />}
                                     >
                                         See all plans

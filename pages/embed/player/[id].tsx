@@ -16,8 +16,9 @@ import {
 } from "@chakra-ui/react";
 import { Player } from "@components/features/player";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Player } from "@components/features/player";
 import { useEditorStore } from "src/store/editor";
+import { supabase } from "src/services";
 
 const Edit: React.FC = () => {
     const router = useRouter();
@@ -50,7 +51,6 @@ const Edit: React.FC = () => {
     const handleInputChange = (e) => setInput(e.target.value);
 
     const [duration, setDuration] = useState(0);
-    const supabase = createClientComponentClient();
     const playerRef = useRef(null);
     const { setVideo, setInteractiveElements, interactiveElements, video } =
         useEditorStore();

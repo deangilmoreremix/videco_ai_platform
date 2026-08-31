@@ -43,16 +43,17 @@ import {
 } from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { Invite } from "@components/features/invite";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { TopAnalytics } from "@components/features/analytics/top";
 import { LatestAnalytics } from "@components/features/analytics/latest";
 import Pricing from "@components/common/pricing";
+import { supabase } from "src/services";
+import { AuthGuard } from "src/hoc/withAuthGuard";
 
-const InviteUsers: React.FC = () => {
-    const supabase = createClientComponentClient();
+const InviteUsersContent: React.FC = () => {
     const [isSSR, setIsSSR] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
     const [videoData, setVideoData] = useState<any>();
@@ -504,4 +505,10 @@ const InviteUsers: React.FC = () => {
     );
 };
 
-export default InviteUsers;
+const InviteUsersWithAuth: React.FC = () => (
+    <AuthGuard>
+        <InviteUsersContent />
+    </AuthGuard>
+);
+
+export default InviteUsersWithAuth;

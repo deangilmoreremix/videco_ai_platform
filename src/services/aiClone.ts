@@ -1,4 +1,4 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import axios from "axios";
 import { makeTextToVoice } from "./api/aiVoice";
 
@@ -9,7 +9,6 @@ export const JOB_DETAILS = {
     failed: "failed",
 };
 
-const supabase = createClientComponentClient();
 
 // createAIClone: dispatches a lipsync generation job via Muapi.
 // Replaces the legacy Inngest + Cloudinary + Sync.so path.

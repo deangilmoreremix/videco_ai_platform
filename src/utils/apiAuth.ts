@@ -1,7 +1,6 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 
 export async function verifyToken(req: any, res, next) {
-    const supabase = createClientComponentClient();
     if (!req.body.api_key) {
         return res
             .status(401)

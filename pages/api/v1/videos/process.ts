@@ -1,11 +1,10 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 
 const USE_MUAPI =
     process.env.NEXT_PUBLIC_USE_MUAPI_AI === "true" ||
     process.env.USE_MUAPI_AI === "true";
 
 export default async function handler(req, res) {
-    const supabase = createClientComponentClient();
     const {
         greeting,
         language,

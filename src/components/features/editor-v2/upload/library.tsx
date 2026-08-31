@@ -19,7 +19,7 @@ import {
     SimpleGrid,
     Tag,
 } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import moment from "moment";
 import router from "next/router";
@@ -29,7 +29,6 @@ import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { videoTypes } from "src/utils/video";
 export const Library = ({ handleDownload }) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [videoData, setVideoData] = useState<any>();
     const [filterVideos, setFilterVideos] = useState<any>(videoTypes.video);

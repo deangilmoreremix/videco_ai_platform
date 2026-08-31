@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "src/services";
 import { verifyWebhookSignature } from "src/lib/muapi";
 
 /**
@@ -14,7 +14,6 @@ export default async function handler(
 ) {
     if (req.method !== "POST") return res.status(405).end();
 
-    const supabase = createClientComponentClient();
 
     const signature = req.headers["x-muapi-signature"] as string | undefined;
     const rawBody = JSON.stringify(req.body);

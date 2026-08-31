@@ -21,7 +21,6 @@ import {
     FormErrorMessage,
     useToast,
 } from "@chakra-ui/react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Field, Form, Formik } from "formik";
 import { useRouter } from "next/router";
@@ -29,10 +28,10 @@ import { useEffect, useState } from "react";
 import { FiPlus, FiSettings } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useWorkspaces } from "src/store/workspace";
+import { supabase } from "src/services";
 
 export const WorkspaceSwitcher = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const supabase = createClientComponentClient();
     const session = useSession();
     const { currentUserPlan } = useUserPlan();
     const router = useRouter();
