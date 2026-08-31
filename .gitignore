@@ -31,3 +31,12 @@ coverage/
 .trigger
 # Local Netlify folder
 .netlify
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Yarn Berry cache/state
+.yarn/install-state.gz
+
+# Development screenshots
+dashboard_*.png
