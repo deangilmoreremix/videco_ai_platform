@@ -8,6 +8,10 @@ import {
     Link,
     Divider,
     useDisclosure,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
 } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
