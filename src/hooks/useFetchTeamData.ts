@@ -9,6 +9,8 @@ export function useFetchTeamData() {
     const { workspace } = useWorkspaces();
     // get team user ids including owner
     const getTeamUserIds = async () => {
+        // No authenticated user yet (or during session boot) — nothing to fetch.
+        if (!user?.email || !workspace?.id) return undefined;
         try {
             return await supabase
                 .from("sub_accounts")
@@ -40,6 +42,7 @@ export function useFetchTeamData() {
     ) => {
         try {
             const teamIdResponse = await getTeamUserIds();
+            if (!teamIdResponse) return undefined;
             const teamIds = teamIdResponse
                 .filter((item) => item.shared_account_user !== null)
                 .map((item) => item.shared_account_user);

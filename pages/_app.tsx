@@ -71,6 +71,38 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     useEffect(() => {
         TagManager.initialize(tagManagerArgs);
     }, []);
+
+    // Dev/demo bypass: open the app without requiring a real login.
+    // When NEXT_PUBLIC_ALLOW_ANON=true and there is no session, sign in
+    // anonymously so useSession() resolves to a user and all gated UI renders.
+    // This is for local visual review only — disable in production.
+    useEffect(() => {
+        if (
+            process.env.NEXT_PUBLIC_ALLOW_ANON !== "true" ||
+            !supabase
+        ) {
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            const { data } = await supabase.auth.getSession();
+            if (cancelled) return;
+            if (!data.session) {
+                await supabase.auth
+                    .signInAnonymously()
+                    .catch((err) =>
+                        console.warn(
+                            "[anon-bypass] signInAnonymously failed:",
+                            err?.message,
+                        ),
+                    );
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [supabase]);
+
     const AnyComponent = Component as any;
 
     return (

@@ -20,7 +20,8 @@
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import crypto from "crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { Buffer } from "node:buffer";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -323,9 +324,9 @@ async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?:
   // Signature verification: validate using MUAPI_WEBHOOK_SECRET if present
   if (signatureHeader && MUAPI_WEBHOOK_SECRET) {
     try {
-      const hmac = crypto.createHmac("sha256", MUAPI_WEBHOOK_SECRET).update(rawBody || JSON.stringify(data), "utf8").digest("hex");
+      const hmac = createHmac("sha256", MUAPI_WEBHOOK_SECRET).update(rawBody || JSON.stringify(data), "utf8").digest("hex");
       const normalized = signatureHeader.startsWith("sha256=") ? signatureHeader.split("=")[1] : signatureHeader;
-      const verified = crypto.timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(normalized, "hex"));
+      const verified = timingSafeEqual(Buffer.from(hmac, "hex"), Buffer.from(normalized, "hex"));
       if (!verified) {
         console.warn("[ai-orchestrator] muapi webhook signature invalid");
         return new Response(JSON.stringify({ received: false, error: "invalid signature" }), {
