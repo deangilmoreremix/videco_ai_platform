@@ -5,7 +5,6 @@ import {
     Text,
     Link,
     Button,
-    useToast,
     Textarea,
     NumberDecrementStepper,
     NumberIncrementStepper,
@@ -27,20 +26,20 @@ import {
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { Templates } from "@components/features/ai-clone/templates";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-TeleprompterContent: React.FC = () => {
-    const [plan, setPlan] = useState<any>();
-    const [loading, setLoading] = useState(true);
+const TeleprompterContent: React.FC = () => {
+    const [, setPlan] = useState<string | null>(null);
+    const [, setLoading] = useState(true);
     const [started, setStarted] = useState(false);
 
-    const [videoData, setVideoData] = useState<any>();
+    const [_videoData, setVideoData] =
+        useState<Array<{ id: string; name?: string; status?: string }>>();
     const [aiCloneText, setAiCloneText] = useState<string>("");
 
-    const [fullname, setFullname] = useState<any>("");
+    const [, setFullname] = useState<string>("");
 
     const { getPlan } = useUserPlan();
 
     const session = useSession();
-    const toast = useToast();
     const user = session?.user;
     const scrollRef = useRef(null);
     const [speed, setSpeed] = useState(1); // Adjust speed here (higher is faster)

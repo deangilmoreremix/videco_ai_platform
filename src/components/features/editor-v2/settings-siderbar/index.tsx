@@ -3,7 +3,6 @@ import {
     Button,
     Checkbox,
     Flex,
-    GridItem,
     Heading,
     IconButton,
     Input,
@@ -16,8 +15,8 @@ import { Formik } from "formik";
 import { useEditorStore } from "src/store/editor";
 
 type SettingsSidebarProps = {
-    toggleSettingsWindow?: any;
-    activeElement?: any;
+    toggleSettingsWindow?: (element: unknown) => void;
+    activeElement?: Record<string, unknown>;
 };
 
 export const SettingsSidebar = ({
@@ -26,8 +25,6 @@ export const SettingsSidebar = ({
 }: SettingsSidebarProps): JSX.Element => {
     const { updateInteractiveElements, deleteInteractiveElement } =
         useEditorStore();
-
-    const ACTIVE_END_TIME = activeElement?.endTime;
 
     return (
         <Box
@@ -78,7 +75,7 @@ export const SettingsSidebar = ({
                     updateInteractiveElements({ ...activeElement, ...values });
                 }}
             >
-                {({ handleChange, handleSubmit, handleBlur, values }) => (
+                {({ handleChange, handleSubmit, values }) => (
                     <form onSubmit={handleSubmit}>
                         {activeElement?.type === "link" && (
                             <>

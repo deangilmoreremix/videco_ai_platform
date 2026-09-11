@@ -7,7 +7,7 @@ import { OnBoardingVideoFrame } from "./video";
 export const OnBoardingVideo: FC<{
     helpOff?: boolean;
 }> = ({ helpOff = false }) => {
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [onboardingVideo, setOnboardingVideo] = useState("");
     const [name, setName] = useState("There");
     const [fetchAgain, setFetchAgain] = useState(false);

@@ -6,7 +6,7 @@ export const OnBoardingVideoLoader: FC = () => {
     const [showIcon1, setShowIcon1] = useState(false);
     const [showIcon2, setShowIcon2] = useState(false);
     const [showIcon3, setShowIcon3] = useState(false);
-    const [showIcon4, setShowIcon4] = useState(false);
+    const [showIcon4, _setShowIcon4] = useState(false);
 
     useEffect(() => {
         setTimeout(() => setShowIcon1(true), 3000); // 5s delay

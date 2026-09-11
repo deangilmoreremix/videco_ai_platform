@@ -5,7 +5,7 @@ interface UsageLog {
     model?: string;
     provider?: string;
     action?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     cost_estimate?: number;
 }
 

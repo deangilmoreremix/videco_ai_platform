@@ -1,7 +1,6 @@
 import { Divider, Box, Text } from "@chakra-ui/react";
 import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
 import {
     ResponsiveContainer,
@@ -14,7 +13,7 @@ import {
 } from "recharts";
 
 type VideoData = {
-    filterById?: any;
+    filterById?: string | number;
     range?: number;
     plan?: string;
 };
@@ -23,12 +22,26 @@ export const SingleAnalytics: React.FC<VideoData> = ({
     range = 7,
     plan,
 }) => {
-    const router = useRouter();
-    const [videoData, setVideoData] = useState<any>([]);
-    const [formattedVideoData, setFormattedVideoData] = useState<any>([]);
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            size?: string;
+            status?: string;
+            analytics: Array<{
+                id: string;
+                data: { count?: number; user_agent?: string };
+                event: string;
+                created_at: string;
+            }>;
+        }>
+    >([]);
+    const [formattedVideoData, setFormattedVideoData] = useState<
+        Array<{ date: string; name: string; clicks: number }>
+    >([]);
     const session = useSession();
     const user = session?.user;
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const getProfile = useCallback(async () => {
         try {
             setLoading(true);
@@ -78,7 +91,7 @@ export const SingleAnalytics: React.FC<VideoData> = ({
         const analyticsCounts = {};
 
         // Get today's date
-        const today: any = new Date();
+        const today = new Date();
 
         // Iterate through each item in the data array
         processedVideoData &&
@@ -86,7 +99,7 @@ export const SingleAnalytics: React.FC<VideoData> = ({
                 // Iterate through the analytics array of the item
                 item.analytics.forEach((analytic) => {
                     // Extract the date from the created_at field
-                    const createdDate: any = new Date(analytic.created_at);
+                    const createdDate = new Date(analytic.created_at);
 
                     // Calculate the difference in days between today and the analytics date
                     const dayDiff = Math.ceil(

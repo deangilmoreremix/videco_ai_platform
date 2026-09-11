@@ -14,38 +14,47 @@ import {
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import "ka-table/style.css";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { supabase } from "src/services";
 import { AuthGuard } from "src/hoc/withAuthGuard";
 import { LatestAnalytics } from "@components/features/analytics/latest";
 import { TopAnalytics } from "@components/features/analytics/top";
 import Select from "react-select";
-import { useUserPlan } from "src/hooks/useUserPlan";
 import { ClickAnalytics } from "@components/features/analytics/click";
 import { FiArrowRight } from "react-icons/fi";
 
 const AnalyticsContent: React.FC = () => {
-    const router = useRouter();
-    const [videoData, setVideoData] = useState<any>();
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            size?: string;
+            status?: string;
+            analytics: Array<{
+                id: string;
+                data: { count?: number; user_agent?: string };
+                event: string;
+                created_at: string;
+            }>;
+            leads: Array<{ id: string }>;
+            feedback: Array<{ id: string }>;
+        }>
+    >();
     const [videoViews, setVideoViews] = useState<number>(0);
     const [videoPlays, setVideoPlays] = useState<number>(0);
     const [videoLeads, setVideoLeads] = useState<number>(0);
     const [videoFeedback, setVideoFeedback] = useState<number>(0);
-    const [filterById, setFilterById] = useState<any>(null);
-    const [filterByRange, setFilterByRange] = useState<any>(7);
-    const [videoOptionsList, setVideoOptionsList] = useState<any>([]);
+    const [filterById, setFilterById] = useState<string | number | null>(null);
+    const [filterByRange, setFilterByRange] = useState<string | number>(7);
+    const [videoOptionsList, setVideoOptionsList] = useState<
+        Array<{ value: number | string; label: string }>
+    >([]);
     const session = useSession();
     const user = session?.user;
-    const { getPlan } = useUserPlan();
-    const [plan, setPlan] = useState<any>();
-    useEffect(() => {
-        const plan = async () => {
-            const fetchPlan = await getPlan(user?.id);
-            setPlan(fetchPlan?.[0]?.plan_name);
-        };
-        plan();
-    }, [user]);
-    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+    const [plan, _setPlan] = useState<string | null>(null);
+    const [, setLoading] = useState(true);
     const videoOptions = [
         { value: 7, label: "Last 7 days" },
         { value: 30, label: "Last 30 days" },
@@ -78,7 +87,7 @@ const AnalyticsContent: React.FC = () => {
             }
 
             if (data) {
-                setVideoData(data ?? []);
+                setVideoData((data ?? []) as unknown as typeof videoData);
                 if (!filterById) {
                     setVideoOptionsList(
                         data
@@ -126,10 +135,10 @@ const AnalyticsContent: React.FC = () => {
                     if (analytic.event === "view") viewsCount += 1;
                     if (analytic.event === "video_play") playCount += 1;
                 });
-                item.leads.forEach((analytic) => {
+                item.leads.forEach((_analytic) => {
                     leadsCount += 1;
                 });
-                item.feedback.forEach((analytic) => {
+                item.feedback.forEach((_analytic) => {
                     feedbackCount += 1;
                 });
             });
@@ -183,9 +192,10 @@ const AnalyticsContent: React.FC = () => {
                                     <Select
                                         placeholder="Select a video"
                                         options={videoOptionsList}
-                                        onChange={(e: { value: number }) =>
-                                            setFilterById(e.value)
-                                        }
+                                        onChange={(e: {
+                                            value: string | number;
+                                            label: string;
+                                        }) => setFilterById(e.value)}
                                     />
                                 </Box>
                                 <Box ml={5} mb={4}>
@@ -391,17 +401,27 @@ const AnalyticsContent: React.FC = () => {
                                     />
                                 </Box>
                                 {videoData && (
-                                    <LatestAnalytics
-                                        filterById={filterById}
-                                        range={filterByRange}
-                                    />
-                                )}{" "}
-                                {videoData && (
-                                    <ClickAnalytics
-                                        filterById={filterById}
-                                        range={filterByRange}
-                                        plan={plan}
-                                    />
+                                    <React.Fragment>
+                                        <LatestAnalytics
+                                            filterById={filterById}
+                                            range={
+                                                typeof filterByRange ===
+                                                "number"
+                                                    ? filterByRange
+                                                    : 7
+                                            }
+                                        />
+                                        <ClickAnalytics
+                                            filterById={filterById}
+                                            range={
+                                                typeof filterByRange ===
+                                                "number"
+                                                    ? filterByRange
+                                                    : 7
+                                            }
+                                            plan={plan}
+                                        />
+                                    </React.Fragment>
                                 )}
                             </Flex>
                         </Flex>

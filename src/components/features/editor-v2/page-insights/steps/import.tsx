@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Link, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import "ka-table/style.css";
 import { Table } from "ka-table";
 import {
@@ -12,8 +12,8 @@ import { FiUpload } from "react-icons/fi";
 
 interface StepImportProps {
     children?: React.ReactNode;
-    csvData: any;
-    onCsvDataChange: any;
+    csvData: unknown[];
+    onCsvDataChange: (data: unknown[]) => void;
 }
 export const StepImport: React.FC<StepImportProps> = ({
     children,
@@ -21,7 +21,7 @@ export const StepImport: React.FC<StepImportProps> = ({
     onCsvDataChange,
 }) => {
     const { CSVReader } = useCSVReader();
-    const convertCsvData = (data): any[] => {
+    const convertCsvData = (data: unknown[]): unknown[] => {
         // Extract the keys from the first sub-array
         const keys = data[0];
 
@@ -38,7 +38,7 @@ export const StepImport: React.FC<StepImportProps> = ({
 
     return (
         <CSVReader
-            onUploadAccepted={(results: any) => {
+            onUploadAccepted={(results: { data: unknown[] }) => {
                 onCsvDataChange(results.data);
             }}
         >
@@ -46,8 +46,11 @@ export const StepImport: React.FC<StepImportProps> = ({
                 getRootProps,
                 acceptedFile,
                 ProgressBar,
-                getRemoveFileProps,
-            }: any) => (
+            }: {
+                getRootProps: () => Record<string, unknown>;
+                acceptedFile: File | null;
+                ProgressBar: React.ComponentType;
+            }) => (
                 <>
                     {!csvData.length && (
                         <Box display="flex" flexDir="column">

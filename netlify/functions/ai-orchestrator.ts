@@ -1,13 +1,16 @@
 import { Handler } from '@netlify/functions';
+import { createClient } from '@supabase/supabase-js';
+
+type Json = Record<string, unknown>;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-internal-secret, x-muapi-webhook, x-muapi-webhook-secret',
   'Content-Type': 'application/json',
-};
+} as const;
 
-const supabase = (await import('@supabase/supabase-js')).createClient(
+const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { persistSession: false } }
@@ -26,7 +29,7 @@ const MODELS = {
   FAST_T2V: 'veo3-fast-text-to-video',
 };
 
-async function handlePersonalizeScript(data: any) {
+async function handlePersonalizeScript(data: Json) {
   const { lead, video_id } = data;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -61,13 +64,13 @@ async function handlePersonalizeScript(data: any) {
   return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, script }) };
 }
 
-async function handleProcessVideo(data: any) {
+async function handleProcessVideo(data: Json) {
   try {
     const { ai_video_id, text } = data;
     await fetch(`${process.env.SUPABASE_URL}/rest/v1/usage`, {
       method: 'POST',
       headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: data.user_id || null, model: 'tts-1', provider: 'openai', action: 'generate-tts', details: { text_len: (text || '').length }, cost_estimate: 0.0 }),
+      body: JSON.stringify({ user_id: data.user_id || null, model: 'tts-1', provider: 'openai', action: 'generate-tts', details: { text_len: (typeof text === 'string' ? text : '').length }, cost_estimate: 0.0 }),
     }).catch(() => {});
   } catch (e) {}
 
@@ -118,7 +121,7 @@ async function handleProcessVideo(data: any) {
   return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, muapi_request_id: videoJob.request_id }) };
 }
 
-async function handleAiClone(data: any) {
+async function handleAiClone(data: Json) {
   const { video_url, video_id, language, text, audio_url: providedAudioUrl } = data;
 
   let audioUrl = providedAudioUrl;
@@ -174,7 +177,7 @@ async function handleAiClone(data: any) {
   return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, request_id: cloneJob.request_id, audio_url: audioUrl }) };
 }
 
-async function handlePollMuapi(data: any) {
+async function handlePollMuapi(data: Json) {
   const { request_id, video_id, ai_video_id } = data;
 
   const result = await fetch(`${MUAPI_BASE}/predictions/${request_id}/result`, {
@@ -209,7 +212,7 @@ async function handlePollMuapi(data: any) {
   return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, status: result.status }) };
 }
 
-async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?: string) {
+async function handleMuapiWebhook(data: Json, rawBody?: string, signatureHeader?: string) {
   const { request_id, status, outputs, video_id, ai_video_id } = data;
 
   if (signatureHeader && MUAPI_WEBHOOK_SECRET) {
@@ -239,12 +242,15 @@ async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?:
 
   const existing = await getExistingStatus();
   if (existing) {
-    if (existing.media_status === 'completed' || existing.status === 'completed') {
+    const isCompleted =
+      (existing as Json).media_status === 'completed' ||
+      (existing as Json).status === 'completed';
+    if (isCompleted) {
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ received: true, ignored: true }) };
     }
   }
 
-  async function reliableUpdate(table: string, payload: any, eqClause: any) {
+  async function reliableUpdate(table: string, payload: Json, eqClause: string) {
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -263,15 +269,15 @@ async function handleMuapiWebhook(data: any, rawBody?: string, signatureHeader?:
     const finalUrl = outputs[0].url;
 
     if (video_id) {
-      await reliableUpdate('videos', { final_url: finalUrl, preview: finalUrl, media_status: 'completed', ai_preview: request_id }, video_id);
+      await reliableUpdate('videos', { final_url: finalUrl, preview: finalUrl, media_status: 'completed', ai_preview: request_id }, video_id as string);
     }
 
     if (ai_video_id) {
-      await reliableUpdate('ai_videos', { status: 'completed', url: finalUrl }, ai_video_id);
+      await reliableUpdate('ai_videos', { status: 'completed', url: finalUrl }, ai_video_id as string);
     }
   } else if (status === 'failed') {
-    if (video_id) await reliableUpdate('videos', { media_status: 'failed' }, video_id);
-    if (ai_video_id) await reliableUpdate('ai_videos', { status: 'failed' }, ai_video_id);
+    if (video_id) await reliableUpdate('videos', { media_status: 'failed' }, video_id as string);
+    if (ai_video_id) await reliableUpdate('ai_videos', { status: 'failed' }, ai_video_id as string);
   }
 
   return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ received: true }) };
@@ -299,7 +305,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
-  let payload: any;
+  let payload: Json;
   try {
     payload = JSON.parse(event.body || '{}');
   } catch {
@@ -323,8 +329,8 @@ export const handler: Handler = async (event) => {
       default:
         return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Unknown action' }) };
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[ai-orchestrator] error', err);
-    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: err.message }) };
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown error' }) };
   }
 };

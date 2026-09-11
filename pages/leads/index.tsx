@@ -11,35 +11,35 @@ import {
     Flex,
     Spinner,
     Text,
-    Image,
     Link,
     Menu,
     MenuButton,
     MenuItem,
     MenuList,
 } from "@chakra-ui/react";
-import { useRouter } from "next/router";
-import { Sidebar } from "@components/common/sidebar";
-import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
-import { ChevronDownIcon } from "@chakra-ui/icons";
-import { FiFilm, FiSettings, FiUpload, FiYoutube } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import Pricing from "@components/common/pricing";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-LeadsContentContent: React.FC = () => {
+export const LeadsContent: React.FC = () => {
     const [searchText, setSearchText] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [leadsData, setLeadsData] = useState<any>();
+    const [, setLoading] = useState(true);
+    const [leadsData, setLeadsData] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            email?: string;
+            company?: string;
+        }>
+    >();
     const session = useSession();
-    const [showPricing, setShowPricing] = useState<any>(false);
+    const [showPricing, setShowPricing] = useState(false);
     const user = session?.user;
-    const router = useRouter();
     const { clearVideo } = useEditorStore();
     const { getPlan } = useUserPlan();
-    const [plan, setPlan] = useState<any>();
+    const [plan, setPlan] = useState<string | null>(null);
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
@@ -276,8 +276,8 @@ LeadsContentContent: React.FC = () => {
                                                             cursor: "pointer",
                                                         },
                                                         onClick: (
-                                                            event,
-                                                            extendedEvent,
+                                                            _event,
+                                                            _extendedEvent,
                                                         ) => {
                                                             // router.push({
                                                             //     pathname: `/videos/edit`,

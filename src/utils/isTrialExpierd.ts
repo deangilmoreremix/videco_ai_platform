@@ -1,6 +1,7 @@
 import moment from "moment";
 
-export const isTrialExpired = (trialStart: string, status: string) => {
+export const isTrialExpired = (trialStart: string, _status: string) => {
+    void _status;
     // trialEnd format is like 2024-04-30 this. return true if trail is ended else false. Trial should end after 14 days. compare trialEnd with current date.
     const currentDate = moment(new Date());
     const trialEndDate = moment(new Date(trialStart));

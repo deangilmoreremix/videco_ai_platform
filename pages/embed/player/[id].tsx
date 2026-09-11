@@ -45,16 +45,20 @@ const Edit: React.FC = () => {
         endCTAtext: "",
         endCTAtitle: "",
     });
-    const [playing, setPlaying] = useState(false);
-    const [input, setInput] = useState("");
+    const [, setPlaying] = useState(false);
+    const [, setInput] = useState("");
 
     const handleInputChange = (e) => setInput(e.target.value);
 
-    const [duration, setDuration] = useState(0);
+    const [, setDuration] = useState(0);
     const playerRef = useRef(null);
-    const { setVideo, setInteractiveElements, interactiveElements, video } =
-        useEditorStore();
-    const getAIVideoByID = useCallback(async (og_url: string) => {
+    const {
+        setVideo: _setVideo,
+        setInteractiveElements: _setInteractiveElements,
+        interactiveElements: _interactiveElements,
+        video: _video,
+    } = useEditorStore();
+    const getAIVideoByID = useCallback(async (_og_url: string) => {
         if (router.query.ai_email) {
             await supabase
                 .from("ai_videos")

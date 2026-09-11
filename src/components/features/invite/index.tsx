@@ -3,7 +3,6 @@ import {
     AlertDescription,
     AlertIcon,
     AlertTitle,
-    Box,
     Button,
     Flex,
     FormControl,
@@ -284,7 +283,7 @@ export const Invite: React.FC<InviteProps> = ({
 };
 
 type InviteProps = {
-    onClose?: any;
-    setInviteUpdated?: any;
+    onClose?: () => void;
+    setInviteUpdated?: (value: boolean) => void;
     memberEmail?: string | null;
 };

@@ -9,7 +9,6 @@ export const JOB_DETAILS = {
     failed: "failed",
 };
 
-
 // createAIClone: dispatches a lipsync generation job via Muapi.
 // Replaces the legacy Inngest + Cloudinary + Sync.so path.
 // Audio is uploaded to Muapi directly; video processing happens via Muapi API.

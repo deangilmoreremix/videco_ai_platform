@@ -38,7 +38,6 @@ import { createAIPreview } from "src/services/api/createAIPreview";
 import { rem } from "polished";
 import { UploadV2 } from "@components/features/editor-v2/upload/v2";
 import { FileUploader } from "react-drag-drop-files";
-import axios from "axios";
 import { blobUrlToBlob, videoTypes } from "src/utils/video";
 import { reader, the_greeting, the_text } from "src/utils/voice";
 import { MdDeleteOutline } from "react-icons/md";
@@ -47,37 +46,45 @@ import { Templates } from "@components/features/ai-clone/templates";
 import { NotAllowed } from "@components/features/ai-clone/not-allowed";
 import { useWorkspaces } from "src/store/workspace";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-CreateContentContent: React.FC = () => {
-    const [plan, setPlan] = useState<any>();
+export const CreateContent: React.FC = () => {
+    const [plan, _setPlan] = useState<{ plan_name?: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const [videoLoading, setVideoLoading] = useState(false);
-    const [jobsGenerated, setJobsGenerated] = useState(false);
+    const [, setJobsGenerated] = useState(false);
     const { workspace } = useWorkspaces();
     const [campaignName, setCampaignName] = useState("");
     const [voiceID, setVoiceID] = useState<string>("");
     const [language, setLanguage] = useState("english");
-    const [greeting, setGreeting] = useState("Hello");
-    const [videoData, setVideoData] = useState<any>();
+    const [greeting, _setGreeting] = useState<string>("Hello");
+    const [videoData, setVideoData] =
+        useState<
+            Array<{ id: string; type?: string; name?: string; status?: string }>
+        >();
     const [aiCloneText, setAiCloneText] = useState<string>("");
-    const [video, setVideo] = useState<any>();
-    const [originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
+    const [video, setVideo] = useState<{
+        url?: string;
+        preview?: string;
+    } | null>(null);
+    const [, setOriginalVideoPubId] = useState<string>("");
     const [voiceRecordingStarted, setVoiceRecordingStarted] =
         useState<boolean>(false);
-    const [jobUpdateMessages, setJobUpdateMessages] = useState<any>(
+    const [jobUpdateMessages, setJobUpdateMessages] = useState<string>(
         "Generating an AI preview for you",
     );
-    const [readyToGenerate, setReadyToGenerate] = useState(false);
-    const [csvCompleted, setCsvCompleted] = useState(false);
-    const [voiceCloningEnabled, setVoiceCloningEnabled] = useState(true);
+    const [, _setReadyToGenerate] = useState(false);
+    const [csvCompleted, _setCsvCompleted] = useState(false);
+    const [voiceCloningEnabled, _setVoiceCloningEnabled] = useState(true);
 
-    const [userAudio, setUserAudio] = useState<any>();
-    const [fullname, setFullname] = useState<any>("");
-    const [background, setBackground] = useState<any>("website");
+    const [userAudio, setUserAudio] = useState<string | null>(null);
+    const [fullname, setFullname] = useState<string>("");
+    const [, _setBackground] = useState<string>("website");
     const { getPlan } = useUserPlan();
-    const [aiIntro, setAiIntro] = useState<any>();
+    const [aiIntro, setAiIntro] = useState<string | null>(null);
     const [jobUpdates, setJobUpdates] = useState("pending");
-    const [csvData, setCsvData] = useState<any>([]);
-    const runningJobID = useRef(0);
+    const [, _setCsvData] = useState<
+        Array<{ name?: string; email?: string; phone?: string }>
+    >([]);
+    const runningJobID = useRef<string>("");
     const session = useSession();
     const toast = useToast();
     const user = session?.user;
@@ -115,7 +122,7 @@ CreateContentContent: React.FC = () => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
 
-            setPlan(fetchPlan?.[0]);
+            _setPlan(fetchPlan?.[0] ?? null);
         };
         plan();
     }, [user, supabase]);
@@ -192,7 +199,9 @@ CreateContentContent: React.FC = () => {
                 text: the_text(language),
             });
             if (startJob) {
-                runningJobID.current = (startJob as { data: { job_id: string } }).data.job_id;
+                runningJobID.current = (
+                    startJob as { data: { job_id: string } }
+                ).data.job_id;
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -226,7 +235,7 @@ CreateContentContent: React.FC = () => {
     }, [user, supabase]);
     const getPreviewAudioFromDB = async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error: _error } = await supabase
                 .from("videos")
                 .select("ai_preview")
                 .eq("id", router.query.id);
@@ -242,7 +251,7 @@ CreateContentContent: React.FC = () => {
     };
     const getVideoFromDB = async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error: _error } = await supabase
                 .from("videos")
                 .select("id, url, preview, campaign_name")
                 .eq("id", router.query.id);
@@ -309,8 +318,8 @@ CreateContentContent: React.FC = () => {
         );
     }
 
-    const startUpload = async (url: string, size: any) => {
-        const { error, data } = await supabase
+    const startUpload = async (url: string, size: number) => {
+        const { error } = await supabase
             .from("videos")
             .update({
                 user_id: user?.id,
@@ -340,11 +349,11 @@ CreateContentContent: React.FC = () => {
             })
             .eq("id", router.query.id)
             .select("id");
-        setVideo(data);
+        setVideo(data?.[0] as { url?: string; preview?: string } | null);
         if (error) throw error;
     };
     const updateCampaignName = async (name: string) => {
-        const { error, data } = await supabase
+        const { error } = await supabase
             .from("videos")
             .update({
                 campaign_name: name,
@@ -389,17 +398,23 @@ CreateContentContent: React.FC = () => {
     };
 
     const confirmScriptAndGenerate = async () => {
-        setReadyToGenerate(true);
+        _setReadyToGenerate(true);
         setLoading(false);
 
-        const startJob = await createAIClone({
+        const startJob = (await createAIClone({
             video_id: router.query.id,
             voice_id: voiceID,
             text: aiCloneText,
             video_url: video.url,
             ai_video_id: "test_id",
             language: language,
-        });
+        })) as {
+            data: {
+                mode?: string;
+                result?: { request_id?: string };
+                url?: string;
+            };
+        };
 
         const response = startJob.data;
 
@@ -429,7 +444,9 @@ CreateContentContent: React.FC = () => {
                         video_id: router.query.id,
                     }),
                 },
-            ).catch((e) => console.warn("[clone] background generation failed:", e)); // fire and forget
+            ).catch((e) =>
+                console.warn("[clone] background generation failed:", e),
+            ); // fire and forget
 
             // UI feedback: notify user generation started
             toast({
@@ -468,7 +485,7 @@ CreateContentContent: React.FC = () => {
         const url = "/default_thumb.png";
 
         try {
-            startUpload(url, "12");
+            startUpload(url, 12);
         } catch (error) {
             console.error("Error downloading the video", error);
         }
@@ -725,9 +742,11 @@ CreateContentContent: React.FC = () => {
                             <UploadV2
                                 isReady={true}
                                 id={router.query.id as string}
-                                externalVideo={""}
+                                externalVideo={(_url: string) => undefined}
                                 isPorcessing={videoLoading}
-                                saveScreenRecordingToCloud={""}
+                                saveScreenRecordingToCloud={async () =>
+                                    undefined
+                                }
                             >
                                 <Box
                                     width="full"
@@ -841,10 +860,10 @@ CreateContentContent: React.FC = () => {
                                     <Switch
                                         colorScheme="brand"
                                         id="clone-voice"
-                                        onChange={(e) => {
-                                            setVoiceCloningEnabled(
-                                                e.target.checked,
-                                            );
+                                         onChange={(e) => {
+                                             _setVoiceCloningEnabled(
+                                                 e.target.checked,
+                                             );
                                             setVoiceRecordingStarted(false);
                                         }}
                                         defaultChecked={voiceCloningEnabled}
@@ -1286,22 +1305,22 @@ CreateContentContent: React.FC = () => {
                         {plan &&
                             plan?.plan_name === "lite" &&
                             videoData?.filter(
-                                (video: any) => video.type === videoTypes.clone,
+                                (video) => video.type === videoTypes.clone,
                             ).length > 1 && <NotAllowed />}
                         {plan &&
                             plan?.plan_name === "growth" &&
                             videoData?.filter(
-                                (video: any) => video.type === videoTypes.clone,
+                                (video) => video.type === videoTypes.clone,
                             ).length > 4 && <NotAllowed />}
                         {plan &&
                             plan?.plan_name === "scale" &&
                             videoData?.filter(
-                                (video: any) => video.type === videoTypes.clone,
+                                (video) => video.type === videoTypes.clone,
                             ).length > 9 && <NotAllowed />}
                         {plan &&
                             plan?.plan_name === "enterprise" &&
                             videoData?.filter(
-                                (video: any) => video.type === videoTypes.clone,
+                                (video) => video.type === videoTypes.clone,
                             ).length > 19 && <NotAllowed />}
                         <Box pos="relative">
                             <Textarea

@@ -15,16 +15,16 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { FiShare2 } from "react-icons/fi";
-import {
-    emailProvidersList,
-    getEmailEmbedCode,
-} from "src/utils/getEmailEmbedCode";
+import { emailProvidersList } from "src/utils/getEmailEmbedCode";
 
-const ShareModal = ({ videoId, ogURL }) => {
+interface ShareModalProps {
+    videoId: string;
+    ogURL: string;
+}
+const ShareModal = ({ videoId, ogURL }: ShareModalProps) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [copied, setCopied] = useState(false);
     const [search, setSearch] = useState("");
-    const [copiedProvider, setCopiedProvider] = useState(null);
+    const [copiedProvider, setCopiedProvider] = useState<string | null>(null);
 
     const handleCopy = (provider) => {
         const container = document.createElement("div");
@@ -36,7 +36,7 @@ const ShareModal = ({ videoId, ogURL }) => {
                         // eslint-disable-next-line @typescript-eslint/no-var-requires
                         require("src/utils/media");
                     return getGifPreviewUrl(ogURL);
-                } catch (e) {
+                } catch {
                     return "/default_thumb.png";
                 }
             })(),
@@ -65,8 +65,8 @@ const ShareModal = ({ videoId, ogURL }) => {
         }, 9000);
     };
 
-    const filteredProviders = emailProvidersList().filter((provider) =>
-        provider.label.toLowerCase().includes(search.toLowerCase()),
+    const filteredProviders = emailProvidersList().filter((_provider) =>
+        _provider.label.toLowerCase().includes(search.toLowerCase()),
     );
 
     return (

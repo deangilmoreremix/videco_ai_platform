@@ -1,22 +1,48 @@
-import { Rnd } from "react-rnd";
-import { motion } from "framer-motion";
 import { Box, Link } from "@chakra-ui/react";
 import { FiArrowRight } from "react-icons/fi";
+import { motion } from "framer-motion";
+
+interface ElementData {
+    id: string;
+    name?: string;
+    butonPosition?: string;
+    defaultPosition?: { x: number; y: number };
+    url?: string;
+    link?: string;
+    user_id?: string;
+}
+
+interface InteractiveButtonProps {
+    _handleDragEnd: (element: ElementData, d: { x: number; y: number }) => void;
+    element: ElementData;
+    _handleDragStart: (
+        element: ElementData,
+        d: { x: number; y: number },
+    ) => void;
+    embeded: boolean;
+    _constraintsRef: { current: HTMLElement | null };
+    _isLargerThan800: boolean;
+    id: string;
+    updateClickAnalytics: (
+        videoId: string,
+        elementName?: string,
+    ) => Promise<void>;
+}
 
 export const InteractiveButton = ({
-    handleDragEnd,
+    _handleDragEnd,
     element,
-    handleDragStart,
+    _handleDragStart,
     embeded,
-    constraintsRef,
-    isLargerThan800,
+    _constraintsRef,
+    _isLargerThan800,
     id,
     updateClickAnalytics,
-}: any) => {
-    let buttonPositionTop: any = "auto";
-    let buttonPositionLeft: any = "auto";
-    let buttonPositionRight: any = "auto";
-    let buttonPositionBottom: any = "auto";
+}: InteractiveButtonProps) => {
+    let buttonPositionTop: number | string = "auto";
+    let buttonPositionLeft: number | string = "auto";
+    let buttonPositionRight: number | string = "auto";
+    let buttonPositionBottom: number | string = "auto";
     if (element?.butonPosition === "bottom-right") {
         buttonPositionBottom = 16;
         buttonPositionRight = 5;

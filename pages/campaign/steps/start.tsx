@@ -49,7 +49,6 @@ import { rem } from "polished";
 import { UploadV2 } from "@components/features/editor-v2/upload/v2";
 import { PersonalizationPanel } from "src/components/features/ai/PersonalizationPanel";
 import { FileUploader } from "react-drag-drop-files";
-import axios from "axios";
 import { blobUrlToBlob } from "src/utils/video";
 import { greetings, reader, the_greeting, the_text } from "src/utils/voice";
 import { StepImport } from "@components/features/editor-v2/page-aivideos/steps/import";
@@ -59,38 +58,50 @@ import { useWorkspaces } from "src/store/workspace";
 import { FaLinkedin } from "react-icons/fa";
 
 const Start: React.FC = () => {
-    const [plan, setPlan] = useState<any>();
+    const [plan, _setPlan] = useState<{ plan_name?: string } | null>(null);
     const [loading, setLoading] = useState(true);
     const [videoLoading, setVideoLoading] = useState(false);
-    const [jobsGenerated, setJobsGenerated] = useState(false);
+    const [, setJobsGenerated] = useState(false);
+    const [voiceCloningEnabled, setVoiceCloningEnabled] = useState(true);
     const [linkedinCookie, setLinkedinCookie] = useState("");
     const [canContinue, setCanContinue] = useState(false);
     const linkedinModal = useDisclosure();
     const [campaignName, setCampaignName] = useState("");
     const [voiceID, setVoiceID] = useState<string>("");
     const [language, setLanguage] = useState("english");
-    const [greeting, setGreeting] = useState("Hello");
+    const [greeting, setGreeting] = useState<string>("Hello");
     const { workspace } = useWorkspaces();
-    const [videoData, setVideoData] = useState<any>();
-    const [video, setVideo] = useState<any>();
+    const [_videoData, setVideoData] =
+        useState<Array<{ id: string; name?: string; status?: string }>>();
+    const [video, setVideo] = useState<{
+        url?: string;
+        preview?: string;
+    } | null>(null);
     const [originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
     const [voiceRecordingStarted, setVoiceRecordingStarted] =
         useState<boolean>(false);
-    const [jobUpdateMessages, setJobUpdateMessages] = useState<any>(
+    const [jobUpdateMessages, setJobUpdateMessages] = useState<string>(
         "Generating an AI preview for you",
     );
-    const [readyToGenerate, setReadyToGenerate] = useState(false);
-    const [csvCompleted, setCsvCompleted] = useState(false);
-    const [voiceCloningEnabled, setVoiceCloningEnabled] = useState(true);
+    const [, setReadyToGenerate] = useState(false);
+    const [csvCompleted, _setCsvCompleted] = useState(false);
 
-    const [userAudio, setUserAudio] = useState<any>();
-    const [fullname, setFullname] = useState<any>("");
-    const [background, setBackground] = useState<any>("website");
+    const [userAudio, setUserAudio] = useState<string | null>(null);
+    const [fullname, setFullname] = useState<string>("");
+    const [background, setBackground] = useState<string>("website");
     const { getPlan } = useUserPlan();
-    const [aiIntro, setAiIntro] = useState<any>();
+    const [aiIntro, setAiIntro] = useState<string | null>(null);
     const [jobUpdates, setJobUpdates] = useState("pending");
-    const [csvData, setCsvData] = useState<any>([]);
-    const runningJobID = useRef(0);
+    const [csvData, setCsvData] = useState<
+        Array<{
+            fname?: string;
+            lname?: string;
+            email?: string;
+            website?: string;
+            phone?: string;
+        }>
+    >([]);
+    const runningJobID = useRef<string>("");
     const session = useSession();
     const toast = useToast();
     const user = session?.user;
@@ -124,7 +135,7 @@ const Start: React.FC = () => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
 
-            setPlan(fetchPlan?.[0]);
+            _setPlan(fetchPlan?.[0] ?? null);
         };
         plan();
     }, [user, supabase]);
@@ -201,7 +212,9 @@ const Start: React.FC = () => {
                 text: the_text(language),
             });
             if (startJob) {
-                runningJobID.current = (startJob as { data: { job_id: string } }).data.job_id;
+                runningJobID.current = (
+                    startJob as { data: { job_id: string } }
+                ).data.job_id;
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -235,7 +248,7 @@ const Start: React.FC = () => {
     }, [user, supabase]);
     const getPreviewAudioFromDB = async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error: _error } = await supabase
                 .from("videos")
                 .select("ai_preview")
                 .eq("id", router.query.id);
@@ -251,7 +264,7 @@ const Start: React.FC = () => {
     };
     const getVideoFromDB = async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error: _error } = await supabase
                 .from("videos")
                 .select("url, preview, campaign_name")
                 .eq("id", router.query.id);
@@ -318,8 +331,8 @@ const Start: React.FC = () => {
         );
     }
 
-    const startUpload = async (url: string, size: any) => {
-        const { error, data } = await supabase
+    const startUpload = async (url: string, size: number) => {
+        const { error } = await supabase
             .from("videos")
             .update({
                 user_id: user?.id,
@@ -349,11 +362,11 @@ const Start: React.FC = () => {
             })
             .eq("id", router.query.id)
             .select("id");
-        setVideo(data);
+        setVideo(data?.[0] as { url?: string; preview?: string } | null);
         if (error) throw error;
     };
     const updateCampaignName = async (name: string) => {
-        const { error, data } = await supabase
+        const { error } = await supabase
             .from("videos")
             .update({
                 campaign_name: name,
@@ -389,17 +402,22 @@ const Start: React.FC = () => {
                     new File([blobFile], "test").size / (1024 * 1024),
                 );
             } else {
-                console.error(
-                    "Upload API did not return publicUrl",
-                    uploadedVideo.data,
-                );
+                console.error("Upload API did not return publicUrl");
             }
         } catch (e) {
             console.log(e);
             setVideoLoading(false);
         }
     };
-    const convertCsvData = (data): any[] => {
+    const convertCsvData = (
+        data,
+    ): Array<{
+        fname?: string;
+        lname?: string;
+        email?: string;
+        website?: string;
+        phone?: string;
+    }> => {
         // Extract the keys from the first sub-array
         const keys = data[0];
 
@@ -421,7 +439,7 @@ const Start: React.FC = () => {
         website: string,
     ) => {
         try {
-            const { error, data } = await supabase
+            const { error: _error, data } = await supabase
                 .from("ai_videos")
                 .upsert({
                     user_id: user.id,
@@ -474,7 +492,7 @@ const Start: React.FC = () => {
             }
 
             setReadyToGenerate(true);
-            setCsvCompleted(true);
+            _setCsvCompleted(true);
             setCanContinue(true);
             setLoading(false);
         }
@@ -488,7 +506,7 @@ const Start: React.FC = () => {
                 `${el.website}&cookies=li_at=${linkedinCookie};+Domain=www.linkedin.com;+Secure;+HttpOnly`,
             );
 
-            const startJob = await processAIVideos({
+            const _startJob = await processAIVideos({
                 og_video_public_id: originalVideoPubId,
                 voice_id: voiceID,
                 background: background,
@@ -513,7 +531,7 @@ const Start: React.FC = () => {
 
     async function handleDownload(url: string) {
         try {
-            startUpload(url, "12");
+            startUpload(url, 12);
         } catch (error) {
             console.error("Error downloading the video", error);
         }
@@ -776,10 +794,12 @@ const Start: React.FC = () => {
                             <UploadV2
                                 isReady={true}
                                 id={router.query.id as string}
-                                externalVideo={""}
+                                externalVideo={(_url: string) => undefined}
                                 handleDownload={handleDownload}
                                 isPorcessing={videoLoading}
-                                saveScreenRecordingToCloud={""}
+                                saveScreenRecordingToCloud={async () =>
+                                    undefined
+                                }
                             >
                                 <Box
                                     width="full"
@@ -1583,7 +1603,7 @@ const Start: React.FC = () => {
                                         cursor="pointer"
                                         onClick={() => {
                                             setCsvData([]);
-                                            setCsvCompleted(false);
+                                            _setCsvCompleted(false);
                                         }}
                                     />
                                 </Box>

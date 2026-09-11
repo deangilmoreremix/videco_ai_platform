@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools, persist, createJSONStorage } from "zustand/middleware";
 
 export type Workspace = {
-    id: any;
+    id: string;
     name: string;
     image?: string;
 };

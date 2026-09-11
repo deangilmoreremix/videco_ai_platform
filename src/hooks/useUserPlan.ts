@@ -19,7 +19,9 @@ export interface PlanRow {
 export function useUserPlan() {
     const session = useSession();
     const user = session?.user;
-    const getPlan = async (user_id?: string): Promise<PlanRow[] | undefined> => {
+    const getPlan = async (
+        user_id?: string,
+    ): Promise<PlanRow[] | undefined> => {
         if (!user_id) {
             return undefined;
         }

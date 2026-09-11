@@ -12,9 +12,7 @@ import {
     useDisclosure,
     Modal,
     ModalBody,
-    ModalCloseButton,
     ModalContent,
-    ModalHeader,
     ModalOverlay,
 } from "@chakra-ui/react";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -30,7 +28,7 @@ export const OnBoardingVideoFrame: FC<{
 }> = ({ video, name, helpOff }) => {
     const session = useSession();
     const user = session?.user;
-    const [plan, setPlan] = useState<any>();
+    const [plan, setPlan] = useState<{ status?: string } | null>(null);
     const { getPlan } = useUserPlan();
     const router = useRouter();
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -93,10 +91,10 @@ export const OnBoardingVideoFrame: FC<{
                     <video
                         src={(function () {
                             try {
-                                    const {
-                                        normalizeMediaUrl,
-                                        // eslint-disable-next-line @typescript-eslint/no-var-requires
-                                    } = require("src/utils/media");
+                                const {
+                                    normalizeMediaUrl,
+                                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                                } = require("src/utils/media");
                                 return normalizeMediaUrl(video);
                             } catch (e) {
                                 return video;

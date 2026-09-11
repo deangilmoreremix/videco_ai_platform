@@ -1,7 +1,4 @@
-import OpenAI from "openai";
 import { openai } from "../../lib/openai";
-
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export interface VoiceCloneResult {
     data: {
@@ -45,13 +42,9 @@ async function synthesizeSpeech(
     voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
     model = "tts-1",
 ): Promise<string> {
-    const client =
-        openai ||
-        (!OPENAI_API_KEY
-            ? (() => {
-                  throw new Error("OPENAI_API_KEY is not set");
-              })()
-            : null!);
+    if (!openai) {
+        throw new Error("OpenAI client is not configured");
+    }
 
     const mp3 = await openai.audio.speech.create({
         model,
@@ -78,9 +71,9 @@ export async function makeAIVoice(
     mp3: string,
     text: string,
     greeting: string,
-    userId: string,
-    userName: string,
-    email: string,
+    _userId: string,
+    _userName: string,
+    _email: string,
 ): Promise<VoiceCloneResult> {
     const fullText = greeting ? `${greeting}. ${text}` : text;
     const base64Audio = await synthesizeSpeech(fullText, "alloy", "tts-1");
@@ -117,7 +110,7 @@ export async function makeTextToVoice(
     text: string,
     greeting: string,
     voice_id: string,
-    language: string,
+    _language: string,
 ): Promise<TTSResult> {
     const selectedVoice =
         voice_id && VOICE_MAP[voice_id] ? VOICE_MAP[voice_id] : "alloy";

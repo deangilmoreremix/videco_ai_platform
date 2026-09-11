@@ -21,9 +21,15 @@ export default async function handler(req, res) {
             return res
                 .status(200)
                 .json({ success: true, mode: "muapi", result });
-        } catch (err: any) {
-            console.error("[clone] Muapi path failed:", err.message);
-            return res.status(500).json({ success: false, error: err.message });
+        } catch (err: unknown) {
+            console.error(
+                "[clone] Muapi path failed:",
+                err instanceof Error ? err.message : "Unknown error",
+            );
+            return res.status(500).json({
+                success: false,
+                error: err instanceof Error ? err.message : "Unknown error",
+            });
         }
     }
 

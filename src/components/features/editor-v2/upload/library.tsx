@@ -1,10 +1,8 @@
-import { ChevronDownIcon } from "@chakra-ui/icons";
 import {
     Modal,
     ModalOverlay,
     ModalContent,
     ModalHeader,
-    ModalFooter,
     ModalBody,
     ModalCloseButton,
     Text,
@@ -19,25 +17,45 @@ import {
     SimpleGrid,
     Tag,
 } from "@chakra-ui/react";
-import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import moment from "moment";
-import router from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { FiFolder } from "react-icons/fi";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { videoTypes } from "src/utils/video";
-export const Library = ({ handleDownload }) => {
+export const Library = ({
+    handleDownload,
+}: {
+    handleDownload: (url: string) => void;
+}) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [loading, setLoading] = useState(true);
-    const [videoData, setVideoData] = useState<any>();
-    const [filterVideos, setFilterVideos] = useState<any>(videoTypes.video);
+    const [_loading, setLoading] = useState(true);
+    const [videoData, setVideoData] = useState<
+        | {
+              id: string;
+              name: string;
+              type: string;
+              created_at: string;
+              preview?: string;
+              url: string;
+              campaign_name?: string;
+          }[]
+        | undefined
+    >();
     const session = useSession();
     const { getData } = useFetchTeamData();
     const user = session?.user;
-    const filteredVideos = filterVideos
-        ? videoData?.filter((video: any) => video.type === filterVideos)
-        : videoData;
+    const filteredVideos = videoData?.filter(
+        (video: {
+            id: string;
+            name: string;
+            type: string;
+            created_at: string;
+            preview?: string;
+            url: string;
+            campaign_name?: string;
+        }) => video.type === videoTypes.video,
+    );
     const getProfile = useCallback(async () => {
         try {
             setLoading(true);
@@ -55,7 +73,7 @@ export const Library = ({ handleDownload }) => {
         } finally {
             setLoading(false);
         }
-    }, [user, supabase]);
+    }, [user, getData]);
 
     useEffect(() => {
         getProfile();

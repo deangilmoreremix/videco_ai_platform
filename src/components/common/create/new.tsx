@@ -21,11 +21,12 @@ import { useUserPlan } from "src/hooks/useUserPlan";
 import { supabase } from "src/services";
 
 const New: React.FC = () => {
-    const [loading, setLoading] = useState(true);
-    const [loadingCampaign, setLoadingCampaign] = useState(false);
-    const [loadingUpload, setLoadingUpload] = useState(false);
+    const [, setLoading] = useState(true);
+    const [, setLoadingCampaign] = useState(false);
+    const [, setLoadingUpload] = useState(false);
     const [needUpgrade, setNeedUpgrade] = useState(false);
-    const [videoData, setVideoData] = useState<any>();
+    const [videoData, setVideoData] =
+        useState<Array<{ id: string; name?: string; status?: string }>>();
     const toast = useToast();
     const { currentUserPlan } = useUserPlan();
     const session = useSession();
@@ -174,15 +175,15 @@ const New: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { activeStep, setActiveStep } = useSteps({
+    const { _activeStep, _setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
 
-    const activeStepText = steps[activeStep].description;
+    const _activeStepText = steps[_activeStep].description;
 
     const max = steps.length - 1;
-    const progressPercent = (activeStep / max) * 100;
+    const _progressPercent = (_activeStep / max) * 100;
     return (
         <>
             {!session ? (

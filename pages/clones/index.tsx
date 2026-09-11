@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import moment from "moment";
 import {
     Grid,
     GridItem,
@@ -11,44 +12,56 @@ import {
     Link,
     Menu,
     MenuButton,
-    Image,
-    CardBody,
     Heading,
-    Card,
-    SimpleGrid,
-    Popover,
-    PopoverArrow,
-    PopoverBody,
-    PopoverCloseButton,
-    PopoverContent,
-    PopoverTrigger,
-    Portal,
     Input,
-    Tag,
     MenuItem,
     MenuList,
     useToast,
+    Image,
 } from "@chakra-ui/react";
-import moment from "moment";
-import { useRouter } from "next/router";
-import { Sidebar } from "@components/common/sidebar";
-import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
 import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { FiBarChart, FiDelete, FiEdit, FiShare } from "react-icons/fi";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import { Banner } from "@components/common/banners";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { videoTypes } from "src/utils/video";
 import { OnBoardingVideo } from "@components/common/onboarding-video";
+import {
+    SimpleGrid,
+    Card,
+    CardBody,
+    Tag,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    PopoverArrow,
+    PopoverCloseButton,
+    PopoverBody,
+    Portal,
+} from "@chakra-ui/react";
+import { Sidebar } from "@components/common/sidebar";
+import { Header } from "@components/common/header";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-VideosContentContent: React.FC = () => {
+export const ClonesContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
-    const [videoData, setVideoData] = useState<any>();
-    const [filterVideos, setFilterVideos] = useState<any>(videoTypes.clone);
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            type?: string;
+            name?: string;
+            status?: string;
+            url?: string;
+            campaign_name?: string;
+            created_at?: string;
+            embed_code?: string;
+            final_url?: string;
+        }>
+    >();
+    const [filterVideos, _setFilterVideos] = useState(videoTypes.clone);
     const filteredVideosList = filterVideos
-        ? videoData?.filter((video: any) => video.type === filterVideos)
+        ? videoData?.filter((video) => video.type === filterVideos)
         : videoData;
 
     const session = useSession();
@@ -80,7 +93,7 @@ VideosContentContent: React.FC = () => {
                 .update({ status: "deleted" })
                 .eq("id", id)
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     toast({
                         title: "Deleted",
                         description: "Your video has been deleted",
@@ -462,10 +475,10 @@ VideosContentContent: React.FC = () => {
         </>
     );
 };
-const VideosWithAuth: React.FC = () => (
+const ClonesWithAuth: React.FC = () => (
     <AuthGuard>
-        <VideosContent />
+        <ClonesContent />
     </AuthGuard>
 );
 
-export default VideosWithAuth;
+export default ClonesWithAuth;

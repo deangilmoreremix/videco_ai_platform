@@ -1,6 +1,5 @@
 import { Divider, Box, Text, Spinner, Center } from "@chakra-ui/react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
 import {
     ResponsiveContainer,
@@ -14,18 +13,32 @@ import {
 import { supabase } from "src/services";
 
 type VideoData = {
-    filterById?: any;
+    filterById?: string | number;
     range?: number;
     plan?: string;
 };
 export const ClickAnalytics: React.FC<VideoData> = ({
     filterById,
     range = 7,
-    plan,
+    _plan,
 }) => {
-    const router = useRouter();
-    const [videoData, setVideoData] = useState<any>([]);
-    const [formattedVideoData, setFormattedVideoData] = useState<any>([]);
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            size?: string;
+            status?: string;
+            analytics: Array<{
+                id: string;
+                data: { count?: number; user_agent?: string };
+                event: string;
+                created_at: string;
+            }>;
+        }>
+    >([]);
+    const [formattedVideoData, setFormattedVideoData] = useState<
+        Array<{ date: string; name: string; clicks: number }>
+    >([]);
     const [error, setError] = useState<string | null>(null);
     const session = useSession();
     const user = session?.user;
@@ -60,9 +73,11 @@ export const ClickAnalytics: React.FC<VideoData> = ({
             if (data) {
                 setVideoData(data ?? []);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to load click analytics", err);
-            setError(err?.message || "Failed to load analytics");
+            setError(
+                err instanceof Error ? err.message : "Failed to load analytics",
+            );
         } finally {
             setLoading(false);
         }
@@ -75,8 +90,8 @@ export const ClickAnalytics: React.FC<VideoData> = ({
         const processedVideoData = videoData.map((item) => ({
             ...item,
             analytics: item.analytics
-                .filter((item: any) => item.event === "link_click")
-                .map((analytic: any) => ({
+                .filter((item) => item.event === "link_click")
+                .map((analytic) => ({
                     ...analytic,
                 })),
         }));
@@ -85,8 +100,8 @@ export const ClickAnalytics: React.FC<VideoData> = ({
 
         const today = new Date();
 
-        processedVideoData?.forEach((item: any) => {
-            item.analytics.forEach((analytic: any) => {
+        processedVideoData?.forEach((item) => {
+            item.analytics.forEach((analytic) => {
                 const createdDate = new Date(analytic.created_at);
 
                 if (Number.isNaN(createdDate.getTime())) {
@@ -132,13 +147,7 @@ export const ClickAnalytics: React.FC<VideoData> = ({
                 border="1px solid #dcdcdc"
                 rounded="md"
             >
-                <Text
-                    as="h2"
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    mb={5}
-                    ml={5}
-                >
+                <Text as="h2" fontSize="lg" fontWeight="semibold" mb={5} ml={5}>
                     Total in-video button clicks last {range} days
                 </Text>
                 <Divider mb={5} />
@@ -161,13 +170,7 @@ export const ClickAnalytics: React.FC<VideoData> = ({
                 border="1px solid #dcdcdc"
                 rounded="md"
             >
-                <Text
-                    as="h2"
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    mb={5}
-                    ml={5}
-                >
+                <Text as="h2" fontSize="lg" fontWeight="semibold" mb={5} ml={5}>
                     Total in-video button clicks last {range} days
                 </Text>
                 <Divider mb={5} />

@@ -24,12 +24,7 @@ import {
     Progress,
     useToast,
 } from "@chakra-ui/react";
-import {
-    PiConfetti,
-    PiFinnTheHuman,
-    PiMagicWandBold,
-    PiRobot,
-} from "react-icons/pi";
+import { PiConfetti, PiFinnTheHuman, PiRobot } from "react-icons/pi";
 import {
     FiHome,
     FiTrendingUp,
@@ -175,12 +170,12 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
     const toast = useToast();
 
     const user = session?.user;
-    const [plan, setPlan] = React.useState<any>();
+    const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
     const { getData } = useFetchTeamData();
-    const [trail, setTrail] = React.useState<any>();
-    const [videos, setVideos] = React.useState<any>(0);
-    const [videoSize, setVideoSize] = React.useState<any>(0);
+    const [trail, setTrail] = React.useState<unknown>(null);
+    const [, setVideos] = React.useState<number>(0);
+    const [, setVideoSize] = React.useState<number>(0);
     const calculateTotalSize = (data) => {
         let totalSize = 0;
         data.forEach((item: { size: number }) => {
@@ -582,7 +577,7 @@ interface NavItemProps extends FlexProps {
     icon: IconType;
     path: string;
     target: string;
-    children: any;
+    children: React.ReactNode;
 }
 const NavItem = ({
     icon,

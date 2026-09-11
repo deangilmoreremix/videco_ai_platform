@@ -37,16 +37,18 @@ export const WorkspaceSwitcher = () => {
     const router = useRouter();
     const { setWorkspace, workspace } = useWorkspaces();
     const toast = useToast();
-    const [workspaces, setWorkspaces] = useState([]);
-    const [isUpdate, setIsUpdate] = useState<any>(); //Workspace data as a json {id,name,image}
+    const [workspaces, setWorkspaces] = useState<
+        Array<{ id: string; name?: string; image?: string }>
+    >([]);
+    const [isUpdate, setIsUpdate] = useState<unknown>(); //Workspace data as a json {id,name,image}
     const user = session?.user;
     const fetchWorkspaces = async () => {
         await supabase
             .from("workspace")
             .select()
             .eq("owner", user?.id)
-            .then((res) => {
-                setWorkspaces(res.data);
+            .then((_res) => {
+                setWorkspaces(_res.data);
             });
     };
     const deleteWorkspaces = async (id: string) => {
@@ -55,7 +57,7 @@ export const WorkspaceSwitcher = () => {
             .delete()
             .eq("id", id)
             .eq("owner", user?.id)
-            .then((res) => {
+            .then((_res) => {
                 onClose();
                 fetchWorkspaces();
                 toast({
@@ -133,7 +135,7 @@ export const WorkspaceSwitcher = () => {
                     },
                 ])
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     onClose();
                     fetchWorkspaces();
                     toast({

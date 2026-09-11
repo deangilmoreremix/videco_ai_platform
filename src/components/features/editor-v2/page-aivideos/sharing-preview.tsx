@@ -1,5 +1,4 @@
-import { Box, Text } from "@chakra-ui/react";
-import Image from "next/image";
+import { Box } from "@chakra-ui/react";
 
 interface StepImportProps {
     id: string;

@@ -55,7 +55,7 @@ const ElementsLog = () => {
                 .update({ status: "deleted" })
                 .eq("id", router.query.id)
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     toast({
                         title: "Deleted",
                         description: "Your video was deleted",

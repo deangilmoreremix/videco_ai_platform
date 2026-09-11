@@ -1,7 +1,7 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect } from "react";
-import { Box, Spinner, Flex } from "@chakra-ui/react";
+import { Spinner, Flex } from "@chakra-ui/react";
 
 interface AuthGuardProps {
     children: ReactNode;
@@ -35,11 +35,11 @@ export const AuthGuard = ({
     return <>{children}</>;
 };
 
-export const withAuthGuard = (
-    Component: any,
+export const withAuthGuard = <P extends Record<string, unknown>>(
+    Component: React.ComponentType<P>,
     options?: Omit<AuthGuardProps, "children">,
 ) => {
-    return function WrappedComponent(props: any) {
+    return function WrappedComponent(props: P) {
         return (
             <AuthGuard {...options}>
                 <Component {...props} />

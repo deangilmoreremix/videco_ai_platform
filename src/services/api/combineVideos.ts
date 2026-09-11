@@ -13,13 +13,13 @@ export async function uploadVideoToStorage(
 }
 
 // Upload via our server API to Supabase Storage (no Cloudinary)
-export const uploadVideoToStorageDirect = async (file: any) => {
+export const uploadVideoToStorageDirect = async (file: string) => {
     const blobFile = await blobUrlToBlob(file);
     const formData = new FormData();
     formData.append("file", new File([blobFile], `upload.mp4`));
 
     try {
-        const uploadedVideo: any = await axios.post(
+        const uploadedVideo = await axios.post(
             "/api/v1/videos/upload",
             formData,
             {

@@ -38,7 +38,7 @@ export enum LayoutEnum {
 
 // Form Inputs
 export type IFormInput = {
-    [id: string]: string | number | any[];
+    [id: string]: string | number | unknown[];
 };
 
 export type IForm = {

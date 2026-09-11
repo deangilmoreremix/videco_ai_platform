@@ -1,0 +1,135 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+  ▲ Next.js 13.5.11
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Ready in 11.4s
+ ✓ Compiled /middleware in 814ms (54 modules)
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 15.8s (1422 modules)
+ ○ Compiling /dashboard ...
+ ⨯ ./src/components/common/header/index.tsx
+Error: 
+  [31mx[0m the name `supabase` is defined multiple times
+    ,-[[36;1;4m/Users/deanellgilmore/Downloads/VidecoAI/videco_ai_platform/src/components/common/header/index.tsx[0m:13:1]
+ [2m13[0m |     Image,
+ [2m14[0m |     useDisclosure,
+ [2m15[0m | } from "@chakra-ui/react";
+ [2m16[0m | import { supabase } from "src/services";
+    : [31;1m         ^^^^|^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `supabase` here[0m[0m
+ [2m17[0m | import { useSession } from "@supabase/auth-helpers-react";
+ [2m18[0m | import { useUserStore } from "src/store/user";
+ [2m19[0m | import { useUserPlan } from "src/hooks/useUserPlan";
+ [2m20[0m | import { FaCheckCircle } from "react-icons/fa";
+ [2m21[0m | import {
+ [2m22[0m |     FiAlertCircle,
+ [2m23[0m |     FiArrowRight,
+ [2m24[0m |     FiHelpCircle,
+ [2m25[0m |     FiPlus,
+ [2m26[0m |     FiX,
+ [2m27[0m | } from "react-icons/fi";
+ [2m28[0m | import { daysLeftInTrial, isTrialExpired } from "src/utils/isTrialExpierd";
+ [2m29[0m | import { Onboarding } from "../onboarding/welcome";
+ [2m30[0m | import { supabase } from "src/services";
+    : [33;1m         ^^^^|^^^[0m
+    :              [33;1m`-- [33;1m`supabase` redefined here[0m[0m
+ [2m31[0m | import New from "../create/new";
+ [2m32[0m | import { useRouter } from "next/router";
+ [2m33[0m | import Pricing from "../pricing";
+    `----
+
+Import trace for requested module:
+./src/components/common/header/index.tsx
+ ⨯ ./src/components/common/header/index.tsx
+Error: 
+  [31mx[0m the name `supabase` is defined multiple times
+    ,-[[36;1;4m/Users/deanellgilmore/Downloads/VidecoAI/videco_ai_platform/src/components/common/header/index.tsx[0m:13:1]
+ [2m13[0m |     Image,
+ [2m14[0m |     useDisclosure,
+ [2m15[0m | } from "@chakra-ui/react";
+ [2m16[0m | import { supabase } from "src/services";
+    : [31;1m         ^^^^|^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `supabase` here[0m[0m
+ [2m17[0m | import { useSession } from "@supabase/auth-helpers-react";
+ [2m18[0m | import { useUserStore } from "src/store/user";
+ [2m19[0m | import { useUserPlan } from "src/hooks/useUserPlan";
+ [2m20[0m | import { FaCheckCircle } from "react-icons/fa";
+ [2m21[0m | import {
+ [2m22[0m |     FiAlertCircle,
+ [2m23[0m |     FiArrowRight,
+ [2m24[0m |     FiHelpCircle,
+ [2m25[0m |     FiPlus,
+ [2m26[0m |     FiX,
+ [2m27[0m | } from "react-icons/fi";
+ [2m28[0m | import { daysLeftInTrial, isTrialExpired } from "src/utils/isTrialExpierd";
+ [2m29[0m | import { Onboarding } from "../onboarding/welcome";
+ [2m30[0m | import { supabase } from "src/services";
+    : [33;1m         ^^^^|^^^[0m
+    :              [33;1m`-- [33;1m`supabase` redefined here[0m[0m
+ [2m31[0m | import New from "../create/new";
+ [2m32[0m | import { useRouter } from "next/router";
+ [2m33[0m | import Pricing from "../pricing";
+    `----
+
+Import trace for requested module:
+./src/components/common/header/index.tsx
+ ⨯ ./src/components/common/header/index.tsx
+Error: 
+  [31mx[0m the name `supabase` is defined multiple times
+    ,-[[36;1;4m/Users/deanellgilmore/Downloads/VidecoAI/videco_ai_platform/src/components/common/header/index.tsx[0m:13:1]
+ [2m13[0m |     Image,
+ [2m14[0m |     useDisclosure,
+ [2m15[0m | } from "@chakra-ui/react";
+ [2m16[0m | import { supabase } from "src/services";
+    : [31;1m         ^^^^|^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `supabase` here[0m[0m
+ [2m17[0m | import { useSession } from "@supabase/auth-helpers-react";
+ [2m18[0m | import { useUserStore } from "src/store/user";
+ [2m19[0m | import { useUserPlan } from "src/hooks/useUserPlan";
+ [2m20[0m | import { FaCheckCircle } from "react-icons/fa";
+ [2m21[0m | import {
+ [2m22[0m |     FiAlertCircle,
+ [2m23[0m |     FiArrowRight,
+ [2m24[0m |     FiHelpCircle,
+ [2m25[0m |     FiPlus,
+ [2m26[0m |     FiX,
+ [2m27[0m | } from "react-icons/fi";
+ [2m28[0m | import { daysLeftInTrial, isTrialExpired } from "src/utils/isTrialExpierd";
+ [2m29[0m | import { Onboarding } from "../onboarding/welcome";
+ [2m30[0m | import { supabase } from "src/services";
+    : [33;1m         ^^^^|^^^[0m
+    :              [33;1m`-- [33;1m`supabase` redefined here[0m[0m
+ [2m31[0m | import New from "../create/new";
+ [2m32[0m | import { useRouter } from "next/router";
+ [2m33[0m | import Pricing from "../pricing";
+    `----
+
+Import trace for requested module:
+./src/components/common/header/index.tsx
+ ⨯ ./pages/videos/index.tsx
+Error: 
+  [31mx[0m the name `supabase` is defined multiple times
+    ,-[[36;1;4m/Users/deanellgilmore/Downloads/VidecoAI/videco_ai_platform/pages/videos/index.tsx[0m:33:1]
+ [2m33[0m | import { useRouter } from "next/router";
+ [2m34[0m | import { Sidebar } from "@components/common/sidebar";
+ [2m35[0m | import { Header } from "@components/common/header";
+ [2m36[0m | import { supabase } from "src/services";
+    : [31;1m         ^^^^|^^^[0m
+    :              [31;1m`-- [31;1mprevious definition of `supabase` here[0m[0m
+ [2m37[0m | import { useEditorStore } from "src/store/editor";
+ [2m38[0m | import { FiBarChart, FiDelete, FiEdit, FiShare } from "react-icons/fi";
+ [2m39[0m | import { useFetchTeamData } from "src/hooks/useFetchTeamData";
+ [2m40[0m | import { Banner } from "@components/common/banners";
+ [2m41[0m | import { ChevronDownIcon } from "@chakra-ui/icons";
+ [2m42[0m | import { videoTypes } from "src/utils/video";
+ [2m43[0m | import { OnBoardingVideo } from "@components/common/onboarding-video";
+ [2m44[0m | import { supabase } from "src/services";
+    : [33;1m         ^^^^|^^^[0m
+    :              [33;1m`-- [33;1m`supabase` redefined here[0m[0m
+ [2m45[0m | import { AuthGuard } from "src/hoc/withAuthGuard";
+ [2m46[0m | 
+ [2m47[0m | const VideosContent: React.FC = () => {
+    `----
+ ✓ Compiled / in 7.9s (1415 modules)
+[?25h

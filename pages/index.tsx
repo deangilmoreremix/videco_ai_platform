@@ -15,7 +15,13 @@ const Home: React.FC = () => {
 
 export default Home;
 
-export const getServerSideProps = async (ctx: any) => {
+export const getServerSideProps = async (ctx: {
+    res: {
+        setHeader: (key: string, value: string) => void;
+        statusCode: number;
+        end: () => void;
+    };
+}) => {
     const { res } = ctx;
 
     res.setHeader("location", "/dashboard");

@@ -1,8 +1,19 @@
-import { Rnd } from "react-rnd";
-import { motion } from "framer-motion";
 import { Box, Text } from "@chakra-ui/react";
 
-export const InteractiveCalendar = ({ element, isLargerThan800 }: any) => (
+interface CalendarElement {
+    id: string;
+    url?: string;
+}
+
+interface InteractiveCalendarProps {
+    element: CalendarElement;
+    isLargerThan800: boolean;
+}
+
+export const InteractiveCalendar = ({
+    element,
+    isLargerThan800,
+}: InteractiveCalendarProps) => (
     <Box
         key={element.id}
         zIndex={990}

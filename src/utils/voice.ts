@@ -75,7 +75,7 @@ const voice_text = {
     no: "Hallo, dette er din klonede stemme. Hvordan går det med deg?",
 };
 
-export const the_greeting = (language, custom: any = false) => {
+export const the_greeting = (language, custom: unknown = false) => {
     switch (language) {
         case supportedLanguages.en:
             return custom ? custom : greetings.en[0];

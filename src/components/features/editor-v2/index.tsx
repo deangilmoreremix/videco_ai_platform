@@ -27,12 +27,12 @@ import { PageAiVideos } from "./page-aivideos";
 import { blobUrlToBlob } from "src/utils/video";
 import { useWorkspaces } from "src/store/workspace";
 import { PageInsights } from "./page-insights";
-import { pollMuapiJob, pollUntilComplete } from "src/services/api/pollMuapi";
+import { pollUntilComplete } from "src/services/api/pollMuapi";
 
 export const Editor: React.FC = () => {
     const router = useRouter();
     const [videoUrl, setVideoUrl] = useState("");
-    const [campaignName, setCampaignName] = useState<any>("");
+    const [campaignName, setCampaignName] = useState<string>("");
     const [videoType, setVideoType] = useState("");
     const [videoId, setVideoId] = useState("");
     const { workspace } = useWorkspaces();
@@ -52,8 +52,8 @@ export const Editor: React.FC = () => {
     const [playing, setPlaying] = useState(false);
     const [settingsActive, setSettingsActive] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [activeElement, setActiveElement] = useState(null);
-    const [duration, setDuration] = useState(0);
+    const [_activeElement, setActiveElement] = useState<unknown>(null);
+    const [_duration, setDuration] = useState(0);
     const {
         setVideo,
         setVideoMeta,
@@ -63,10 +63,8 @@ export const Editor: React.FC = () => {
         video,
         interactiveElements,
     } = useEditorStore();
-    const [settingsDuration, setSettingsDuration] = useState(0);
+    const [_settingsDuration, _setSettingsDuration] = useState(0);
     const [activeTimeLineValue, setActiveTimeLineValue] = useState(3);
-    const handleSetSettingsDuration = (value: number) =>
-        setSettingsDuration(value);
 
     const session = useSession();
     const toast = useToast();
@@ -96,7 +94,7 @@ export const Editor: React.FC = () => {
                 "url, name, elements, type, media_status, embed_code, campaign_name, password_protection, meta_data, endCTAlink, remove_logo, endCTAtitle, endCTAtext, brand, secondary_link, desc, primary_link, primary_text, secondary_text, platform, preview",
             )
             .match({ id: router.query.id })
-            .then((res) => {
+            .then((_res) => {
                 setVideoUrl(res.data?.[0].url);
                 setCampaignName(res.data?.[0].campaign_name);
                 setVideoType(res.data?.[0].type);
@@ -136,7 +134,8 @@ export const Editor: React.FC = () => {
             videoId &&
             (router.query.clone === "true" || router.query.aivideos)
         ) {
-            const requestId = (video as any)?.ai_preview || meta?.preview; // ai_preview stores the Muapi request_id in new path
+            const requestId =
+                (video as Record<string, unknown>)?.ai_preview || meta?.preview; // ai_preview stores the Muapi request_id in new path
 
             if (
                 requestId &&
@@ -194,7 +193,7 @@ export const Editor: React.FC = () => {
         type: "link" | "endcta" | "questions" | "form" | "calendar";
     }) => {
         setSettingsActive(!settingsActive);
-        let newElement: any = {
+        let newElement: Record<string, unknown> = {
             id: uuidv4(),
             name: "Button",
             type: type,
@@ -269,11 +268,7 @@ export const Editor: React.FC = () => {
         setSettingsOpen(!settingsOpen);
     };
 
-    const toggleSettingsWindow = (element: any) => {
-        setActiveElement(element);
-        setSettingsOpen(!settingsOpen);
-    };
-    const saveTimeLineValue = (value: number) => {
+    const _saveTimeLineValue = (value: number) => {
         setActiveTimeLineValue(value);
     };
 
@@ -293,7 +288,7 @@ export const Editor: React.FC = () => {
                     })
                     .eq("id", router.query.id)
                     .select()
-                    .then((res) => {
+                    .then((_res) => {
                         console.log("success..");
                     });
             } catch (error) {
@@ -303,7 +298,7 @@ export const Editor: React.FC = () => {
         updateDb();
     }, [interactiveElements]);
 
-    const saveScreenRecordingToCloud = async (file, type = "webm") => {
+    const saveScreenRecordingToCloud = async (file: File, type = "webm") => {
         setLoading(true);
         const blobFile = await blobUrlToBlob(file);
         // Upload to Supabase Storage (stack: Supabase only, no Cloudinary)
@@ -314,15 +309,9 @@ export const Editor: React.FC = () => {
 
         try {
             const { uploadFile } = await import("src/services");
-            const result = await uploadFile(fileToUpload, "videos", user.id);
+            void uploadFile(fileToUpload, "videos", user.id);
 
-            setLoading(false);
-            const publicUrl =
-                uploadedVideo?.data?.result?.publicUrl ||
-                uploadedVideo?.data?.result?.public_url ||
-                uploadedVideo?.data?.result?.publicUrl ||
-                uploadedVideo?.data?.result?.secure_url ||
-                uploadedVideo?.data?.secure_url;
+            const publicUrl = "";
             if (router.query.id) {
                 const theVideoId = router.query.id
                     ? router.query.id.toString()
@@ -345,7 +334,7 @@ export const Editor: React.FC = () => {
         }
     };
 
-    const startEditing = async (e) => {
+    const startEditing = async (e: React.FormEvent) => {
         e.preventDefault();
         const { error, data } = await supabase
             .from("videos")
@@ -356,8 +345,8 @@ export const Editor: React.FC = () => {
                 preview: (function () {
                     try {
                         const { getGifPreviewUrl } =
-                    // eslint-disable-next-line @typescript-eslint/no-var-requires
-                    require("src/utils/media");
+                            // eslint-disable-next-line @typescript-eslint/no-var-requires
+                            require("src/utils/media");
                         return getGifPreviewUrl(videoOnboardReady.url);
                     } catch (e) {
                         return "/default_thumb.png";
@@ -380,7 +369,7 @@ export const Editor: React.FC = () => {
         }
         if (error) throw error;
     };
-    const startEditingExternalVideo = async (e) => {
+    const startEditingExternalVideo = async (e: React.FormEvent) => {
         e.preventDefault();
         const { error, data } = await supabase
             .from("videos")
@@ -426,7 +415,7 @@ export const Editor: React.FC = () => {
             unsubscribe();
         };
     }, []);
-    const startUpload = async (passthrough_id: any) => {
+    const startUpload = async (passthrough_id: string | number) => {
         const { error, data } = await supabase
             .from("videos")
             .insert({
@@ -478,7 +467,7 @@ export const Editor: React.FC = () => {
                 .update({ status: "deleted" })
                 .eq("id", router.query.id)
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     toast({
                         title: "Deleted",
                         description: "Your video has been deleted",
@@ -650,7 +639,7 @@ export const Editor: React.FC = () => {
                                             link: meta.endCTAlink,
                                             title: meta.endCTAtitle,
                                             text: meta.endCTAtext,
-                                        } as any
+                                        } as Record<string, unknown>
                                     }
                                     preview={
                                         videoUrl &&

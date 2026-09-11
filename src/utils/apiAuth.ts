@@ -1,6 +1,14 @@
 import { supabase } from "src/services";
 
-export async function verifyToken(req: any, res, next) {
+export async function verifyToken(
+    req: { body: { api_key: string } },
+    res: {
+        status: (code: number) => {
+            json: (body: Record<string, string>) => void;
+        };
+    },
+    next: () => void,
+) {
     if (!req.body.api_key) {
         return res
             .status(401)
@@ -8,7 +16,6 @@ export async function verifyToken(req: any, res, next) {
     }
 
     try {
-        const secretKey = req.body.api_key;
         // const decoded = jwt.verify(token, secretKey);
         const user_id = await supabase
             .from("apikey")

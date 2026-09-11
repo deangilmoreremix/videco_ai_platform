@@ -9,25 +9,16 @@ import {
     Highlight,
     Wrap,
     Alert,
-    AlertIcon,
     Spinner,
     Button,
 } from "@chakra-ui/react";
 import React, { useEffect } from "react";
 import { createClient, ErrorResponse, Videos, Video } from "pexels";
-import {
-    FiCircle,
-    FiSave,
-    FiSearch,
-    FiVideo,
-    FiX,
-    FiYoutube,
-} from "react-icons/fi";
+import { FiSearch, FiVideo, FiX, FiYoutube } from "react-icons/fi";
 import { useRouter } from "next/router";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import dynamic from "next/dynamic";
 import Pricing from "@components/common/pricing";
 import { Recorder } from "@components/features/recorder/recorder";
 import { blobUrlToBlob } from "src/utils/video";
@@ -43,18 +34,22 @@ export const Upload: React.FC<UploadProps> = ({
     const router = useRouter();
     const session = useSession();
     const user = session?.user;
-    const [showPricing, setShowPricing] = React.useState<any>(false);
-    const [recodPreview, setRecodPreview] = React.useState<any>(false);
-    const [recodData, setRecodData] = React.useState<any>();
-    const [recodDataURL, setRecodDataURL] = React.useState<any>();
+    const [showPricing, _setShowPricing] = React.useState<boolean>(false);
+    const [recodPreview, setRecodPreview] = React.useState<boolean>(false);
+    const [_recodData, setRecodData] = React.useState<unknown>();
+    const [recodDataURL, setRecodDataURL] = React.useState<string>();
     const [confirmRecodPreview, setConfirmRecodPreview] =
-        React.useState<any>(false);
-    const [plan, setPlan] = React.useState<any>();
+        React.useState<boolean>(false);
+    const [_plan, setPlan] = React.useState<
+        { plan_name?: string } | undefined
+    >();
     const { getPlan } = useUserPlan();
-    const { getData } = useFetchTeamData();
+    const { getData: _getData } = useFetchTeamData();
     const { type, varient } = router.query;
 
-    const client = createClient(process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY!);
+    const client = createClient(
+        process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY ?? "",
+    );
 
     useEffect(() => {
         const plan = async () => {
@@ -78,7 +73,7 @@ export const Upload: React.FC<UploadProps> = ({
             });
     };
 
-    const handleRecordFinish = async (data) => {
+    const handleRecordFinish = async (data: File) => {
         setRecodPreview(true);
         saveScreenRecordingToCloud(data);
         const blobFile = await blobUrlToBlob(data);
@@ -583,8 +578,8 @@ export const Upload: React.FC<UploadProps> = ({
 };
 
 type UploadProps = {
-    externalVideo: any;
-    saveScreenRecordingToCloud: any;
+    externalVideo: (url: string) => void;
+    saveScreenRecordingToCloud: (file: File, type?: string) => Promise<void>;
     isReady: boolean;
     isPorcessing?: boolean;
     children?: React.ReactNode;

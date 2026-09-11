@@ -3,6 +3,7 @@ const {
     submitPrediction,
     pollResult,
     logMuapiUsage,
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
 } = require("src/lib/muapi");
 
 describe("muapi helpers", () => {

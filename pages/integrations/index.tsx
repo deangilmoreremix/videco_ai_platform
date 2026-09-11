@@ -23,7 +23,7 @@ import { useRouter } from "next/router";
 import { FiHelpCircle, FiSearch, FiSettings } from "react-icons/fi";
 import { MdCreate } from "react-icons/md";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-IntegrationsContent: React.FC = () => {
+const IntegrationsContent: React.FC = () => {
     const session = useSession();
     const [search, setSearch] = useState("");
     const router = useRouter();

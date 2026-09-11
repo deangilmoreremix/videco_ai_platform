@@ -1,35 +1,26 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Grid,
     GridItem,
-    Button,
     Box,
     Flex,
     Spinner,
     Text,
     Link,
-    Input,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
     Divider,
     SimpleGrid,
     useToast,
 } from "@chakra-ui/react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { Sidebar } from "@components/common/sidebar";
-import { BlockPicker, SketchPicker } from "react-color";
+import { BlockPicker } from "react-color";
 
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
-import { useEditorStore } from "src/store/editor";
-import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import { Formik, Form, Field } from "formik";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-BrandKitContentContent: React.FC = () => {
-    const [loading, setLoading] = useState(true);
+export const BrandKitContent: React.FC = () => {
+    const [, _setLoading] = useState(true);
     const [noBrandkit, setNoBrandkit] = useState(false);
     const [primaryColor, setPrimaryColor] = useState("#05405A");
     const [primaryTextColor, setPrimaryTextColor] = useState("#ffffff");
@@ -37,11 +28,10 @@ BrandKitContentContent: React.FC = () => {
     const [secondaryTextColor, setsecondaryTextColor] = useState("#000000");
     const session = useSession();
     const toast = useToast();
-    const user = session?.user;
-    const router = useRouter();
+    const _router = useRouter();
     const getBrandKit = async () => {
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("brand_kit")
                 .select()
                 .eq("user_id", session?.user?.id)
@@ -71,7 +61,7 @@ BrandKitContentContent: React.FC = () => {
                         user_id: session?.user?.id,
                         [brandType]: value,
                     })
-                    .then((res) => {
+                    .then((_res) => {
                         setNoBrandkit(true);
                         toast({
                             title: "Brand Kit updated",
@@ -88,7 +78,7 @@ BrandKitContentContent: React.FC = () => {
                     })
                     .eq("user_id", session?.user?.id)
                     .select()
-                    .then((res) => {
+                    .then((_res) => {
                         toast({
                             title: "Brand Kit updated",
                             status: "success",

@@ -139,7 +139,7 @@ export async function generatePersonalizedScript(params: {
     }
 
     const raw = completion.choices[0]?.message?.content || "{}";
-    let parsed: any;
+    let parsed: unknown;
     try {
         parsed = JSON.parse(raw);
     } catch {
@@ -205,7 +205,7 @@ export function getRealtimeConfig() {
 /**
  * Structured outreach package (email + video script) using Chat Completions.
  */
-export async function generateOutreachPackage(lead: any, user_id?: string) {
+export async function generateOutreachPackage(lead: unknown, user_id?: string) {
     if (!openai) throw new Error("OpenAI not configured");
 
     const res = await openai.chat.completions.create({
@@ -245,7 +245,7 @@ async function logOpenAIUsage({
     model: string;
     action: string;
     tokens: number;
-    details: any;
+    details: unknown;
 }) {
     try {
         let cost_estimate = 0;

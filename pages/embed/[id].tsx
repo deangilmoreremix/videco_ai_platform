@@ -28,10 +28,12 @@ import { usePersonalizedContent } from "src/hooks/usePersonalizedContent";
 import Head from "next/head";
 import { supabase } from "src/services";
 
-const Edit: React.FC = ({ videoData }: any) => {
+const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
+    videoData,
+}) => {
     const router = useRouter();
     const { personalizedContent } = usePersonalizedContent();
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { onClose } = useDisclosure();
     const [isLargerThan800] = useMediaQuery("(min-width: 800px)");
 
     const [videoUrl, setVideoUrl] = useState("");
@@ -60,15 +62,19 @@ const Edit: React.FC = ({ videoData }: any) => {
         primary_text_color: "#ffffff",
         secondary_text_color: "#ffffff",
     });
-    const [playing, setPlaying] = useState(false);
-    const [input, setInput] = useState("");
+    const [, _setPlaying] = useState(false);
+    const [, setInput] = useState("");
     const { getBrandKit } = useBrandKit();
     const handleInputChange = (e) => setInput(e.target.value);
 
-    const [duration, setDuration] = useState(0);
-    const playerRef = useRef(null);
-    const { setVideo, setInteractiveElements, interactiveElements, video } =
-        useEditorStore();
+    const [, _setDuration] = useState(0);
+    const _playerRef = useRef<HTMLVideoElement | null>(null);
+    const {
+        setVideo: _setVideo,
+        setInteractiveElements: _setInteractiveElements,
+        interactiveElements: _interactiveElements,
+        video: _video,
+    } = useEditorStore();
     const getVideoByID = useCallback(async () => {
         await supabase
             .from("videos")

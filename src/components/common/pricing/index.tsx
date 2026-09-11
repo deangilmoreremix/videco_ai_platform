@@ -4,14 +4,6 @@ import { Box, Button, Flex, Text, Image } from "@chakra-ui/react";
 import { FaCheckCircle } from "react-icons/fa";
 import { FiArrowRight, FiX } from "react-icons/fi";
 
-const optionsPremium = [
-    { id: 1, desc: "Unlimited videos" },
-    { id: 2, desc: "Customizable player color" },
-    { id: 3, desc: "Interactive forms" },
-    { id: 4, desc: "Interactive surveys" },
-    { id: 5, desc: "Invite users to the account " },
-    { id: 6, desc: "Remove videco branding " },
-];
 interface PackageTierProps {
     hidePiricng?: () => void;
 }

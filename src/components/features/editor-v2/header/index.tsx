@@ -3,15 +3,11 @@ import {
     Button,
     Input,
     Drawer,
-    DrawerBody,
     DrawerCloseButton,
     Text,
     DrawerContent,
-    DrawerHeader,
-    DrawerOverlay,
     useDisclosure,
     Heading,
-    useBoolean,
     useToast,
     Skeleton,
     Box,
@@ -21,8 +17,6 @@ import {
     ModalBody,
     ModalCloseButton,
     ModalContent,
-    ModalOverlay,
-    useEditableControls,
     ButtonGroup,
     IconButton,
     Editable,
@@ -32,7 +26,6 @@ import {
 import Select from "react-select";
 import Image from "next/image";
 import { supabase } from "src/services";
-// Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 import { useRouter } from "next/router";
 import { rem } from "polished";
 import React, { useEffect, useState } from "react";
@@ -57,32 +50,33 @@ import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 type HeaderProps = {
     activeItem: "page" | "editor" | "aivideos" | "insights";
     campaignName?: string;
-    setCampaignName?: any;
+    setCampaignName?: (value: string) => void;
 };
 export const Header: React.FC<HeaderProps> = ({
     activeItem,
     campaignName,
     setCampaignName,
 }) => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen, onClose } = useDisclosure();
     const chatBotModal = useDisclosure();
 
-    const [published, setPublished] = useBoolean();
-    const [shareData, setShareData] = useState<any>();
-    const [saving, setSaving] = useState<boolean>(false);
+    const [shareData, setShareData] = useState<Record<string, unknown>>();
     const [imageLoading, setImageLoading] = useState<boolean>(true);
-    const [emailProvider, setEmailProvider] = useState<any>();
+    const [emailProvider, setEmailProvider] = useState<{
+        value: string;
+        label: string;
+    }>();
     const [creatingPreview, setCreatingPreview] = useState<boolean>(false);
-    const { meta, setVideoMeta } = useEditorStore();
+    const meta = useEditorStore((s) => s.meta);
     const toast = useToast();
     const router = useRouter();
-    const embedCodeRef = React.useRef();
+    const _embedCodeRef = React.useRef<HTMLDivElement>(null);
 
     const onImageLoad = () => {
         setImageLoading(false);
     };
 
-    const updatePreview = async (playback_id) => {
+    const updatePreview = async (playback_id: string | null) => {
         try {
             await supabase
                 .from("videos")
@@ -108,10 +102,9 @@ export const Header: React.FC<HeaderProps> = ({
                 isClosable: true,
             });
         }
-        setPublished.on();
     };
     const updateCampaignName = async (name: string) => {
-        const { error, data } = await supabase
+        const { error } = await supabase
             .from("videos")
             .update({
                 campaign_name: name,
@@ -159,76 +152,6 @@ export const Header: React.FC<HeaderProps> = ({
             </Flex>
         );
     }
-    const publishVideo = async () => {
-        setSaving(true);
-        try {
-            await supabase
-                .from("videos")
-                .update({
-                    embed_code: `<iframe src='https://app.videco.io/embed/${router.query.id}?method=embed' width='560' height='315' frameborder='0' allowfullscreen></iframe>`,
-                    final_url: `https://app.videco.io/embed/${router.query.id}`,
-                })
-                .eq("id", router.query.id)
-                .select()
-                .then((res) => {
-                    setShareData(res.data?.[0]);
-                });
-            setSaving(false);
-        } catch (error) {
-            setSaving(false);
-            toast({
-                title: "Something went wrong.",
-                description:
-                    "Something went wronge while saving your video. Please cotnact our support team.",
-                status: "error",
-                duration: 1000,
-                isClosable: true,
-            });
-        }
-        setPublished.on();
-    };
-
-    const updateBranding = async () => {
-        setSaving(true);
-        try {
-            await supabase
-                .from("videos")
-                .update({
-                    name: meta.title,
-                    desc: meta.desc,
-                    primary_link: meta.primary_link,
-                    primary_text: meta.primary_text,
-                    secondary_text: meta.secondary_text,
-                    secondary_link: meta.secondary_link,
-                    password_protection: meta.password_protection,
-                    remove_logo: meta.remove_logo,
-                })
-                .eq("id", router.query.id)
-                .select()
-                .then((res) => {
-                    setShareData(res.data?.[0]);
-                });
-            setSaving(false);
-        } catch (error) {
-            setSaving(false);
-            toast({
-                title: "Something went wrong.",
-                description:
-                    "Something went wronge while saving your video. Please cotnact our support team.",
-                status: "error",
-                duration: 1000,
-                isClosable: true,
-            });
-        }
-    };
-
-    const onOpenShare = () => {
-        if (!published) {
-            publishVideo();
-        }
-        onOpen();
-    };
-
     useEffect(() => {
         updateBranding();
     }, [meta]);
@@ -607,7 +530,7 @@ export const Header: React.FC<HeaderProps> = ({
                     size="sm"
                     placement="right"
                     onClose={onClose}
-                    finalFocusRef={embedCodeRef}
+                    finalFocusRef={_embedCodeRef}
                 >
                     <DrawerOverlay />
                     <DrawerContent>

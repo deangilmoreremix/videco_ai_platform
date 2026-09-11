@@ -18,16 +18,9 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useUserStore } from "src/store/user";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { FaCheckCircle } from "react-icons/fa";
-import {
-    FiAlertCircle,
-    FiArrowRight,
-    FiHelpCircle,
-    FiPlus,
-    FiX,
-} from "react-icons/fi";
-import { daysLeftInTrial, isTrialExpired } from "src/utils/isTrialExpierd";
+import { FiArrowRight, FiHelpCircle, FiPlus, FiX } from "react-icons/fi";
+import { isTrialExpired } from "src/utils/isTrialExpierd";
 import { Onboarding } from "../onboarding/welcome";
-import { supabase } from "src/services";
 import New from "../create/new";
 import { useRouter } from "next/router";
 import Pricing from "../pricing";
@@ -35,19 +28,19 @@ import Pricing from "../pricing";
 type HeaderProps = {
     pageTitle: string;
 };
-export const Header: FC<HeaderProps> = (props) => {
-    const [loading, setLoading] = useState(true);
-    const [fullname, setFullname] = useState(null);
+export const Header: FC<HeaderProps> = () => {
+    const [, setLoading] = useState(true);
+    const [, setFullname] = useState(null);
     const create = useDisclosure();
     const router = useRouter();
     const [showOnboarding, setShowOnboarding] = useState(false);
-    const [hideConfetti, setHideConfetti] = useState(false);
+    const [, _setHideConfetti] = useState(false);
     const { setUser } = useUserStore();
     const session = useSession();
     const user = session?.user;
-    const [plan, setPlan] = React.useState<any>();
+    const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
-    const [trail, setTrail] = React.useState<any>();
+    const [trail, setTrail] = React.useState<unknown>(null);
 
     useEffect(() => {
         // Dynamically add the ProductLift SDK script

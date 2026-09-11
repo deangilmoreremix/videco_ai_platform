@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
     Box,
     Slider,
@@ -9,26 +8,24 @@ import {
 import { FiMove } from "react-icons/fi";
 import Draggable from "react-draggable";
 import React, { useEffect, useRef, useState } from "react";
-import VideoThumbnail from "react-video-thumbnail";
 import { useEditorStore } from "src/store/editor";
 
 type TimelineProps = {
-    elements: any[];
-    saveTimeLineValue: any;
-    videoUrl: any;
+    elements: { id: string; name: string; endTime: number; pos: number }[];
+    saveTimeLineValue: (value: number) => void;
+    videoUrl: string;
     toggleSettingsWindow: (id: string) => void;
 };
 export const Timeline = ({
     elements,
     saveTimeLineValue,
-    videoUrl,
+    videoUrl: _videoUrl,
     toggleSettingsWindow,
 }: TimelineProps): JSX.Element => {
-    const { video, setVideo, interactiveElements, updateInteractiveElements } =
-        useEditorStore();
+    const { video, setVideo, updateInteractiveElements } = useEditorStore();
     const [sliderValue, setSliderValue] = useState(3);
     const timelineRef = useRef(null);
-    const onSliderChange = (val) => {
+    const onSliderChange = (val: number) => {
         saveTimeLineValue(val / video.duration);
         setSliderValue(val);
         setVideo({
@@ -37,17 +34,7 @@ export const Timeline = ({
         });
     };
 
-    function getOriginalWidthFromThePrecentage(percentage, fullValue) {
-        // Convert the percentage to a decimal
-        const decimalPercentage = percentage / 100;
-
-        // Calculate the original number
-        const originalNumber = decimalPercentage * fullValue;
-
-        return originalNumber;
-    }
-
-    function calculatePercentage(originalNumber, fullValue) {
+    function calculatePercentage(originalNumber: number, fullValue: number) {
         // Ensure fullValue is not zero to avoid division by zero
         if (fullValue !== 0) {
             // Calculate the percentage
@@ -60,7 +47,12 @@ export const Timeline = ({
         }
     }
 
-    const handleDragStop = (e, data) => {
+    const handleDragStop = (
+        e: React.MouseEvent,
+        data: {
+            element: { id: string; name: string; endTime: number; pos: number };
+        },
+    ) => {
         const TIMELINE_WIDTH = timelineRef.current.clientWidth - 48;
 
         const positionInPresentage =

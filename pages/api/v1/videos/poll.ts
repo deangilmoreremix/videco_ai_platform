@@ -20,7 +20,11 @@ export default async function handler(
 
     console.log("[videos/poll] polling muapi for", request_id);
 
-    const reliableUpdate = async (table: string, payload: any, id: string) => {
+    const reliableUpdate = async (
+        table: string,
+        payload: Record<string, unknown>,
+        id: string,
+    ) => {
         const maxAttempts = 3;
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
@@ -109,8 +113,10 @@ export default async function handler(
         }
 
         return res.status(200).json({ success: true, status: result.status });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("[videos/poll] poll error", err);
-        return res.status(500).json({ error: err.message || "poll_failed" });
+        return res.status(500).json({
+            error: err instanceof Error ? err.message : "poll_failed",
+        });
     }
 }

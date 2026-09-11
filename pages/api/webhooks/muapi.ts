@@ -14,7 +14,6 @@ export default async function handler(
 ) {
     if (req.method !== "POST") return res.status(405).end();
 
-
     const signature = req.headers["x-muapi-signature"] as string | undefined;
     const rawBody = JSON.stringify(req.body);
     if (signature) {

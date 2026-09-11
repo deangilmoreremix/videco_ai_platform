@@ -1,43 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
-    Input,
     Box,
-    Heading,
     Flex,
-    Card,
-    CardBody,
-    Text,
+    Heading,
     Highlight,
     Button,
     Container,
-    FormControl,
-    FormLabel,
     HStack,
-    IconButton,
-    InputGroup,
-    InputLeftElement,
-    Textarea,
-    VStack,
-    Wrap,
-    WrapItem,
     Link,
     Spinner,
+    Wrap,
+    WrapItem,
 } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import {
-import { AuthGuard } from "src/hoc/withAuthGuard";    FiBluetooth,
-    FiDisc,
-    FiFacebook,
-    FiGitCommit,
-    FiMail,
-    FiPhone,
-    FiTwitter,
-    FiVoicemail,
-} from "react-icons/fi";
-LeadsContent: React.FC = () => {
+import { FiMail, FiTwitter } from "react-icons/fi";
+import { AuthGuard } from "src/hoc/withAuthGuard";
+const LeadsContent: React.FC = () => {
     const session = useSession();
     const router = useRouter();
     useEffect(() => {

@@ -9,10 +9,10 @@ import Pricing from "@components/common/pricing";
 const ThemeSidebar: React.FC = () => {
     const { setVideoMeta, meta } = useEditorStore();
     const session = useSession();
-    const [showPricing, setShowPricing] = useState<any>(false);
+    const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
     const { getPlan } = useUserPlan();
-    const [plan, setPlan] = useState<any>();
+    const [plan, setPlan] = useState<{ plan_name?: string } | undefined>();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);

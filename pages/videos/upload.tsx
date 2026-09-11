@@ -7,7 +7,6 @@ import {
     Link,
     Card,
     Flex,
-    Button,
     useSteps,
     Progress,
     Step,
@@ -18,14 +17,14 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import { Header } from "@components/common/header";
-import { FiArrowRight, FiCamera, FiUpload } from "react-icons/fi";
+import { FiCamera, FiUpload } from "react-icons/fi";
 
 const Upload: React.FC = () => {
-    const [loading, setLoading] = useState(true);
-    const [loadingCampaign, setLoadingCampaign] = useState(false);
-    const [loadingUpload, setLoadingUpload] = useState(false);
-    const [videoData, setVideoData] = useState<any>();
+    const [, setLoading] = useState(true);
+    const [, setLoadingCampaign] = useState(false);
+    const [, setLoadingUpload] = useState(false);
+    const [_videoData, setVideoData] =
+        useState<Array<{ id: string; name?: string; status?: string }>>();
     const session = useSession();
     const user = session?.user;
     useEffect(() => {
@@ -77,15 +76,15 @@ const Upload: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { activeStep, setActiveStep } = useSteps({
+    const { _activeStep, _setActiveStep } = useSteps({
         index: 3,
         count: steps.length,
     });
 
-    const activeStepText = steps[activeStep].description;
+    const _activeStepText = steps[_activeStep].description;
 
     const max = steps.length - 1;
-    const progressPercent = (activeStep / max) * 100;
+    const _progressPercent = (_activeStep / max) * 100;
     return (
         <>
             {!session ? (

@@ -1,9 +1,4 @@
-import {
-    CheckIcon,
-    CloseIcon,
-    ArrowForwardIcon,
-    ChevronDownIcon,
-} from "@chakra-ui/icons";
+import { CheckIcon, CloseIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import {
     Box,
     Button,
@@ -21,7 +16,6 @@ import {
     MenuButton,
     MenuItem,
     MenuList,
-    Popover,
     PopoverArrow,
     PopoverBody,
     PopoverCloseButton,
@@ -39,23 +33,12 @@ import { Formik, Form, Field } from "formik";
 import { useRouter } from "next/router";
 import { rem } from "polished";
 import { useEffect, useRef, useState } from "react";
-import {
-    FiArrowRight,
-    FiEdit2,
-    FiEyeOff,
-    FiFlag,
-    FiImage,
-    FiInfo,
-    FiLink,
-    FiRepeat,
-} from "react-icons/fi";
+import { FiEdit2 } from "react-icons/fi";
 import { useBrandKit } from "src/hooks/getBrandKit";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useEditorStore } from "src/store/editor";
 import ThemeSidebar from "../theme-siderbar";
 import { PlayerSettings } from "./player-settings";
-import { supabase } from "src/services";
-// Stack-only: Supabase + Muapi + OpenAI. No axios needed.
 
 type PagePreviewProps = {
     videoUrl: string;
@@ -66,11 +49,10 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     mediaStatus,
 }) => {
     const router = useRouter();
-    const { meta, setVideoMeta, setVideo, interactiveElements } =
-        useEditorStore();
-    const playerRef = useRef(null);
+    const { meta, setVideoMeta } = useEditorStore();
+    const _playerRef = useRef(null);
     const { getBrandKit } = useBrandKit();
-    const [duration, setDuration] = useState(0);
+    const [_duration, setDuration] = useState(0);
     const [latestMediaStatus, setLatestMediaStatus] = useState(mediaStatus);
     const [latestUrl, setLatestUrl] = useState(videoUrl);
     const [isEditing, setIsEditing] = useState(false);
@@ -88,10 +70,10 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     const { isOpen, onClose, onOpen } = useDisclosure();
     const secondaryButton = useDisclosure();
     const session = useSession();
-    const [showPricing, setShowPricing] = useState<any>(false);
+    const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
     const { getPlan } = useUserPlan();
-    const [plan, setPlan] = useState<any>();
+    const [plan, setPlan] = useState<{ plan_name?: string } | undefined>();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
@@ -147,7 +129,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
         }
     }, []);
 
-    function validatePrimaryButton(value) {
+    function validatePrimaryButton(value: string) {
         let error;
         if (!value) {
             error = "This is required";
@@ -371,7 +353,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                                         link: meta.endCTAlink,
                                         title: meta.endCTAtitle,
                                         text: meta.endCTAtext,
-                                    } as any
+                                    } as Record<string, unknown>
                                 }
                                 preview={(function () {
                                     try {
@@ -384,7 +366,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                                         return "/default_thumb.png";
                                     }
                                 })()}
-                                playerRef={playerRef}
+                                playerRef={_playerRef}
                                 videcoBrandingRemoved={
                                     meta.remove_logo ?? false
                                 }

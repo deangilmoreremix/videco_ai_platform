@@ -1,29 +1,24 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     Box,
     Heading,
     Flex,
-    Card,
-    CardBody,
     Text,
     Button,
     Container,
-    Image,
     Link,
     Spinner,
-    SimpleGrid,
 } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import Head from "next/head";
 import Script from "next/script";
 import { supabase } from "src/services";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-IntegrationsContentContent: React.FC = () => {
+export const IntegrationsContent: React.FC = () => {
     const session = useSession();
-    const [fullname, setFullname] = useState<any>("");
+    const [fullname, setFullname] = useState<string>("");
     const user = session?.user;
     const getFullName = useCallback(async () => {
         if (!user?.id) return;

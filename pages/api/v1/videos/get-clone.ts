@@ -3,7 +3,7 @@ import axios from "axios";
 
 export default async function handler(req, res) {
     if (req.method === "POST") {
-        const cloneData = null;
+        const _cloneData = null;
         const getVideo = await supabase
             .from("videos")
             .select("ai_preview, media_status, url")

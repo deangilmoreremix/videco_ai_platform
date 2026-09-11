@@ -2,7 +2,6 @@
 // Client-side usage logger (best-effort). Server-side logging uses src/lib/usageServer.ts
 import { supabase } from "src/services";
 
-
 export async function logUsage({
     user_id,
     model,

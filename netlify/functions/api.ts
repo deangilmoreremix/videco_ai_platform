@@ -1,13 +1,16 @@
 import { Handler } from '@netlify/functions';
+import { createClient } from '@supabase/supabase-js';
+
+type Json = Record<string, unknown>;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-tenant-id, x-muapi-webhook-secret',
   'Content-Type': 'application/json',
-};
+} as const;
 
-const supabase = (await import('@supabase/supabase-js')).createClient(
+const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );

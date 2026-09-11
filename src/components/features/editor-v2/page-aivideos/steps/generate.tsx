@@ -4,16 +4,9 @@ import {
     Card,
     CardBody,
     Heading,
-    useToast,
     Text,
     SimpleGrid,
     Flex,
-    Popover,
-    PopoverArrow,
-    PopoverBody,
-    PopoverContent,
-    PopoverTrigger,
-    Portal,
     Tag,
     Spinner,
     Divider,
@@ -22,12 +15,10 @@ import {
     ModalBody,
     ModalCloseButton,
     ModalContent,
-    ModalFooter,
     ModalHeader,
     ModalOverlay,
     Select,
 } from "@chakra-ui/react";
-import { IoIosRefresh } from "react-icons/io";
 import { submitTextToVideo, pollJob } from "src/services";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
@@ -38,23 +29,22 @@ import { greetings, the_greeting } from "src/utils/voice";
 
 interface StepImportProps {
     children?: React.ReactNode;
-    setIsOpen: any;
-    user?: any;
+    setIsOpen?: () => void;
+    user?: { id?: string; app_metadata?: Record<string, unknown> };
 }
-export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
-    const [loading, setLoading] = useState(false);
-    const [AIVideos, setAIVideos] = useState([]);
-    const [activePreviewVideo, setActivePreviewVideo] = useState<any>();
-    const { isOpen, onOpen, onClose } = useDisclosure();
+export const StepGenerate: React.FC<StepImportProps> = () => {
+    const [_loading, setLoading] = useState(false);
+    const [AIVideos, setAIVideos] = useState<Record<string, unknown>[]>([]);
+    const [activePreviewVideo, setActivePreviewVideo] =
+        useState<Record<string, unknown>>();
+    const { isOpen, onClose } = useDisclosure();
     const previewModal = useDisclosure();
     const router = useRouter();
-    const toast = useToast();
     const [greeting, setGreeting] = useState("Hello");
     const [background, setBackground] = useState("website");
-    const [voiceID, setVoiceID] = useState<string>("");
-    const [regenerateData, setRegenerateData] = useState<any>();
+    const [regenerateData, setRegenerateData] =
+        useState<Record<string, unknown>>();
     const [language, setLanguage] = useState<string>("");
-    const [originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
     const session = useSession();
     const user = session?.user;
 
@@ -65,14 +55,12 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
                 .from("ai_videos")
                 .select()
                 .eq("og_video_id", router.query.id);
-            const { data, error, status } = await aiVideos;
+            const { data } = await aiVideos;
 
             setAIVideos(data);
 
             setLoading(false);
-        } catch (error) {
-            console.log(error);
-
+        } catch {
             setLoading(false);
         }
     };
@@ -106,35 +94,27 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
     const getVoiceid = useCallback(async () => {
         try {
             setLoading(true);
-            const { data, error, status } = await supabase
+            const { data } = await supabase
                 .from("profiles")
                 .select(`ai_voice_id`)
                 .eq("id", user?.id)
                 .single();
 
-            if (error && status !== 406) {
-                throw error;
-            }
             if (data.ai_voice_id) {
-                setVoiceID(data.ai_voice_id);
                 setLoading(false);
             }
-        } catch (error) {
+        } catch {
             setLoading(false);
-            console.log(error);
         }
     }, [user, supabase]);
 
     const getVideoFromDB = async () => {
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from("videos")
                 .select("url, preview, campaign_name, language")
                 .eq("id", router.query.id);
             if (data) {
-                setOriginalVideoPubId(
-                    data[0]?.url.split("/").pop().replace(".mp4", ""),
-                );
                 setLanguage(data[0]?.language);
             }
         } catch (error) {

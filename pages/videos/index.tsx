@@ -37,19 +37,20 @@ import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { FiBarChart, FiDelete, FiEdit, FiShare } from "react-icons/fi";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import { Banner } from "@components/common/banners";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { videoTypes } from "src/utils/video";
 import { OnBoardingVideo } from "@components/common/onboarding-video";
-import { supabase } from "src/services";
 import { AuthGuard } from "src/hoc/withAuthGuard";
 
 const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
-    const [videoData, setVideoData] = useState<any>();
-    const [filterVideos, setFilterVideos] = useState<any>(videoTypes.video);
+    const [videoData, setVideoData] =
+        useState<
+            Array<{ id: string; type?: string; name?: string; status?: string }>
+        >();
+    const [filterVideos, _setFilterVideos] = useState(videoTypes.video);
     const filteredVideos = filterVideos
-        ? videoData?.filter((video: any) => video.type === filterVideos)
+        ? videoData?.filter((video) => video.type === filterVideos)
         : videoData;
     const session = useSession();
     const user = session?.user;
@@ -80,7 +81,7 @@ const VideosContent: React.FC = () => {
                 .update({ status: "deleted" })
                 .eq("id", id)
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     toast({
                         title: "Deleted",
                         description: "Your video has been deleted",
@@ -214,10 +215,10 @@ const VideosContent: React.FC = () => {
                                                         <Image
                                                             src={(function () {
                                                                 try {
-                                                                     const {
-                                                                         getGifPreviewUrl,
-                                                                         // eslint-disable-next-line @typescript-eslint/no-var-requires
-                                                                     } = require("src/utils/media");
+                                                                    const {
+                                                                        getGifPreviewUrl,
+                                                                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                                                                    } = require("src/utils/media");
                                                                     return getGifPreviewUrl(
                                                                         video?.url,
                                                                     );

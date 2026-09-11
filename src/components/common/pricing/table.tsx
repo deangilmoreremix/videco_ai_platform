@@ -2,32 +2,27 @@ import {
     Box,
     Button,
     Flex,
-    Input,
     Link,
     List,
     ListIcon,
     ListItem,
     Stack,
     Text,
-    useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { PiCheckCircleFill } from "react-icons/pi";
-import { CloseIcon } from "@chakra-ui/icons";
 import { planSelector } from "src/utils/plans";
 import { supabase } from "src/services";
 
 interface PricingTableProps {
     freeLitePlan: boolean;
-    user: any;
-    expanded?: any;
+    user: { id: string; email?: string };
+    expanded?: boolean;
 }
 
 export const PricingTable = ({ user, expanded }: PricingTableProps) => {
     const [selectedPlan, setSelectedPlan] = useState("growth");
     const [isLoading, setIsLoading] = useState(false);
-    const [promoCode, setPromoCode] = useState("");
-    const [frequency, setFrequency] = useState("month");
 
     const handleBuy = async () => {
         setIsLoading(true);

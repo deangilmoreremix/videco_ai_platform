@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import React, { useEffect } from "react";
 import { Video } from "pexels";
-import { FiFolder, FiVideo } from "react-icons/fi";
+import { FiVideo } from "react-icons/fi";
 import { useRouter } from "next/router";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -30,14 +30,16 @@ export const UploadV2: React.FC<UploadProps> = ({
     isPorcessing,
     id,
 }) => {
-    const [videoFiles, setVideoFiles] = React.useState<Video[]>([]);
+    const [_videoFiles, _setVideoFiles] = React.useState<Video[]>([]);
     const router = useRouter();
     const session = useSession();
     const user = session?.user;
-    const [showPricing, setShowPricing] = React.useState<any>(false);
-    const [plan, setPlan] = React.useState<any>();
+    const [showPricing, _setShowPricing] = React.useState<boolean>(false);
+    const [_plan, setPlan] = React.useState<
+        { plan_name?: string } | undefined
+    >();
     const { getPlan } = useUserPlan();
-    const { getData } = useFetchTeamData();
+    const { getData: _getData } = useFetchTeamData();
     const { type = "upload", varient } = router.query;
 
     useEffect(() => {
@@ -316,9 +318,9 @@ export const UploadV2: React.FC<UploadProps> = ({
 };
 
 type UploadProps = {
-    externalVideo: any;
-    saveScreenRecordingToCloud: any;
-    handleDownload?: any;
+    externalVideo: (url: string) => void;
+    saveScreenRecordingToCloud: (file: File, type?: string) => Promise<void>;
+    handleDownload?: (url: string) => void;
     isReady: boolean;
     id?: string;
     isPorcessing?: boolean;

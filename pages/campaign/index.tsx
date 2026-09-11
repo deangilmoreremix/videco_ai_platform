@@ -11,23 +11,22 @@ import {
     Menu,
     MenuButton,
     Image,
-    CardBody,
     Heading,
-    Card,
-    SimpleGrid,
     Tag,
     MenuItem,
     MenuList,
     useToast,
     useMediaQuery,
+    SimpleGrid,
+    Card,
+    CardBody,
 } from "@chakra-ui/react";
 import moment from "moment";
-import { useRouter } from "next/router";
-import { Sidebar } from "@components/common/sidebar";
-import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
+import { Sidebar } from "@components/common/sidebar";
+import { Header } from "@components/common/header";
 import {
     FiBarChart,
     FiDelete,
@@ -36,6 +35,7 @@ import {
     FiShare,
 } from "react-icons/fi";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
+import { useRouter } from "next/router";
 import { videoTypes } from "src/utils/video";
 import { OnBoardingVideo } from "@components/common/onboarding-video";
 import { AuthGuard } from "src/hoc/withAuthGuard";
@@ -44,10 +44,20 @@ import { PiPlay, PiVideo } from "react-icons/pi";
 const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isLargerThan800] = useMediaQuery("(min-width: 1000px)");
-    const [videoData, setVideoData] = useState<any>();
-    const [filterVideos, setFilterVideos] = useState<any>(videoTypes.campaign);
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            type?: string;
+            name?: string;
+            status?: string;
+            url?: string;
+            campaign_name?: string;
+            created_at?: string;
+        }>
+    >();
+    const [filterVideos, _setFilterVideos] = useState(videoTypes.campaign);
     const filteredVideos = filterVideos
-        ? videoData?.filter((video: any) => video.type === filterVideos)
+        ? videoData?.filter((video) => video.type === filterVideos)
         : videoData;
     const session = useSession();
     const user = session?.user;
@@ -78,7 +88,7 @@ const VideosContent: React.FC = () => {
                 .update({ status: "deleted" })
                 .eq("id", id)
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     toast({
                         title: "Deleted",
                         description: "Your video has been deleted",

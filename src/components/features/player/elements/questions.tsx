@@ -1,6 +1,4 @@
-import { Rnd } from "react-rnd";
-import { motion } from "framer-motion";
-import { Box, Button, Input, Link } from "@chakra-ui/react";
+import { Box, Button, Input } from "@chakra-ui/react";
 import { v4 as uuidv4 } from "uuid";
 import { Formik } from "formik";
 import { FiCheck, FiCheckCircle } from "react-icons/fi";
@@ -16,7 +14,28 @@ export const InteractiveQuestions = ({
     setHideQuestion,
     answerSubmitted,
     activeAnswerType,
-}: any) => (
+}: {
+    setFormSubmitting: (value: boolean) => void;
+    element: {
+        id: string;
+        name?: string;
+        answer_type?: string;
+        answers?: string;
+        answer_placeholder?: string;
+        user_id?: string;
+    };
+    isLargerThan800: boolean;
+    submitFormData: (
+        url: string,
+        data: Record<string, unknown>,
+    ) => Promise<void>;
+    id: string;
+    setAnswerSubmitted: (value: boolean) => void;
+    setActiveAnswerType: (value: string) => void;
+    setHideQuestion: (value: boolean) => void;
+    answerSubmitted: boolean;
+    activeAnswerType: string;
+}) => (
     <Box
         key={element.id}
         zIndex={990}

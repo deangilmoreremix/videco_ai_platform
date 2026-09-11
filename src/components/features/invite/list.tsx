@@ -1,24 +1,19 @@
 import {
     Alert,
-    Avatar,
     Box,
     Button,
-    Card,
     Drawer,
     DrawerBody,
     DrawerCloseButton,
     DrawerContent,
     DrawerHeader,
     DrawerOverlay,
-    Flex,
     Heading,
     Table,
     TableContainer,
-    Tag,
     Tbody,
     Td,
     Text,
-    Tfoot,
     Th,
     Thead,
     Tr,
@@ -35,12 +30,19 @@ type InviteListProps = {
 };
 
 export const InviteList: React.FC<InviteListProps> = () => {
-    const [teamMembers, setTeamMembers] = useState<any>();
+    const [teamMembers, setTeamMembers] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            role?: string;
+            shared_account?: string;
+            shared_account_user?: boolean;
+        }>
+    >();
     const [memberEmail, setMemberEmail] = useState<string | null>(null);
-    const [canInvite, setCanInvite] = useState<any>(false);
+    const [canInvite, setCanInvite] = useState<boolean>(false);
     const [inviteUpdated, setInviteUpdated] = useState(false);
-    const [inviteApproved, setInviteApproved] = useState<any>(true);
-    const { getTeamUserIds, getData } = useFetchTeamData();
+    const { getTeamUserIds } = useFetchTeamData();
     const { isOpen, onOpen, onClose } = useDisclosure();
     const session = useSession();
     const user = session?.user;
@@ -59,7 +61,7 @@ export const InviteList: React.FC<InviteListProps> = () => {
                     member?.shared_account === user?.email &&
                     !member?.shared_account_user
                 ) {
-                    setInviteApproved(false);
+                    // invite approval state removed
                 }
             });
             setTeamMembers(team ?? []);

@@ -15,15 +15,15 @@ export interface UploadFileResult {
     url: string;
 }
 
-function getStorageKey(): string {
+function getStorageKey(): string | undefined {
     const isServer = typeof window === "undefined";
     if (isServer) {
         return (
             process.env.SUPABASE_SERVICE_ROLE_KEY ||
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         );
     }
-    return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    return process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }
 
 function createStorageClient(): SupabaseClient {

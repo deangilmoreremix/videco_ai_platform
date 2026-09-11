@@ -3,7 +3,7 @@ import { Grid, GridItem, Image, Container, Heading } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { supabase } from "src/services";
 
-const Logout: any = () => {
+const Logout: React.FC = () => {
     const router = useRouter();
     useEffect(() => {
         supabase.auth.signOut().finally(() => {

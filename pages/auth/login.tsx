@@ -3,10 +3,7 @@ import {
     Grid,
     GridItem,
     Image,
-    FormControl,
-    FormLabel,
     Input,
-    FormHelperText,
     Container,
     Button,
     Box,
@@ -20,7 +17,7 @@ import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import Script from "next/script";
 import { motion } from "framer-motion";
-const Login: any = () => {
+const Login = () => {
     const session = useSession();
     const supabase = useSupabaseClient();
     const [resetPassword, setResetPassword] = React.useState("");
@@ -34,15 +31,17 @@ const Login: any = () => {
     }, [session, router]);
 
     useEffect(() => {
-        const emailInput: any = document.getElementById("email");
+        const emailInput = document.getElementById(
+            "email",
+        ) as HTMLInputElement | null;
         if (emailInput) {
-            emailInput.value = router.query.email ?? "";
+            emailInput.value = (router.query.email as string) ?? "";
         }
     }, [router.query]);
 
-    const handleAuthError = (error: any) => {
+    const handleAuthError = (error: unknown) => {
         console.error("Auth error:", error);
-        alert(error?.message || "Authentication failed");
+        alert(error instanceof Error ? error.message : "Authentication failed");
     };
 
     return (
@@ -93,7 +92,9 @@ const Login: any = () => {
                                         if (error) {
                                             handleAuthError(error);
                                         } else {
-                                            alert("Password updated successfully");
+                                            alert(
+                                                "Password updated successfully",
+                                            );
                                             router.push("/auth/login");
                                         }
                                     } catch (e) {

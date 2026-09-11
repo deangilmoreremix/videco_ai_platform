@@ -4,7 +4,6 @@ import {
     Heading,
     Text,
     useDisclosure,
-    useSteps,
     useToast,
     Modal,
     ModalBody,
@@ -26,37 +25,25 @@ import { useUserPlan } from "src/hooks/useUserPlan";
 import Image from "next/image";
 import { StepGenerate } from "./steps/generate";
 import { supabase } from "src/services";
-import {
-    emailProvidersList,
-    getEmailEmbedCode,
-} from "src/utils/getEmailEmbedCode";
+import { emailProvidersList } from "src/utils/getEmailEmbedCode";
 import {
     FiCopy,
     FiDownloadCloud,
     FiFacebook,
     FiLinkedin,
-    FiMail,
     FiX,
 } from "react-icons/fi";
 import { SharingPreview } from "./sharing-preview";
 import { rem } from "polished";
-import { PiBrowser } from "react-icons/pi";
 import { videoTypes } from "src/utils/video";
-import { IoMdBrowsers } from "react-icons/io";
 import ShareModal from "./share-modal";
 import ShareModalVideo from "./share-modal-video";
 
 type PagePreviewProps = {
     videoUrl: string;
     videoType: string;
-    meta: any;
+    meta: Record<string, unknown>;
 };
-const steps = [
-    { title: "Contacts", description: "Import your contact list" },
-    { title: "Generate", description: "Generate your AI videos" },
-    { title: "Share", description: "Share your AI videos" },
-];
-
 export const PageAiVideos: React.FC<PagePreviewProps> = ({
     videoUrl,
     videoType,
@@ -64,28 +51,26 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
 }) => {
     const router = useRouter();
     const toast = useToast();
-    const [emailProvider, setEmailProvider] = useState<any>();
+    const [emailProvider, setEmailProvider] = useState<{
+        value: string;
+        label: string;
+    }>();
     const { getBrandKit } = useBrandKit();
     const [loading, setLoading] = useState(false);
-    const [duration, setDuration] = useState(0);
-    const [playing, setPlaying] = useState(false);
-    const [brandKit, setBrandKit] = useState({
+    const [_duration, _setDuration] = useState(0);
+    const [_playing, _setPlaying] = useState(false);
+    const [_brandKit, setBrandKit] = useState({
         primary_color: "#05405A",
         secondary_color: "#1A202C",
         primary_text_color: "#ffffff",
         secondary_text_color: "#ffffff",
     });
-    const [plan, setPlan] = useState<any>();
-    const secondaryButton = useDisclosure();
+    const [plan, setPlan] = useState<unknown>();
     const session = useSession();
-    const [showPricing, setShowPricing] = useState<any>(false);
+    const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
     const { getPlan } = useUserPlan();
-    const { activeStep, setActiveStep } = useSteps({
-        index: 0,
-        count: steps.length,
-    });
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const { isOpen, onClose } = useDisclosure();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
@@ -105,7 +90,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                 .from("ai_videos")
                 .select()
                 .eq("og_video_id", router.query.id);
-            const { data, error, status } = await aiVideos;
+            const { data, error: _error, status: _status } = await aiVideos;
             const csvRows = [
                 ["email", "fname", "lname", "website", "video", "preview_gif"], // Header row
                 ...data.map((item) => {
@@ -150,7 +135,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
             setLoading(false);
         }
     };
-    const copyEmailToClipboard = (videoUrl: string) => {
+    const _copyEmailToClipboard = (videoUrl: string) => {
         const gifUrl = (function () {
             try {
                 const { getGifPreviewUrl } =
@@ -276,9 +261,9 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                 <Select
                                                     placeholder="Select your email provider"
                                                     options={emailProvidersList()}
-                                                    onChange={(e: any) =>
-                                                        setEmailProvider(e)
-                                                    }
+                                                    onChange={(e: {
+                                                        value: string;
+                                                    }) => setEmailProvider(e)}
                                                 />
                                                 {emailProvider && (
                                                     <>
@@ -435,7 +420,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                         {/* <Select
                                             placeholder="Select your email provider"
                                             options={emailProvidersList()}
-                                            onChange={(e: any) =>
+                                            onChange={(e: unknown) =>
                                                 setEmailProvider(e)
                                             }
                                         /> */}

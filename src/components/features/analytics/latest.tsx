@@ -1,6 +1,5 @@
 import { Divider, Box, Text, Spinner, Center } from "@chakra-ui/react";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
 import {
     ResponsiveContainer,
@@ -14,16 +13,30 @@ import {
 import { supabase } from "src/services";
 
 type VideoData = {
-    filterById?: any;
+    filterById?: string | number;
     range?: number;
 };
 export const LatestAnalytics: React.FC<VideoData> = ({
     filterById,
     range = 7,
 }) => {
-    const router = useRouter();
-    const [videoData, setVideoData] = useState<any>([]);
-    const [formattedVideoData, setFormattedVideoData] = useState<any>([]);
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            size?: string;
+            status?: string;
+            analytics: Array<{
+                id: string;
+                data: { count?: number; user_agent?: string };
+                event: string;
+                created_at: string;
+            }>;
+        }>
+    >([]);
+    const [formattedVideoData, setFormattedVideoData] = useState<
+        Array<{ date: string; name: string; views: number }>
+    >([]);
     const [error, setError] = useState<string | null>(null);
     const session = useSession();
     const user = session?.user;
@@ -58,9 +71,11 @@ export const LatestAnalytics: React.FC<VideoData> = ({
             if (data) {
                 setVideoData(data ?? []);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to load latest analytics", err);
-            setError(err?.message || "Failed to load analytics");
+            setError(
+                err instanceof Error ? err.message : "Failed to load analytics",
+            );
         } finally {
             setLoading(false);
         }
@@ -73,8 +88,8 @@ export const LatestAnalytics: React.FC<VideoData> = ({
         const processedVideoData = videoData.map((item) => ({
             ...item,
             analytics: item.analytics
-                .filter((item: any) => item.event === "view")
-                .map((analytic: any) => ({
+                .filter((item) => item.event === "view")
+                .map((analytic) => ({
                     ...analytic,
                 })),
         }));
@@ -83,8 +98,8 @@ export const LatestAnalytics: React.FC<VideoData> = ({
 
         const today = new Date();
 
-        processedVideoData?.forEach((item: any) => {
-            item.analytics.forEach((analytic: any) => {
+        processedVideoData?.forEach((item) => {
+            item.analytics.forEach((analytic) => {
                 const createdDate = new Date(analytic.created_at);
 
                 if (Number.isNaN(createdDate.getTime())) {
@@ -129,13 +144,7 @@ export const LatestAnalytics: React.FC<VideoData> = ({
                 pt={6}
                 mb={6}
             >
-                <Text
-                    as="h2"
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    mb={5}
-                    ml={5}
-                >
+                <Text as="h2" fontSize="lg" fontWeight="semibold" mb={5} ml={5}>
                     Total views last {range} days
                 </Text>
                 <Divider mb={5} />
@@ -157,13 +166,7 @@ export const LatestAnalytics: React.FC<VideoData> = ({
                 pt={6}
                 mb={6}
             >
-                <Text
-                    as="h2"
-                    fontSize="lg"
-                    fontWeight="semibold"
-                    mb={5}
-                    ml={5}
-                >
+                <Text as="h2" fontSize="lg" fontWeight="semibold" mb={5} ml={5}>
                     Total views last {range} days
                 </Text>
                 <Divider mb={5} />

@@ -16,16 +16,26 @@ import {
 } from "@chakra-ui/react";
 import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useRouter } from "next/router";
 import { useState, useCallback, useEffect } from "react";
 import { FiPlay } from "react-icons/fi";
 
 export const TopAnalytics: React.FC = () => {
-    const router = useRouter();
-    const [videoData, setVideoData] = useState<any>();
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            size?: string;
+            status?: string;
+            analytics: Array<{
+                id: string;
+                data: { count?: number };
+                event: string;
+            }>;
+        }>
+    >();
     const session = useSession();
     const user = session?.user;
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const getProfile = useCallback(async () => {
         try {
             setLoading(true);

@@ -17,15 +17,17 @@ import { useState } from "react";
 import { FiShare2 } from "react-icons/fi";
 import {
     emailProvidersList,
-    getEmailEmbedCode,
     getEmailEmbedCodeForSimpleVideos,
 } from "src/utils/getEmailEmbedCode";
 
-const ShareModalVideo = ({ videoId, ogURL }) => {
+interface ShareModalVideoProps {
+    videoId: string;
+    ogURL: string;
+}
+const ShareModalVideo = ({ videoId, ogURL }: ShareModalVideoProps) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [copied, setCopied] = useState(false);
     const [search, setSearch] = useState("");
-    const [copiedProvider, setCopiedProvider] = useState(null);
+    const [copiedProvider, setCopiedProvider] = useState<string | null>(null);
 
     const handleCopy = (provider) => {
         const container = document.createElement("div");
@@ -37,7 +39,7 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
                         // eslint-disable-next-line @typescript-eslint/no-var-requires
                         require("src/utils/media");
                     return getGifPreviewUrl(ogURL);
-                } catch (e) {
+                } catch {
                     return "/default_thumb.png";
                 }
             })(),
@@ -66,8 +68,8 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
         }, 9000);
     };
 
-    const filteredProviders = emailProvidersList().filter((provider) =>
-        provider.label.toLowerCase().includes(search.toLowerCase()),
+    const filteredProviders = emailProvidersList().filter((_provider) =>
+        _provider.label.toLowerCase().includes(search.toLowerCase()),
     );
 
     return (

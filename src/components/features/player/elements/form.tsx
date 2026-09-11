@@ -14,7 +14,30 @@ export const InteractiveForm = ({
     formSubmitting,
     setUpdatedPlaying,
     isEditor,
-}: any) => (
+}: {
+    element: {
+        id: string;
+        name?: string;
+        form_enable_name?: boolean;
+        form_enable_email?: boolean;
+        form_enable_message?: boolean;
+        form_submit_text?: string;
+        user_id?: string;
+    };
+    isLargerThan800: boolean;
+    setFormSubmitting: (value: boolean) => void;
+    submitFormData: (
+        url: string,
+        data: Record<string, unknown>,
+    ) => Promise<void>;
+    id: string;
+    setFormSubmitted: (value: boolean) => void;
+    setHideForm: (value: boolean) => void;
+    formSubmitted: boolean;
+    formSubmitting: boolean;
+    setUpdatedPlaying: (value: boolean) => void;
+    isEditor: boolean;
+}) => (
     <Box
         key={element.id}
         zIndex={990}

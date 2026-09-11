@@ -3,7 +3,6 @@ const {
     generatePersonalizedScript,
     textToSpeech,
     generateOutreachPackage,
-    logOpenAIUsage, // This would be internal but we can test the public functions that call it
     // eslint-disable-next-line @typescript-eslint/no-var-requires
 } = require("src/lib/openai");
 

@@ -33,10 +33,10 @@ export const PersonalizationPanel: React.FC<PersonalizationPanelProps> = ({
                 title: "Personalized script generated",
                 status: "success",
             });
-        } catch (e: any) {
+        } catch (e: unknown) {
             toast({
                 title: "Generation failed",
-                description: e.message,
+                description: e instanceof Error ? e.message : "Unknown error",
                 status: "error",
             });
         } finally {

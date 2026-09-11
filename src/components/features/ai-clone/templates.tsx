@@ -14,7 +14,7 @@ import { useState } from "react";
 import { FiArrowRight } from "react-icons/fi";
 
 type TemplatesTypes = {
-    getSelectedScript: any;
+    getSelectedScript: (text: string) => void;
 };
 export const Templates: React.FC<TemplatesTypes> = ({ getSelectedScript }) => {
     const [updatedModalOpen, setUpdatedModalOpen] = useState(false);

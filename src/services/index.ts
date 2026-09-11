@@ -20,7 +20,7 @@ function getSupabase(): SupabaseClient {
 
 export const supabase = new Proxy({} as SupabaseClient, {
     get(_, prop) {
-        return (getSupabase() as any)[prop];
+        return (getSupabase() as unknown as SupabaseClient)[prop];
     },
 });
 
@@ -35,7 +35,8 @@ export async function callMuapi<T = unknown>(
     const {
         data: { session },
     } = await supabase.auth.getSession();
-    const tenantId = (session?.user?.app_metadata as any)?.tenant_id;
+    const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
+        ?.tenant_id;
     const res = await fetch(`${FN_BASE}/${endpoint}`, {
         method: "POST",
         headers: {
@@ -58,7 +59,8 @@ export async function callMuapiGet<T = unknown>(endpoint: string): Promise<T> {
     const {
         data: { session },
     } = await supabase.auth.getSession();
-    const tenantId = (session?.user?.app_metadata as any)?.tenant_id;
+    const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
+        ?.tenant_id;
     const res = await fetch(`${FN_BASE}/${endpoint}`, {
         method: "GET",
         headers: {
@@ -84,24 +86,24 @@ export const generateImage = (
         model?: string;
         user_id?: string;
         tenant_id?: string;
-        [k: string]: any;
+        [k: string]: unknown;
     } = {},
 ) => callMuapi("images/text-to-image", { prompt, ...opts });
 
 export const editImage = (
     prompt: string,
     image_url: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("images/edit", { prompt, image_url, ...opts });
 
 export const upscaleImage = (
     image_url: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("images/upscale", { image_url, ...opts });
 
 export const removeImageBackground = (
     image_url: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("images/background-remover", { image_url, ...opts });
 
 // ============================================================================
@@ -116,7 +118,7 @@ export const generateVideo = (
         duration?: number;
         resolution?: string;
         quality?: string;
-        [k: string]: any;
+        [k: string]: unknown;
     } = {},
 ) => callMuapi("videos/text-to-video", { prompt, ...opts });
 
@@ -125,7 +127,7 @@ export const submitTextToVideo = generateVideo;
 export const imageToVideo = (
     prompt: string,
     image_url: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("videos/image-to-video", { prompt, image_url, ...opts });
 
 export const applyVideoEffects = (
@@ -145,13 +147,13 @@ export const applyVideoEffects = (
 export const lipSync = (
     video_url: string,
     audio_url: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("videos/lip-sync", { video_url, audio_url, ...opts });
 
 export const faceSwap = (
     source_url: string,
     target_url: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("videos/face-swap", { source_url, target_url, ...opts });
 
 // ============================================================================
@@ -159,28 +161,28 @@ export const faceSwap = (
 // ============================================================================
 export const generateMusic = (
     prompt: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("music", { prompt, ...opts });
 
 export const remixMusic = (
     prompt: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("music", { prompt, model: "suno-remix-music", ...opts });
 
 export const extendMusic = (
     prompt: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("music", { prompt, model: "suno-extend-music", ...opts });
 
 export const textToAudio = (
     prompt: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("audio/text-to-audio", { prompt, ...opts });
 
 export const videoToAudio = (
     video_url: string,
     prompt: string,
-    opts: { model?: string; user_id?: string; [k: string]: any } = {},
+    opts: { model?: string; user_id?: string; [k: string]: unknown } = {},
 ) => callMuapi("audio/video-to-audio", { video_url, prompt, ...opts });
 
 // ============================================================================
@@ -211,7 +213,8 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     const {
         data: { session },
     } = await supabase.auth.getSession();
-    const tenantId = (session?.user?.app_metadata as any)?.tenant_id;
+    const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
+        ?.tenant_id;
     const res = await fetch(`${FN_BASE}/upload`, {
         method: "POST",
         headers: {

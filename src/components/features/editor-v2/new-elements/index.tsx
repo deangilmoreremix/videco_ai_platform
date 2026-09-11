@@ -11,7 +11,7 @@ import Pricing from "@components/common/pricing";
 import { rem } from "polished";
 
 type NewElementsProps = {
-    onSettingsActive?: any;
+    onSettingsActive?: (element: { type: string }) => void;
 };
 
 export const NewElements = ({
@@ -20,12 +20,10 @@ export const NewElements = ({
     const router = useRouter();
     const session = useSession();
     const user = session?.user;
-    const [plan, setPlan] = React.useState<any>();
-    const [active, setActive] = React.useState<string>("");
-    const [isHovered, setIsHovered] = React.useState("");
+    const [plan, setPlan] = React.useState<unknown>();
     const { getPlan } = useUserPlan();
-    const [showPricing, setShowPricing] = React.useState<any>(false);
-    const { setVideoMeta, meta } = useEditorStore();
+    const [showPricing, setShowPricing] = React.useState<boolean>(false);
+    const meta = useEditorStore((s) => s.meta);
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
@@ -53,7 +51,7 @@ export const NewElements = ({
                     })
                     .eq("id", router.query.id)
                     .select()
-                    .then((res) => {
+                    .then(() => {
                         console.log("success..");
                     });
             } catch (error) {

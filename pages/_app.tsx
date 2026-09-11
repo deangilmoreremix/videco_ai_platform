@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
+import {
+    SessionContextProvider,
+    useSession,
+} from "@supabase/auth-helpers-react";
 import { AppProps } from "next/app";
 import { Box, ChakraProvider } from "@chakra-ui/react";
 import { useLanguageStore } from "src/store/language";
@@ -17,10 +20,10 @@ declare global {
         Trengo: {
             key: string;
         };
-        usetifulTags: any;
-        $crisp: any[];
-        shotstack: any;
-        po: any;
+        usetifulTags: unknown;
+        $crisp: unknown[];
+        shotstack: unknown;
+        po: unknown;
         CRISP_WEBSITE_ID: string;
     }
 }
@@ -36,19 +39,17 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
         return null;
     });
     const router = useRouter();
-    const env = process.env.NODE_ENV;
+    const [, _env] = useState(process.env.NODE_ENV);
 
-    const { language, languages, setLanguage } = useLanguageStore();
-    const [currentLanguage, setCurrentLanguage] = useState<
-        ILanguage | undefined
-    >();
+    const { language } = useLanguageStore();
+    const [, _setCurrentLanguage] = useState<ILanguage | undefined>();
 
     const tagManagerArgs = {
         gtmId: "GTM-KG3QRFCQ",
     };
 
     useEffect(() => {
-        setCurrentLanguage(language);
+        _setCurrentLanguage(language);
     }, [language]);
     const authRegex = /^\/auth\//;
     const embedRegex = /^\/embed\//;
@@ -71,7 +72,9 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     useEffect(() => {
         TagManager.initialize(tagManagerArgs);
     }, []);
-    const AnyComponent = Component as any;
+    const AnyComponent = Component as React.ComponentType<
+        Record<string, unknown>
+    >;
 
     const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
         const session = useSession();

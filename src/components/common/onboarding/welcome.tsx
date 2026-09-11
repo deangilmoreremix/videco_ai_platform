@@ -17,16 +17,11 @@ import {
 import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useUserStore } from "src/store/user";
-import { motion, m } from "framer-motion";
+import { motion } from "framer-motion";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { isTrialExpired } from "src/utils/isTrialExpierd";
-import {
-    generateScript,
-    submitTextToVideo,
-    pollJob,
-    supabase,
-} from "src/services";
+import { generateScript, submitTextToVideo, pollJob } from "src/services";
 import { FiArrowRight } from "react-icons/fi";
 import { useRouter } from "next/router";
 
@@ -43,11 +38,11 @@ const steps = [
     },
 ];
 
-export const Onboarding: FC<OnboardingProps> = (props) => {
+export const Onboarding: FC<OnboardingProps> = () => {
     const [loading, setLoading] = useState(false);
-    const [fullname, setFullname] = useState(null);
-    const [website, setWebsite] = useState(null);
-    const [paymentProcessing, setPaymentProcessing] = useState(true);
+    const [fullname, setFullname] = useState<string | null>(null);
+    const [website, setWebsite] = useState<string | null>(null);
+    const [, setPaymentProcessing] = useState(true);
     const router = useRouter();
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showVideo, setShowVideo] = useState(false);
@@ -55,14 +50,14 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
     const { setUser } = useUserStore();
     const session = useSession();
     const user = session?.user;
-    const [plan, setPlan] = React.useState<any>([]);
-    const [showCongratz, setShowCongratz] = useState(false);
-    const [trail, setTrail] = React.useState<any>();
-    const [videos, setVideos] = React.useState<any>(0);
-    const [videoSize, setVideoSize] = React.useState<any>(0);
+    const [_plan, setPlan] = useState<string | null>(null);
+    const [, setShowCongratz] = useState(false);
+    const [, setTrail] = useState<unknown>(null);
+    const [, setVideos] = useState<number>(0);
+    const [, setVideoSize] = useState<number>(0);
     const { getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const { activeStep, setActiveStep } = useSteps({
+    const { _activeStep, setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
@@ -150,7 +145,7 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
                 },
             });
         }
-        const { data, error } = await supabase.from("profiles").upsert({
+        const { data: _data, error } = await supabase.from("profiles").upsert({
             full_name: fullname,
             website: website,
             onboarding_video: "in_progress",
@@ -185,7 +180,9 @@ export const Onboarding: FC<OnboardingProps> = (props) => {
             user_id: user.id,
         });
         if (job?.id) {
-            pollJob(job.id).catch((e) => console.warn("[onboarding] pollJob failed:", e));
+            pollJob(job.id).catch((e) =>
+                console.warn("[onboarding] pollJob failed:", e),
+            );
         }
         await generateScript(`Welcome ${fullname}`, {
             tenant_id: user?.app_metadata?.tenant_id,

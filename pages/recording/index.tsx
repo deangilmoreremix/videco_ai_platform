@@ -2,22 +2,28 @@ import React, { useEffect, useState } from "react";
 import { Box, Link, Spinner } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "src/services";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { AuthGuard } from "src/hoc/withAuthGuard";
 
 const RecordingContent: React.FC = () => {
     const session = useSession();
-    const [plan, setPlan] = React.useState<any>();
+    const [, setPlan] = React.useState<string | null>(null);
     const user = session?.user;
-    const [teamMembers, setTeamMembers] = useState<any>();
+    const [, setTeamMembers] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            role?: string;
+            shared_account?: string;
+        }>
+    >();
     const { getTeamUserIds, getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const [videos, setVideos] = React.useState<any>(0);
-    const [videoSize, setVideoSize] = React.useState<any>(0);
+    const [, setVideos] = React.useState<number>(0);
+    const [, setVideoSize] = React.useState<number>(0);
 
-    const recordingUrl =
+    const _recordingUrl =
         process.env.NEXT_PUBLIC_RECORDING_URL || "http://localhost:5173/";
 
     const getFullTeamMembers = async () => {

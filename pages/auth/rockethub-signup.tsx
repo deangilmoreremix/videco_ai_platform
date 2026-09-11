@@ -18,9 +18,9 @@ import Script from "next/script";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import { supabase } from "src/services";
 
-const Login: any = () => {
+const Login: React.FC = () => {
     const session = useSession();
-    const [error, setError] = React.useState(null);
+    const [error, setError] = React.useState<string | null>(null);
     const router = useRouter();
     interface FormValues {
         email: string;
@@ -39,9 +39,11 @@ const Login: any = () => {
     useEffect(() => {
         // Wait for the input to be in the DOM, then prefill it
         setTimeout(() => {
-            const emailInput: any = document.getElementById("email");
+            const emailInput = document.getElementById(
+                "email",
+            ) as HTMLInputElement | null;
             if (emailInput) {
-                emailInput.value = router.query.email ?? "";
+                emailInput.value = (router.query.email as string) ?? "";
             }
         }, 500);
     }, [router.query]); // Run this effect once after the component mounts
@@ -133,14 +135,20 @@ const Login: any = () => {
                                             });
 
                                         if (!error && data?.user) {
-                                            const tenantId = crypto.randomUUID();
+                                            const tenantId =
+                                                crypto.randomUUID();
                                             const { error: tenantError } =
-                                                await supabase.from("tenants").insert([
-                                                    {
-                                                        id: tenantId,
-                                                        name: data.user.email ?? "Default Tenant",
-                                                    },
-                                                ]);
+                                                await supabase
+                                                    .from("tenants")
+                                                    .insert([
+                                                        {
+                                                            id: tenantId,
+                                                            name:
+                                                                data.user
+                                                                    .email ??
+                                                                "Default Tenant",
+                                                        },
+                                                    ]);
 
                                             if (!tenantError) {
                                                 await supabase.auth.updateUser({
@@ -149,41 +157,57 @@ const Login: any = () => {
                                                     },
                                                 });
 
-                                                await supabase.from("profiles").upsert(
-                                                    {
-                                                        id: data.user.id,
-                                                        tenant_id: tenantId,
-                                                        email: data.user.email,
-                                                        full_name: data.user.user_metadata?.full_name,
-                                                        onboard_completed: false,
-                                                    },
-                                                    {
-                                                        onConflict: "id",
-                                                    },
-                                                );
-
-                                                const { error: wsUpdateError, count } =
-                                                    await supabase
-                                                        .from("workspace")
-                                                        .update({
+                                                await supabase
+                                                    .from("profiles")
+                                                    .upsert(
+                                                        {
+                                                            id: data.user.id,
                                                             tenant_id: tenantId,
-                                                        })
-                                                        .eq("owner", data.user.id)
-                                                        .is("tenant_id", null);
+                                                            email: data.user
+                                                                .email,
+                                                            full_name:
+                                                                data.user
+                                                                    .user_metadata
+                                                                    ?.full_name,
+                                                            onboard_completed:
+                                                                false,
+                                                        },
+                                                        {
+                                                            onConflict: "id",
+                                                        },
+                                                    );
+
+                                                const {
+                                                    error: wsUpdateError,
+                                                    count,
+                                                } = await supabase
+                                                    .from("workspace")
+                                                    .update({
+                                                        tenant_id: tenantId,
+                                                    })
+                                                    .eq("owner", data.user.id)
+                                                    .is("tenant_id", null);
 
                                                 if (wsUpdateError) {
-                                                    console.error("workspace update failed", wsUpdateError);
+                                                    console.error(
+                                                        "workspace update failed",
+                                                        wsUpdateError,
+                                                    );
                                                 }
 
                                                 if (!count) {
-                                                    await supabase.from("workspace").insert([
-                                                        {
-                                                            owner: data.user.id,
-                                                            tenant_id: tenantId,
-                                                            name: "Default",
-                                                            image: "/default_icon.png",
-                                                        },
-                                                    ]);
+                                                    await supabase
+                                                        .from("workspace")
+                                                        .insert([
+                                                            {
+                                                                owner: data.user
+                                                                    .id,
+                                                                tenant_id:
+                                                                    tenantId,
+                                                                name: "Default",
+                                                                image: "/default_icon.png",
+                                                            },
+                                                        ]);
                                                 }
                                             }
 
@@ -205,7 +229,11 @@ const Login: any = () => {
                                                 .eq("Code", code.Code);
                                         }
                                         if (error) {
-                                            setError(error);
+                                            setError(
+                                                error instanceof Error
+                                                    ? error.message
+                                                    : String(error),
+                                            );
                                             console.log(
                                                 "Error signing up:",
                                                 error,
@@ -218,10 +246,10 @@ const Login: any = () => {
                             }}
                         >
                             {({
-                                values,
+                                values: _values,
                                 isSubmitting,
-                                handleChange,
-                                handleBlur,
+                                handleChange: _handleChange,
+                                handleBlur: _handleBlur,
                                 handleSubmit,
                             }) => (
                                 <Form onSubmit={handleSubmit}>

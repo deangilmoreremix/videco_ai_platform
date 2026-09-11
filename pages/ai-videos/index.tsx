@@ -33,7 +33,7 @@ import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { FiBarChart, FiShare } from "react-icons/fi";
 import { AuthGuard } from "src/hoc/withAuthGuard";
-VideosContentContent: React.FC = () => {
+const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [AIVideos, setAIVideos] = useState([]);
     const session = useSession();

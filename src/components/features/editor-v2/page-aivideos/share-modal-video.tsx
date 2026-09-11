@@ -17,17 +17,27 @@ import { useState } from "react";
 import { FiShare2 } from "react-icons/fi";
 import {
     emailProvidersList,
-    getEmailEmbedCode,
     getEmailEmbedCodeForSimpleVideos,
 } from "src/utils/getEmailEmbedCode";
 
-const ShareModalVideo = ({ videoId, ogURL }) => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const [copied, setCopied] = useState(false);
-    const [search, setSearch] = useState("");
-    const [copiedProvider, setCopiedProvider] = useState(null);
+interface Provider {
+    value: string;
+    label: string;
+    fileType: string;
+}
 
-    const handleCopy = (provider) => {
+const ShareModalVideo = ({
+    videoId,
+    ogURL,
+}: {
+    videoId: string;
+    ogURL: string;
+}) => {
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [copiedProvider, setCopiedProvider] = useState<null | string>(null);
+    const [search, setSearch] = useState("");
+
+    const handleCopy = (provider: Provider) => {
         const container = document.createElement("div");
         container.innerHTML = getEmailEmbedCodeForSimpleVideos(
             `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${videoId}`,
@@ -66,8 +76,9 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
         }, 9000);
     };
 
-    const filteredProviders = emailProvidersList().filter((provider) =>
-        provider.label.toLowerCase().includes(search.toLowerCase()),
+    const filteredProviders = emailProvidersList().filter(
+        (provider: Provider) =>
+            provider.label.toLowerCase().includes(search.toLowerCase()),
     );
 
     return (
@@ -178,6 +189,7 @@ const ShareModalVideo = ({ videoId, ogURL }) => {
                             <Box mt={4} maxH="300px" overflowY="auto">
                                 {filteredProviders.map((provider) => (
                                     <Box
+                                        key={provider.value}
                                         display="flex"
                                         justifyContent="space-between"
                                         onClick={() => handleCopy(provider)}

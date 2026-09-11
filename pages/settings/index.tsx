@@ -35,7 +35,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { useUserPlan } from "src/hooks/useUserPlan";
-import axios from "axios";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { InviteList } from "@components/features/invite/list";
 import { supabase } from "src/services";
@@ -48,19 +47,26 @@ function generateSecureKey() {
 }
 const SettingsContent: React.FC = () => {
     const session = useSession();
-    const [plan, setPlan] = React.useState<any>();
-    const [stipeId, setStipeId] = React.useState<any>();
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const [plan, setPlan] = React.useState<string | null>(null);
+    const [, setStipeId] = React.useState<string | null>(null);
+    const { isOpen, onClose } = useDisclosure();
     const cancelRef = React.useRef();
     const user = session?.user;
     const router = useRouter();
     const toast = useToast();
-    const [teamMembers, setTeamMembers] = useState<any>();
-    const [deleted, setDeleted] = useState<any>(false);
+    const [, setTeamMembers] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            role?: string;
+            shared_account?: string;
+        }>
+    >();
+    const [, setDeleted] = useState(false);
     const { getTeamUserIds, getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const [videos, setVideos] = React.useState<any>(0);
-    const [videoSize, setVideoSize] = React.useState<any>(0);
+    const [, setVideos] = React.useState<number>(0);
+    const [, setVideoSize] = React.useState<number>(0);
     const [show, setShow] = React.useState(false);
     const [key, setKey] = React.useState("");
     const [apiKeyLoading, setApiKeyLoading] = React.useState(false);
@@ -132,11 +138,14 @@ const SettingsContent: React.FC = () => {
                 duration: 3000,
                 isClosable: true,
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to generate API key", error);
             toast({
                 title: "Failed to generate API key",
-                description: error?.message || "Please try again later.",
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Please try again later.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,

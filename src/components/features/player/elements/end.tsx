@@ -9,7 +9,15 @@ export const EndScreen = ({
     setShowEnd,
     videcoBrandingRemoved,
     setPlayerButtonHover,
-}: any) => (
+}: {
+    endCTA: { link?: string; text?: string; title?: string };
+    playerButtonHover: boolean;
+    setUpdatedPlaying: (value: boolean) => void;
+    updatedPlaying: boolean;
+    setShowEnd: (value: boolean) => void;
+    videcoBrandingRemoved: boolean;
+    setPlayerButtonHover: (value: boolean) => void;
+}) => (
     <>
         <Box
             bg="#00000083"

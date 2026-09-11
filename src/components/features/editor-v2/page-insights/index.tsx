@@ -1,6 +1,5 @@
 import {
     Box,
-    Heading,
     Text,
     Divider,
     Table,
@@ -13,7 +12,6 @@ import {
     chakra,
     Container,
     Flex,
-    useColorModeValue,
     Tag,
 } from "@chakra-ui/react";
 import { LatestAnalytics } from "@components/features/analytics/latest";
@@ -21,58 +19,37 @@ import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import "ka-table/style.css";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FiEye, FiPlay } from "react-icons/fi";
 
 import { useBrandKit } from "src/hooks/getBrandKit";
-import { useUserPlan } from "src/hooks/useUserPlan";
 
 type PageInsightsProps = {
     videoUrl: string;
     videoType: string;
-    meta: any;
+    meta: Record<string, unknown>;
 };
 export const PageInsights: React.FC<PageInsightsProps> = ({
-    videoUrl,
-    videoType,
-    meta,
+    videoUrl: _videoUrl,
+    videoType: _videoType,
+    meta: _meta,
 }) => {
     const router = useRouter();
     const { getBrandKit } = useBrandKit();
-    const [videoData, setVideoData] = useState<any>();
-    const [videoViews, setVideoViews] = useState<number>(0);
-    const [leadsData, setLeadsData] = useState<any[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [videoPlays, setVideoPlays] = useState<number>(0);
-    const [linkClicks, setLinkClicks] = useState<number>(0);
-    const [videoLeads, setVideoLeads] = useState<number>(0);
-    const [videoFeedback, setVideoFeedback] = useState<number>(0);
-    const [filterById, setFilterById] = useState<any>(router.query?.id);
-    const [filterByRange, setFilterByRange] = useState<any>(7);
-    const [brandKit, setBrandKit] = useState({
-        primary_color: "#05405A",
-        secondary_color: "#1A202C",
-        primary_text_color: "#ffffff",
-        secondary_text_color: "#ffffff",
-    });
-    const [plan, setPlan] = useState<any>();
+    const [videoData, setVideoData] = useState<Record<string, unknown>[]>([]);
+    const [leadsData, setLeadsData] = useState<
+        { name: string; status: string }[]
+    >([]);
+    const [filterById] = useState<string | undefined>(
+        router.query?.id as string | undefined,
+    );
     const session = useSession();
     const user = session?.user;
-    const { getPlan } = useUserPlan();
     useEffect(() => {
-        const plan = async () => {
-            const fetchPlan = await getPlan(user?.id);
-            setPlan(fetchPlan?.[0]);
-        };
-        plan();
-        getBrandKit(user?.id).then((res) => {
-            if (res?.[0]) {
-                setBrandKit(res?.[0]);
-            }
-        });
-    }, []);
+        getBrandKit(user?.id);
+    }, [user, getBrandKit]);
 
-    const getProfile = useCallback(async () => {
+    const getProfile = async () => {
         try {
             setLoading(true);
             let query = supabase
@@ -101,7 +78,7 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
         } finally {
             setLoading(false);
         }
-    }, [user, supabase, filterById]);
+    };
 
     useEffect(() => {
         if (user) {
@@ -115,28 +92,6 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
     }));
 
     useEffect(() => {
-        let viewsCount = 0;
-        let playCount = 0;
-        let clickCount = 0;
-        let leadsCount = 0;
-        let feedbackCount = 0;
-        if (processedVideoData) {
-            processedVideoData.forEach((item) => {
-                // Iterate through the analytics array of the item
-                item.analytics.forEach((analytic) => {
-                    // set the lenght as view count
-                    if (analytic.event === "view") viewsCount += 1;
-                    if (analytic.event === "video_play") playCount += 1;
-                    if (analytic.event === "link_click") clickCount += 1;
-                });
-                item.leads.forEach((analytic) => {
-                    leadsCount += 1;
-                });
-                item.feedback.forEach((analytic) => {
-                    feedbackCount += 1;
-                });
-            });
-        }
         const statusMapping: Record<string, string> = {
             page_view: "Landing Page Visit",
             video_play: "Landing Page Visit",
@@ -146,10 +101,10 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
         const uniqueLeads = new Set<string>();
 
         const leads = processedVideoData?.[0].analytics
-            .filter((item) => item.data.lead) // Get only events with a lead property
+            .filter((item) => item.data.lead)
             .filter((item) => {
-                const key = `${item.data.lead}-${item.event}`; // Unique key for each lead-event pair
-                if (uniqueLeads.has(key)) return false; // Skip duplicates
+                const key = `${item.data.lead}-${item.event}`;
+                if (uniqueLeads.has(key)) return false;
                 uniqueLeads.add(key);
                 return true;
             })
@@ -158,11 +113,6 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                 status: statusMapping[item.event] || "Unknown Event",
             }));
         setLeadsData(leads);
-        setLinkClicks(clickCount);
-        setVideoViews(viewsCount);
-        setVideoPlays(playCount);
-        setVideoLeads(leadsCount);
-        setVideoFeedback(feedbackCount);
     }, [videoData]);
 
     return (
@@ -311,9 +261,7 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                                     display="flex"
                                     mt={1}
                                     alignItems="center"
-                                >
-                                    <Text> {videoViews} </Text>
-                                </Box>
+                                ></Box>
                             </Box>
                             <Box
                                 display="flex"
@@ -344,9 +292,7 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                                     display="flex"
                                     mt={1}
                                     alignItems="center"
-                                >
-                                    <Text> {videoPlays} </Text>
-                                </Box>
+                                ></Box>
                             </Box>
                             <Box
                                 display="flex"
@@ -377,9 +323,7 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                                     display="flex"
                                     mt={1}
                                     alignItems="center"
-                                >
-                                    <Text> {linkClicks} </Text>
-                                </Box>
+                                ></Box>
                             </Box>
                         </Box>
                         <Flex

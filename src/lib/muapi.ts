@@ -19,15 +19,15 @@ if (!MUAPI_KEY && process.env.NODE_ENV !== "test") {
 export interface MuapiSubmitResponse {
     request_id: string;
     status: "processing" | "completed" | "failed" | string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface MuapiResultResponse {
     request_id: string;
     status: "processing" | "completed" | "failed" | string;
-    outputs?: Array<{ url: string; [key: string]: any }>;
+    outputs?: Array<{ url: string; [key: string]: unknown }>;
     error?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 const client = axios.create({
@@ -44,7 +44,7 @@ export async function logMuapiUsage(
     userId: string | null,
     model: string,
     action: string,
-    details: any = {},
+    details: Record<string, unknown> = {},
     cost = 0,
 ) {
     try {
@@ -77,7 +77,7 @@ export async function logMuapiUsage(
  */
 export async function submitPrediction(
     model: string,
-    payload: Record<string, any>,
+    payload: Record<string, unknown>,
     options?: { webhook?: string },
 ): Promise<MuapiSubmitResponse> {
     const url = options?.webhook
@@ -266,10 +266,11 @@ export async function generateImage(params: {
     aspect_ratio?: string;
     num_outputs?: number;
     user_id?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }): Promise<MuapiSubmitResponse> {
     const model = params.model || "flux-dev";
     const { model: _m, ...payload } = params;
+    void _m;
     const res = await submitPrediction(model, payload);
     try {
         await logMuapiUsage(params.user_id || null, model, "image", {
@@ -302,7 +303,7 @@ export async function generateVideo(params: {
     resolution?: string;
     quality?: string;
     user_id?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }): Promise<MuapiSubmitResponse> {
     const model =
         params.model ||
@@ -310,6 +311,7 @@ export async function generateVideo(params: {
             ? MUAPI_MODELS.HIGH_QUALITY_I2V
             : MUAPI_MODELS.FAST_T2V);
     const { model: _m, ...payload } = params;
+    void _m;
     const res = await submitPrediction(model, payload);
     try {
         await logMuapiUsage(params.user_id || null, model, "video", {
@@ -332,10 +334,12 @@ export async function generateVideo(params: {
 export async function lipsync(
     videoId: string,
     audioUrl: string,
-    opts?: { model?: string; user_id?: string; [key: string]: any },
+    opts?: { model?: string; user_id?: string; [key: string]: unknown },
 ): Promise<MuapiSubmitResponse> {
     const model = opts?.model || MUAPI_MODELS.LIPSYNC;
     const { model: _m, user_id: _uid, ...rest } = opts || {};
+    void _m;
+    void _uid;
     const payload = { video_url: videoId, audio_url: audioUrl, ...rest };
     const res = await submitPrediction(model, payload);
     try {
@@ -359,10 +363,11 @@ export async function faceSwap(params: {
     target_url: string;
     model?: string;
     user_id?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }): Promise<MuapiSubmitResponse> {
     const model = params.model || "face-swap-general";
     const { model: _m, ...payload } = params;
+    void _m;
     const res = await submitPrediction(model, payload);
     try {
         await logMuapiUsage(params.user_id || null, model, "face-swap", {});
@@ -383,10 +388,12 @@ export async function uploadImage(
     file: Buffer | Blob | File,
 ): Promise<{ url: string }> {
     const isFile = typeof File !== "undefined" && file instanceof File;
-    const filename = isFile ? file.name : (file as any).name || "upload.png";
+    const filename = isFile
+        ? file.name
+        : (file as Blob | Buffer).name || "upload.png";
 
     const form = new FormData();
-    form.append("image", file as any, filename);
+    form.append("image", file, filename);
 
     const { data } = await axios.post(`${MUAPI_BASE}/upload_image`, form, {
         headers: {
@@ -426,8 +433,11 @@ export function extractFinalUrl(
     result: MuapiResultResponse,
 ): string | undefined {
     if (result.outputs?.[0]?.url) return result.outputs[0].url;
-    if ((result as any).public_url) return (result as any).public_url;
-    if ((result as any).url) return (result as any).url;
+    if ((result as MuapiResultResponse & { public_url?: string }).public_url)
+        return (result as MuapiResultResponse & { public_url?: string })
+            .public_url;
+    if ((result as MuapiResultResponse & { url?: string }).url)
+        return (result as MuapiResultResponse & { url?: string }).url;
     return undefined;
 }
 
@@ -442,7 +452,14 @@ export async function pollMuapiJob(
 ) {
     const result = await getJobStatus(requestId);
     const final_url = extractFinalUrl(result);
-    const res: any = { ...result, final_url, video_id: videoId };
+    const res: MuapiResultResponse & {
+        final_url?: string;
+        video_id?: string | number;
+    } = {
+        ...result,
+        final_url,
+        video_id: videoId,
+    };
     return res;
 }
 

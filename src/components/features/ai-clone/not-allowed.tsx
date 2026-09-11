@@ -11,17 +11,17 @@ import {
 import { useState } from "react";
 
 type TemplatesTypes = {
-    getSelectedScript?: any;
+    getSelectedScript?: (text: string) => void;
 };
 export const NotAllowed: React.FC<TemplatesTypes> = ({ getSelectedScript }) => {
     const [updatedModalOpen, setUpdatedModalOpen] = useState(false);
 
-    const onSelectScript = (text: string) => {
-        getSelectedScript(text);
+    const _onSelectScript = (text: string) => {
+        getSelectedScript?.(text);
         setUpdatedModalOpen(false);
     };
 
-    const onOpen = () => setUpdatedModalOpen(!updatedModalOpen);
+    const _onOpen = () => setUpdatedModalOpen(!updatedModalOpen);
     const onClose = () => setUpdatedModalOpen(!updatedModalOpen);
     return (
         <>

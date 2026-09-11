@@ -2,7 +2,7 @@ import { supabase } from "src/services";
 
 export function useAnalytics() {
     const updateClickAnalytics = async (
-        video_id: any,
+        video_id: string | number,
         element_name: string,
     ) => {
         try {

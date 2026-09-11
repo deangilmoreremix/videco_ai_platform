@@ -31,21 +31,39 @@ type PlayerTypes = {
     videoUrl: string;
     platform: string;
     preview: string;
-    playerRef: any;
-    onPlayerPlay?: any;
+    playerRef: React.RefObject<ReactPlayer>;
+    onPlayerPlay?: () => void;
     playing: boolean;
     embeded?: boolean;
     videcoBrandingRemoved?: boolean;
-    elements?: any[];
+    elements?: Array<{
+        id: string;
+        type: string;
+        time?: number | string;
+        endTime?: number | string;
+        name?: string;
+        url?: string;
+        link?: string;
+        butonPosition?: string;
+        defaultPosition?: { x: number; y: number };
+        user_id?: string;
+        form_enable_name?: boolean;
+        form_enable_email?: boolean;
+        form_enable_message?: boolean;
+        form_submit_text?: string;
+        answer_type?: string;
+        answers?: string;
+        answer_placeholder?: string;
+    }>;
     isEditor?: boolean;
-    setDuration: any;
-    width?: any;
-    id?: any;
-    height?: any;
-    endCTA?: any;
-    setPlaying: any;
-    onClickPreiveiw?: any;
-    setVideo: any;
+    setDuration: (value: number) => void;
+    width?: string | number;
+    id?: string | number;
+    height?: string | number;
+    endCTA?: { link?: string; text?: string; title?: string };
+    setPlaying: (value: boolean) => void;
+    onClickPreiveiw?: () => void;
+    setVideo: (value: unknown) => void;
 };
 export const Player = ({
     videoUrl,
@@ -64,7 +82,6 @@ export const Player = ({
     elements,
     setVideo,
 }: PlayerTypes) => {
-    const [activeElement, setActiveElement] = useState(null);
     const [isMouseInside, setIsMouseInside] = useState(false);
     const [updatedPlaying, setUpdatedPlaying] = useState(playing);
     const [isVolueClicked, setIsVolueClicked] = useState(false);
@@ -78,7 +95,6 @@ export const Player = ({
     const [hideForm, setHideForm] = useState(false);
     const [hideQuestion, setHideQuestion] = useState(false);
     const [activeAnswerType, setActiveAnswerType] = useState("list");
-    const [previewFinished, setPreviewFinished] = useState(false);
     const [isLargerThan800] = useMediaQuery("(min-width: 670px)");
 
     const [volumeBar, setVolumeBar] = useState(1);
@@ -101,8 +117,8 @@ export const Player = ({
 
         updateInteractiveElements(updatedActiveElement);
     };
-    const handleDragStart = (e, data) => {
-        setActiveElement(e);
+    const handleDragStart = (_e, _data) => {
+        // kept for prop compatibility; activeElement tracking removed
     };
 
     const addOpacityToHexColor = (hexColor, opacity) => {
@@ -157,19 +173,6 @@ export const Player = ({
 
     React.useEffect(() => {
         let timeoutId;
-        const handleMouseEnter = () => {
-            clearTimeout(timeoutId); // Clear the timeout if the mouse enters again before the delay
-            setIsMouseInside(true);
-        };
-
-        const handleMouseLeave = () => {
-            // Set a timeout to hide the icon after 1000 milliseconds (1 second)
-            timeoutId = setTimeout(() => {
-                setIsMouseInside(false);
-                setIsVolueClicked(false);
-            }, 1000);
-        };
-
         return () => {
             clearTimeout(timeoutId); // Clear the timeout on component unmount
         };

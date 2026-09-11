@@ -3,11 +3,8 @@ import {
     Box,
     Heading,
     Flex,
-    Card,
     Text,
     Button,
-    Spinner,
-    Avatar,
     useDisclosure,
     Drawer,
     DrawerBody,
@@ -16,55 +13,49 @@ import {
     DrawerHeader,
     DrawerOverlay,
     Divider,
-    Tag,
     Modal,
     ModalBody,
     ModalContent,
     ModalFooter,
     ModalHeader,
     ModalOverlay,
-    Table,
-    TableContainer,
-    Tbody,
-    Td,
-    Tr,
     Alert,
     Link,
 } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
-import {
-    FiBarChart,
-    FiBarChart2,
-    FiDatabase,
-    FiEdit,
-    FiUpload,
-    FiUserPlus,
-} from "react-icons/fi";
+import { FiEdit, FiUserPlus } from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { supabase } from "src/services";
 import { Invite } from "@components/features/invite";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
-import { TopAnalytics } from "@components/features/analytics/top";
-import { LatestAnalytics } from "@components/features/analytics/latest";
 import Pricing from "@components/common/pricing";
-import { supabase } from "src/services";
 import { AuthGuard } from "src/hoc/withAuthGuard";
 
 const InviteUsersContent: React.FC = () => {
-    const [isSSR, setIsSSR] = useState(true);
+    const [, setIsSSR] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
-    const [videoData, setVideoData] = useState<any>();
+    const [_videoData, setVideoData] =
+        useState<
+            Array<{ id: string; name?: string; email?: string; role?: string }>
+        >();
     const [memberEmail, setMemberEmail] = useState<string | null>(null);
-    const [teamMembers, setTeamMembers] = useState<any>();
-    const [canInvite, setCanInvite] = useState<any>(false);
-    const [showPricing, setShowPricing] = useState<any>(false);
-    const [plan, setPlan] = React.useState<any>();
-    const [inviteApproved, setInviteApproved] = useState<any>(true);
+    const [teamMembers, setTeamMembers] = useState<
+        Array<{
+            id: string;
+            name?: string;
+            role?: string;
+            shared_account?: string;
+        }>
+    >();
+    const [canInvite, setCanInvite] = useState(false);
+    const [showPricing, setShowPricing] = useState(false);
+    const [_plan, setPlan] = React.useState<string | null>(null);
+    const [inviteApproved, setInviteApproved] = useState(true);
     const { getPlan } = useUserPlan();
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [inviteUpdated, setInviteUpdated] = useState(false);
     const session = useSession();
     const user = session?.user;
