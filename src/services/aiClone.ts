@@ -1,6 +1,6 @@
 import { supabase } from "src/services";
 import axios from "axios";
-import { makeTextToVoice } from "./api/aiVoice";
+import { openai } from "../lib/openai";
 
 export const JOB_DETAILS = {
     pending: "pending",
@@ -21,12 +21,16 @@ export async function createAIClone(params: {
     language?: string;
     webhookUrl?: string;
 }) {
-    const voice = await makeTextToVoice(
-        params.text,
-        null,
-        params.voice_id,
-        params.language,
-    );
+    const selectedVoice = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"].includes(params.voice_id)
+        ? params.voice_id
+        : "alloy";
+    const mp3 = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: selectedVoice,
+        input: params.text,
+    });
+    const base64Audio = Buffer.from(await mp3.arrayBuffer()).toString("base64");
+    const voice = { data: { audio_data: base64Audio } };
 
     const dataUri = `data:audio/mp3;base64,${voice.data.audio_data}`;
     let uploadedAudioUrl: string | null = null;

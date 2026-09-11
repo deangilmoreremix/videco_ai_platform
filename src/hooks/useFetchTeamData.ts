@@ -1,80 +1,63 @@
-import { supabase } from "src/services";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useWorkspaces } from "src/store/workspace";
 
 export function useFetchTeamData() {
+    const supabase = createClientComponentClient();
     const session = useSession();
     const user = session?.user;
     const { workspace } = useWorkspaces();
-
+    // get team user ids including owner
     const getTeamUserIds = async () => {
-        if (!user?.email || !workspace?.id) {
-            return [];
-        }
+        // No authenticated user yet (or during session boot) — nothing to fetch.
+        if (!user?.email || !workspace?.id) return undefined;
         try {
-            const mainAccountRes = await supabase
+            return await supabase
                 .from("sub_accounts")
                 .select("main_account")
                 .eq("shared_account", user.email)
-                .limit(1);
+                .then((res) => {
+                    const team = supabase
+                        .from("sub_accounts")
+                        .select(
+                            "shared_account, name, role, shared_account_user",
+                        )
+                        .eq("main_account", res.data[0].main_account)
+                        .eq("workspace_id", workspace.id)
+                        .order("role", { ascending: false });
 
-            if (mainAccountRes.error || !mainAccountRes.data?.length) {
-                return [];
-            }
-
-            const team = await supabase
-                .from("sub_accounts")
-                .select("shared_account, name, role, shared_account_user")
-                .eq("main_account", mainAccountRes.data[0].main_account)
-                .eq("workspace_id", workspace.id)
-                .order("role", { ascending: false });
-
-            if (team.error) {
-                console.error("Failed to load team members", team.error);
-                return [];
-            }
-
-            return team.data ?? [];
+                    return team.then((res) => {
+                        return res.data;
+                    });
+                });
         } catch (error) {
-            console.error("Error fetching team data", error);
-            return [];
+            console.log("error..", error);
         }
     };
 
+    // fetch data from all team members
     const getData = async (
         scheam: string,
         neq: { col: string; val: string },
     ) => {
-        if (!user?.id || !workspace?.id) {
-            return [];
-        }
         try {
             const teamIdResponse = await getTeamUserIds();
+            if (!teamIdResponse) return undefined;
             const teamIds = teamIdResponse
                 .filter((item) => item.shared_account_user !== null)
                 .map((item) => item.shared_account_user);
-
-            if (!teamIds.length) {
-                return [];
-            }
-
-            const { data, error } = await supabase
+            return await supabase
                 .from(scheam)
                 .select()
-                .in("user_id", teamIds)
+                .in("user_id", [teamIds])
                 .neq(neq.col, neq.val)
                 .eq("workspace_id", workspace.id)
-                .order("created_at", { ascending: false });
-
-            if (error) {
-                console.error("Failed to fetch data", error);
-                return [];
-            }
-
-            return data ?? [];
+                .order("created_at", { ascending: false })
+                .then((res) => {
+                    return res.data;
+                });
         } catch (error) {
-            console.error("Error fetching data", error);
-            return [];
+            console.log("error..", error);
         }
     };
 
