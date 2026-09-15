@@ -1,9 +1,9 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { createHmac, timingSafeEqual } from "crypto";
 
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+const _WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 const supabase = createClientComponentClient();
-const verifySignature = (payload, signature, secret) => {
+const _verifySignature = (payload, signature, secret) => {
     try {
         if (!signature) {
             return false;
@@ -31,7 +31,7 @@ const verifySignature = (payload, signature, secret) => {
 
 export default async function handler(req, res) {
     if (req.method === "POST") {
-        const signature = req.headers["sync-signature"];
+        const _signature = req.headers["sync-signature"];
 
         // if (!verifySignature(req.body, signature, WEBHOOK_SECRET)) {
         //     return res.status(400).json({
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         //     });
         // }
 
-        const ai_video_update = await supabase
+        const _ai_video_update = await supabase
             .from("videos")
             .update({
                 url: req.body.outputUrl,

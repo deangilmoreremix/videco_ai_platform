@@ -25,7 +25,7 @@ export default async function handler(
                     session_id: req.body.session_id,
                 })
                 .select("session_id")
-                .then((res) => {
+                .then((_res) => {
                     console.log("success..");
                 });
         } catch (error) {

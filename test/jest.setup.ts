@@ -1,11 +1,8 @@
 import "cross-fetch/polyfill";
 import dotenv from "dotenv";
+import * as nodeGlobals from "util";
 
 dotenv.config({ path: ".env.test" });
-
-// jsdom does not provide all web API globals required by modern nock/@mswjs/interceptors.
-// Node 20 has native implementations; expose them explicitly before importing nock.
-const nodeGlobals = require("util") as Record<string, unknown>;
 if (typeof globalThis.TextEncoder === "undefined") {
     (globalThis as any).TextEncoder = nodeGlobals.TextEncoder;
 }

@@ -29,7 +29,7 @@ export default async function handler(
                     },
                 })
                 .select()
-                .then((res) => {
+                .then((_res) => {
                     console.log("success..");
                 });
         } catch (error) {
