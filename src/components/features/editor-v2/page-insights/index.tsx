@@ -43,8 +43,8 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
     const [filterById] = useState<string | undefined>(
         router.query?.id as string | undefined,
     );
-    const [loading, setLoading] = useState(false);
-    const [filterByRange, setFilterByRange] = useState<string>("7d");
+    const [_loading, _setLoading] = useState(false);
+    const [_filterByRange, _setFilterByRange] = useState<string>("7d");
     const session = useSession();
     const user = session?.user;
     useEffect(() => {

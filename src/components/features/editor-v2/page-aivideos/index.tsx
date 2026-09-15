@@ -25,14 +25,16 @@ import { useUserPlan } from "src/hooks/useUserPlan";
 import Image from "next/image";
 import { StepGenerate } from "./steps/generate";
 import { supabase } from "src/services";
-import { emailProvidersList, getEmailEmbedCode } from "src/utils/getEmailEmbedCode";
+import {
+    emailProvidersList,
+    getEmailEmbedCode,
+} from "src/utils/getEmailEmbedCode";
 import {
     FiCopy,
     FiDownloadCloud,
     FiFacebook,
     FiLinkedin,
     FiX,
-    FiArrowRight,
 } from "react-icons/fi";
 import { IoMdBrowsers } from "react-icons/io";
 import { PiBrowser } from "react-icons/pi";

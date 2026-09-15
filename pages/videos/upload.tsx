@@ -76,12 +76,12 @@ const Upload: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { activeStep, setActiveStep } = useSteps({
+    const { activeStep, setActiveStep: _setActiveStep } = useSteps({
         index: 3,
         count: steps.length,
     });
 
-    const activeStepText = steps[activeStep].description;
+    const _activeStepText = steps[activeStep].description;
 
     const max = steps.length - 1;
     const progressPercent = (activeStep / max) * 100;

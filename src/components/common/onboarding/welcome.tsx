@@ -52,21 +52,23 @@ export const Onboarding: FC<OnboardingProps> = () => {
     const user = session?.user;
     const [_plan, setPlan] = useState<string | null>(null);
     const [, setShowCongratz] = useState(false);
-type Trail = {
-    free_trial_start_date?: string;
-    status?: string;
-    free_trial_ended?: boolean;
-};
+    type Trail = {
+        free_trial_start_date?: string;
+        status?: string;
+        free_trial_ended?: boolean;
+    };
 
     const [trail, setTrail] = useState<Trail | null>(null);
     const [, setVideos] = useState<number>(0);
     const [, setVideoSize] = useState<number>(0);
     const { getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const { activeStep, setActiveStep } = useSteps({
-        index: 1,
-        count: steps.length,
-    });
+    const { activeStep: _activeStep, setActiveStep: _setActiveStep } = useSteps(
+        {
+            index: 1,
+            count: steps.length,
+        },
+    );
 
     useEffect(() => {
         // Dynamically add the ProductLift SDK script
@@ -99,7 +101,7 @@ type Trail = {
                     setFullname(data.full_name.split(" ")[0]);
                 }
                 setShowOnboarding(true);
-                setActiveStep(1);
+                _setActiveStep(1);
             } else {
                 setShowOnboarding(false);
             }
@@ -129,13 +131,13 @@ type Trail = {
         ) {
             setShowCongratz(false);
             setPaymentProcessing(true);
-            setActiveStep(3);
+            _setActiveStep(3);
         } else {
             setPaymentProcessing(false);
 
             showOnboarding &&
                 setShowCongratz(fetchPlan?.[0]?.plan_name ? true : false);
-            setActiveStep(fetchPlan?.[0]?.plan_name ? 2 : 1);
+            _setActiveStep(fetchPlan?.[0]?.plan_name ? 2 : 1);
         }
     };
     const updateProfile = async (e) => {

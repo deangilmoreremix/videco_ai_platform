@@ -21,7 +21,7 @@ import { videoTypes } from "src/utils/video";
 const Start: React.FC = () => {
     const [, setLoading] = useState(true);
     const [loadingCampaign, setLoadingCampaign] = useState(false);
-    const [loadingUpload, setLoadingUpload] = useState(false);
+    const [_loadingUpload, setLoadingUpload] = useState(false);
     const [_videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();
     const session = useSession();
@@ -126,15 +126,15 @@ const Start: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { activeStep, setActiveStep } = useSteps({
+    const { activeStep, setActiveStep: _setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
 
-    const activeStepText = steps[activeStep].description;
+    const _activeStepText = steps[activeStep].description;
 
     const max = steps.length - 1;
-    const progressPercent = (activeStep / max) * 100;
+    const _progressPercent = (activeStep / max) * 100;
     return (
         <>
             {!session ? (

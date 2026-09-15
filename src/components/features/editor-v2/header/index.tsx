@@ -33,7 +33,7 @@ import Image from "next/image";
 import { supabase } from "src/services";
 import { useRouter } from "next/router";
 import { rem } from "polished";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { FaMagic } from "react-icons/fa";
 import {
     FiArrowLeft,
@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
         label: string;
     }>();
     const [creatingPreview, setCreatingPreview] = useState<boolean>(false);
-    const meta = useEditorStore((s) => s.meta);
+    const _meta = useEditorStore((s) => s.meta);
     const toast = useToast();
     const router = useRouter();
     const _embedCodeRef = React.useRef<HTMLDivElement>(null);

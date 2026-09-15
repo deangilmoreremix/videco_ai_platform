@@ -16,9 +16,6 @@ import {
     MenuButton,
     MenuItem,
     MenuList,
-    Card,
-    Avatar,
-    Tag,
 } from "@chakra-ui/react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";

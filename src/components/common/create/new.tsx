@@ -23,7 +23,7 @@ import { supabase } from "src/services";
 const New: React.FC = () => {
     const [, setLoading] = useState(true);
     const [loadingCampaign, setLoadingCampaign] = useState(false);
-    const [loadingUpload, setLoadingUpload] = useState(false);
+    const [_loadingUpload, setLoadingUpload] = useState(false);
     const [needUpgrade, setNeedUpgrade] = useState(false);
     const [videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();
@@ -175,15 +175,15 @@ const New: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { _activeStep, _setActiveStep } = useSteps({
+    const { activeStep, setActiveStep: _setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
 
-    const _activeStepText = steps[_activeStep].description;
+    const _activeStepText = steps[activeStep].description;
 
     const max = steps.length - 1;
-    const _progressPercent = (_activeStep / max) * 100;
+    const _progressPercent = (activeStep / max) * 100;
     return (
         <>
             {!session ? (
