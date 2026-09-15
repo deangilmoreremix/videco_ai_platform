@@ -52,12 +52,18 @@ export const Onboarding: FC<OnboardingProps> = () => {
     const user = session?.user;
     const [_plan, setPlan] = useState<string | null>(null);
     const [, setShowCongratz] = useState(false);
-    const [trail, setTrail] = useState<unknown>(null);
+type Trail = {
+    free_trial_start_date?: string;
+    status?: string;
+    free_trial_ended?: boolean;
+};
+
+    const [trail, setTrail] = useState<Trail | null>(null);
     const [, setVideos] = useState<number>(0);
     const [, setVideoSize] = useState<number>(0);
     const { getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const { _activeStep, setActiveStep } = useSteps({
+    const { activeStep, setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });

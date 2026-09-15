@@ -40,7 +40,14 @@ export const Header: FC<HeaderProps> = ({ pageTitle }) => {
     const user = session?.user;
     const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
-    const [trail, setTrail] = React.useState<unknown>(null);
+type Trail = {
+    free_trial_start_date?: string;
+    status?: string;
+    free_trial_ended?: boolean;
+};
+
+// ... inside component
+    const [trail, setTrail] = React.useState<Trail | null>(null);
 
     useEffect(() => {
         // Dynamically add the ProductLift SDK script

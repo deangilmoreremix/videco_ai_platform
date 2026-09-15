@@ -9,6 +9,7 @@ import {
     useSteps,
     Button,
 } from "@chakra-ui/react";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
@@ -125,15 +126,15 @@ const Start: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { _activeStep, _setActiveStep } = useSteps({
+    const { activeStep, setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
 
-    const _activeStepText = steps[_activeStep].description;
+    const activeStepText = steps[activeStep].description;
 
     const max = steps.length - 1;
-    const _progressPercent = (_activeStep / max) * 100;
+    const progressPercent = (activeStep / max) * 100;
     return (
         <>
             {!session ? (
@@ -218,8 +219,8 @@ const Start: React.FC = () => {
                                         alt="AI Clone preview"
                                         borderRadius="md"
                                         objectFit="cover"
-                                        width="100%"
-                                        height="auto"
+                                        w="100%"
+                                        h="auto"
                                     />
                                 </Box>
                                 <Box mt={4}>
@@ -284,8 +285,8 @@ const Start: React.FC = () => {
                                         alt="Personalized campaign preview"
                                         borderRadius="md"
                                         objectFit="cover"
-                                        width="100%"
-                                        height="auto"
+                                        w="100%"
+                                        h="auto"
                                     />
                                 </Box>
                                 <Box mt={4}>
@@ -355,8 +356,8 @@ const Start: React.FC = () => {
                                         alt="Upload video preview"
                                         borderRadius="md"
                                         objectFit="cover"
-                                        width="100%"
-                                        height="auto"
+                                        w="100%"
+                                        h="auto"
                                     />
                                 </Box>
                                 <Box mt={4}>
