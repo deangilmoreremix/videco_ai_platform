@@ -387,13 +387,17 @@ export async function faceSwap(params: {
 export async function uploadImage(
     file: Buffer | Blob | File,
 ): Promise<{ url: string }> {
-    const isFile = typeof File !== "undefined" && file instanceof File;
-    const filename = isFile
-        ? file.name
-        : (file as Blob | Buffer).name || "upload.png";
+    const filename =
+        typeof File !== "undefined" && file instanceof File
+            ? file.name
+            : "upload.png";
 
     const form = new FormData();
-    form.append("image", file, filename);
+    if (Buffer.isBuffer(file)) {
+        form.append("image", new Blob([file]), filename);
+    } else {
+        form.append("image", file, filename);
+    }
 
     const { data } = await axios.post(`${MUAPI_BASE}/upload_image`, form, {
         headers: {

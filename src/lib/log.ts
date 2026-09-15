@@ -1,5 +1,3 @@
-import { logger } from "./log";
-
 interface UsageLog {
     user_id?: string;
     model?: string;
@@ -11,7 +9,7 @@ interface UsageLog {
 
 export async function logUsage(entry: UsageLog): Promise<void> {
     try {
-        logger.info("Usage log", { ...entry });
+        console.info("Usage log", entry);
     } catch (error) {
         console.error("Usage logging error:", error);
     }

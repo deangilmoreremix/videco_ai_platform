@@ -34,6 +34,7 @@ import { useRouter } from "next/router";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { supabase } from "src/services";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useEditorStore } from "src/store/editor";
 import { FiBarChart, FiDelete, FiEdit, FiShare } from "react-icons/fi";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
