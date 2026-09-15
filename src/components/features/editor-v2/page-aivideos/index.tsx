@@ -25,14 +25,17 @@ import { useUserPlan } from "src/hooks/useUserPlan";
 import Image from "next/image";
 import { StepGenerate } from "./steps/generate";
 import { supabase } from "src/services";
-import { emailProvidersList } from "src/utils/getEmailEmbedCode";
+import { emailProvidersList, getEmailEmbedCode } from "src/utils/getEmailEmbedCode";
 import {
     FiCopy,
     FiDownloadCloud,
     FiFacebook,
     FiLinkedin,
     FiX,
+    FiArrowRight,
 } from "react-icons/fi";
+import { IoMdBrowsers } from "react-icons/io";
+import { PiBrowser } from "react-icons/pi";
 import { SharingPreview } from "./sharing-preview";
 import { rem } from "polished";
 import { videoTypes } from "src/utils/video";
@@ -70,7 +73,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
     const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
     const { getPlan } = useUserPlan();
-    const { isOpen, onClose } = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);

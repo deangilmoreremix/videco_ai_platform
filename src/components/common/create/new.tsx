@@ -22,8 +22,8 @@ import { supabase } from "src/services";
 
 const New: React.FC = () => {
     const [, setLoading] = useState(true);
-    const [, setLoadingCampaign] = useState(false);
-    const [, setLoadingUpload] = useState(false);
+    const [loadingCampaign, setLoadingCampaign] = useState(false);
+    const [loadingUpload, setLoadingUpload] = useState(false);
     const [needUpgrade, setNeedUpgrade] = useState(false);
     const [videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();

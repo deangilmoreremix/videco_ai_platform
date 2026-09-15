@@ -17,11 +17,16 @@ import {
     ModalBody,
     ModalCloseButton,
     ModalContent,
+    ModalOverlay,
     ButtonGroup,
     IconButton,
     Editable,
     EditableInput,
     EditablePreview,
+    DrawerOverlay,
+    DrawerHeader,
+    DrawerBody,
+    useEditableControls,
 } from "@chakra-ui/react";
 import Select from "react-select";
 import Image from "next/image";
@@ -152,9 +157,10 @@ export const Header: React.FC<HeaderProps> = ({
             </Flex>
         );
     }
-    useEffect(() => {
-        updateBranding();
-    }, [meta]);
+    // updateBranding is legacy and no longer implemented.
+    // useEffect(() => {
+    //     updateBranding();
+    // }, [meta]);
     return (
         <Stack
             pos="absolute"

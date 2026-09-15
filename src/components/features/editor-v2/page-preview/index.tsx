@@ -21,11 +21,21 @@ import {
     PopoverCloseButton,
     PopoverContent,
     PopoverTrigger,
+    Popover,
     Progress,
     Stack,
     Text,
     useDisclosure,
 } from "@chakra-ui/react";
+import {
+    FiImage,
+    FiLink,
+    FiEyeOff,
+    FiRepeat,
+    FiFlag,
+    FiArrowRight,
+} from "react-icons/fi";
+import { ArrowForwardIcon } from "@chakra-ui/icons";
 import Pricing from "@components/common/pricing";
 import { Player } from "@components/features/player";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -49,7 +59,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     mediaStatus,
 }) => {
     const router = useRouter();
-    const { meta, setVideoMeta } = useEditorStore();
+    const { meta, setVideoMeta, interactiveElements, setVideo } = useEditorStore();
     const _playerRef = useRef(null);
     const { getBrandKit } = useBrandKit();
     const [_duration, setDuration] = useState(0);

@@ -98,6 +98,10 @@ export const Player = ({
     const [isLargerThan800] = useMediaQuery("(min-width: 670px)");
 
     const [volumeBar, setVolumeBar] = useState(1);
+    const [activeElement, setActiveElement] = useState<Record<string, unknown>>(
+        {},
+    );
+    const [previewFinished, setPreviewFinished] = useState(false);
     const { updateInteractiveElements, meta, video } = useEditorStore();
     const { updateClickAnalytics } = useAnalytics();
 

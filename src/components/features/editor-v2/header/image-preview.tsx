@@ -13,6 +13,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
     const router = useRouter();
     const [preview, setPreview] = useState<string>("");
     const [_url, setUrl] = useState<string>("");
+    const [files, setFiles] = useState<Array<{ progress: number }>>([]);
 
     const fetchPreview = async () => {
         try {

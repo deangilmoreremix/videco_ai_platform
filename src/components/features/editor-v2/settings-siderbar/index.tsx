@@ -75,7 +75,7 @@ export const SettingsSidebar = ({
                     updateInteractiveElements({ ...activeElement, ...values });
                 }}
             >
-                {({ handleChange, handleSubmit, values }) => (
+                {({ handleChange, handleBlur, handleSubmit, values }) => (
                     <form onSubmit={handleSubmit}>
                         {activeElement?.type === "link" && (
                             <>

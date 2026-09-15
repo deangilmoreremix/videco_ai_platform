@@ -32,11 +32,14 @@ interface StepImportProps {
     setIsOpen?: () => void;
     user?: { id?: string; app_metadata?: Record<string, unknown> };
 }
-export const StepGenerate: React.FC<StepImportProps> = () => {
+export const StepGenerate: React.FC<StepImportProps> = ({
+    setIsOpen,
+}) => {
     const [, setLoading] = useState(false);
     const [AIVideos, setAIVideos] = useState<Record<string, unknown>[]>([]);
     const [activePreviewVideo, setActivePreviewVideo] =
         useState<Record<string, unknown>>();
+    const [originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
     const { isOpen, onClose } = useDisclosure();
     const previewModal = useDisclosure();
     const router = useRouter();
@@ -315,7 +318,7 @@ export const StepGenerate: React.FC<StepImportProps> = () => {
                                                         setRegenerateData(
                                                             video,
                                                         );
-                                                        onOpen();
+                                                        setIsOpen?.();
                                                     }}
                                                 >
                                                     <FiRefreshCcw />

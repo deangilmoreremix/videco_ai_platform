@@ -3,11 +3,13 @@
 import { Box, Button, Flex, Text, Image } from "@chakra-ui/react";
 import { FaCheckCircle } from "react-icons/fa";
 import { FiArrowRight, FiX } from "react-icons/fi";
+import { useRouter } from "next/router";
 
 interface PackageTierProps {
     hidePiricng?: () => void;
 }
 const Pricing = ({ hidePiricng }: PackageTierProps) => {
+    const router = useRouter();
     return (
         <Box>
             <Box

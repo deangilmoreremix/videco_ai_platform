@@ -28,7 +28,7 @@ import Pricing from "../pricing";
 type HeaderProps = {
     pageTitle: string;
 };
-export const Header: FC<HeaderProps> = () => {
+export const Header: FC<HeaderProps> = ({ pageTitle }) => {
     const [, setLoading] = useState(true);
     const [, setFullname] = useState(null);
     const create = useDisclosure();
@@ -336,7 +336,7 @@ export const Header: FC<HeaderProps> = () => {
                 justifyContent="space-between"
             >
                 <Heading as="h2" fontSize="xl" ml={6} color="#383F40">
-                    {props?.pageTitle ?? "Dashboard"}
+                    {pageTitle ?? "Dashboard"}
                 </Heading>
                 <Onboarding />
                 <Flex bg="white" px={4} py={3} rounded="lg">

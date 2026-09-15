@@ -1,4 +1,10 @@
 import { uploadToStorage } from "src/services";
+import axios from "axios";
+
+const blobUrlToBlob = async (url: string): Promise<Blob> => {
+    const response = await fetch(url);
+    return response.blob();
+};
 
 export async function uploadVideoToStorage(
     file: File | Blob,

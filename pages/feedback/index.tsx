@@ -16,6 +16,9 @@ import {
     MenuButton,
     MenuItem,
     MenuList,
+    Card,
+    Avatar,
+    Tag,
 } from "@chakra-ui/react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
@@ -23,6 +26,9 @@ import { useEditorStore } from "src/store/editor";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import Pricing from "@components/common/pricing";
 import { AuthGuard } from "src/hoc/withAuthGuard";
+import { Sidebar } from "@components/common/sidebar";
+import { Header } from "@components/common/header";
+import { FiSettings, FiUpload } from "react-icons/fi";
 export const LeadsContent: React.FC = () => {
     const [searchText, setSearchText] = useState("");
     const [, setLoading] = useState(true);

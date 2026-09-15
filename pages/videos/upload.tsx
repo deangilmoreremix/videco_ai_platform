@@ -21,8 +21,8 @@ import { FiCamera, FiUpload } from "react-icons/fi";
 
 const Upload: React.FC = () => {
     const [, setLoading] = useState(true);
-    const [, setLoadingCampaign] = useState(false);
-    const [, setLoadingUpload] = useState(false);
+    const [loadingCampaign, setLoadingCampaign] = useState(false);
+    const [loadingUpload, setLoadingUpload] = useState(false);
     const [_videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();
     const session = useSession();
@@ -76,15 +76,15 @@ const Upload: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { _activeStep, _setActiveStep } = useSteps({
+    const { activeStep, setActiveStep } = useSteps({
         index: 3,
         count: steps.length,
     });
 
-    const _activeStepText = steps[_activeStep].description;
+    const activeStepText = steps[activeStep].description;
 
     const max = steps.length - 1;
-    const _progressPercent = (_activeStep / max) * 100;
+    const progressPercent = (activeStep / max) * 100;
     return (
         <>
             {!session ? (

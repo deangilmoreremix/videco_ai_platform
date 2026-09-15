@@ -40,7 +40,7 @@ export const getEmailEmbedCode = (
     if (provider === "html") {
         return `
       <div style="position: relative; display: inline-block; padding: 5px; background: white;">
-        <video controls src="${url}" poster="${ogUrl}" style="max-width: 480px; border-radius: 8px;"></video>
+        <video controls src="${url}" poster="${og_url}" style="max-width: 480px; border-radius: 8px;"></video>
         <p style="font-family: Arial; color: #05405A; margin: 0; padding-top: 5px;">${fname}</p>
       </div>
     `;
@@ -133,7 +133,7 @@ export const getEmailEmbedCode = (
         return mailchimp;
     }
     if (provider === "nethunt") {
-        return nethunt;
+        return mailchimp; // nethunt template not defined; fallback to mailchimp format
     }
 
     if (provider === "smartlead") {
@@ -203,7 +203,7 @@ export const getEmailEmbedCodeForSimpleVideos = (
     if (provider === "html") {
         return `
       <div style="position: relative; display: inline-block; padding: 5px; background: white;">
-        <video controls src="${url}" poster="${ogUrl}" style="max-width: 480px; border-radius: 8px;"></video>
+        <video controls src="${url}" poster="${og_url}" style="max-width: 480px; border-radius: 8px;"></video>
         <p style="font-family: Arial; color: #05405A; margin: 0; padding-top: 5px;">${fname}</p>
       </div>
     `;

@@ -19,8 +19,8 @@ import { videoTypes } from "src/utils/video";
 
 const Start: React.FC = () => {
     const [, setLoading] = useState(true);
-    const [, setLoadingCampaign] = useState(false);
-    const [, setLoadingUpload] = useState(false);
+    const [loadingCampaign, setLoadingCampaign] = useState(false);
+    const [loadingUpload, setLoadingUpload] = useState(false);
     const [_videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();
     const session = useSession();

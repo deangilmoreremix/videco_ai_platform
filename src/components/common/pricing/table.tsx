@@ -22,6 +22,7 @@ interface PricingTableProps {
 
 export const PricingTable = ({ user, expanded }: PricingTableProps) => {
     const [selectedPlan, setSelectedPlan] = useState("growth");
+    const [frequency, setFrequency] = useState<"month" | "year">("month");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleBuy = async () => {
