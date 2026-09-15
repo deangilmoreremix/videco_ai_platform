@@ -1,0 +1,19 @@
+diff --git a/pages/_app.tsx b/pages/_app.tsx
+index 810cad1..7af7a72 100644
+--- a/pages/_app.tsx
++++ b/pages/_app.tsx
+@@ -36,10 +36,11 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
+         return null;
+     });
+     const router = useRouter();
+-    const env = process.env.NODE_ENV;
++    const _env = process.env.NODE_ENV;
+ 
+-    const { language, languages, setLanguage } = useLanguageStore();
+-    const [currentLanguage, setCurrentLanguage] = useState<
++    const { language, languages: _languages, setLanguage: _setLanguage } =
++        useLanguageStore();
++    const [_currentLanguage, setCurrentLanguage] = useState<
+         ILanguage | undefined
+     >();
+ 
