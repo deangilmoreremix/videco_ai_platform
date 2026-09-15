@@ -12,10 +12,34 @@ import {
     ModalOverlay,
     ModalContent,
     ModalHeader,
+    ModalBody,
+    ModalFooter,
+    Drawer,
+    DrawerOverlay,
+    DrawerContent,
+    DrawerCloseButton,
+    DrawerHeader,
+    DrawerBody,
+    Card,
+    Avatar,
+    Tag,
+    Alert,
+    Table,
+    TableContainer,
+    Tbody,
+    Tr,
+    Td,
 } from "@chakra-ui/react";
+import {
+    FiEdit,
+    FiUserPlus,
+    FiVideo,
+    FiUpload,
+    FiBarChart,
+    FiBarChart2,
+} from "react-icons/fi";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
-import { FiEdit, FiUserPlus, FiVideo } from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { Invite } from "@components/features/invite";
@@ -24,6 +48,8 @@ import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import Pricing from "@components/common/pricing";
 import { supabase } from "src/services";
 import { AuthGuard } from "src/hoc/withAuthGuard";
+import { TopAnalytics } from "@components/features/analytics/top";
+import { LatestAnalytics } from "@components/features/analytics/latest";
 
 const DashboardContent: React.FC = () => {
     const [, setIsSSR] = useState(true);
@@ -33,6 +59,7 @@ const DashboardContent: React.FC = () => {
     const [memberEmail, setMemberEmail] = useState<string | null>(null);
     const [teamMembers, setTeamMembers] = useState<
         Array<{
+            id: string;
             shared_account: any;
             name: any;
             role: any;

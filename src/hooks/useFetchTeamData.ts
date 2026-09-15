@@ -20,7 +20,7 @@ export function useFetchTeamData() {
                     const team = supabase
                         .from("sub_accounts")
                         .select(
-                            "shared_account, name, role, shared_account_user",
+                            "id, shared_account, name, role, shared_account_user",
                         )
                         .eq("main_account", res.data[0].main_account)
                         .eq("workspace_id", workspace.id)
