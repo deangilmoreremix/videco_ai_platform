@@ -16,7 +16,6 @@ import {
 } from "@chakra-ui/react";
 import { Player } from "@components/features/player";
 import { useRouter } from "next/router";
-import { Player } from "@components/features/player";
 import { useEditorStore } from "src/store/editor";
 import { supabase } from "src/services";
 
@@ -45,7 +44,7 @@ const Edit: React.FC = () => {
         endCTAtext: "",
         endCTAtitle: "",
     });
-    const [, setPlaying] = useState(false);
+    const [playing, setPlaying] = useState(false);
     const [, setInput] = useState("");
 
     const handleInputChange = (e) => setInput(e.target.value);
@@ -108,7 +107,7 @@ const Edit: React.FC = () => {
                     endCTAtitle: res.data?.[0]?.endCTAtitle,
                     endCTAtext: res.data?.[0]?.endCTAtext,
                 });
-                setInteractiveElements(res.data?.[0].elements);
+                _setInteractiveElements(res.data?.[0].elements);
             });
     }, []);
 
@@ -245,7 +244,7 @@ const Edit: React.FC = () => {
                             <FormControl>
                                 <FormLabel>Enter the password</FormLabel>
                                 <Input
-                                    value={input}
+                                    value={password}
                                     onChange={handleInputChange}
                                     placeholder="Password"
                                 />
@@ -257,7 +256,7 @@ const Edit: React.FC = () => {
                                 colorScheme="green"
                                 mr={3}
                                 onClick={() => {
-                                    setPassword(input);
+                                    setPassword(password);
                                 }}
                             >
                                 Watch
@@ -276,7 +275,7 @@ const Edit: React.FC = () => {
                         height="100%"
                         width="100%"
                         id={router.query.id}
-                        elements={interactiveElements}
+                        elements={_interactiveElements}
                         platform={videoRest.platform}
                         videoUrl={videoUrl}
                         playerRef={playerRef}
@@ -288,7 +287,7 @@ const Edit: React.FC = () => {
                         }}
                         setDuration={setDuration}
                         setPlaying={setPlaying}
-                        setVideo={setVideo}
+                        setVideo={_setVideo}
                     />
                 </Box>
             ) : (

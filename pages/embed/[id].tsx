@@ -100,7 +100,7 @@ const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
                     endCTAtitle: res.data?.[0]?.endCTAtitle,
                     endCTAtext: res.data?.[0]?.endCTAtext,
                 });
-                setInteractiveElements(res.data?.[0].elements);
+                _setInteractiveElements(res.data?.[0].elements);
                 getBrandKit(res.data?.[0]?.user_id).then((res) => {
                     if (res?.[0]) {
                         setBrandKit(res?.[0]);
@@ -247,7 +247,7 @@ const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
                                 <FormControl>
                                     <FormLabel>Enter the password</FormLabel>
                                     <Input
-                                        value={input}
+                                        value={password}
                                         onChange={handleInputChange}
                                         placeholder="Password"
                                     />
@@ -259,7 +259,7 @@ const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
                                     colorScheme="green"
                                     mr={3}
                                     onClick={() => {
-                                        setPassword(input);
+                                        setPassword(password);
                                     }}
                                 >
                                     Watch
