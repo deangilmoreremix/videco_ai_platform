@@ -12,7 +12,9 @@ export default async function handler(
     const supabase = createClientComponentClient();
 
     if (req.method !== "POST") {
-        return res.status(405).json({ result: { message: "Method Not Allowed" } });
+        return res
+            .status(405)
+            .json({ result: { message: "Method Not Allowed" } });
     }
 
     // Generic video dispatcher.

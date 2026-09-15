@@ -21,7 +21,14 @@ export async function createAIClone(params: {
     language?: string;
     webhookUrl?: string;
 }) {
-    const selectedVoice = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"].includes(params.voice_id)
+    const selectedVoice = [
+        "alloy",
+        "echo",
+        "fable",
+        "onyx",
+        "nova",
+        "shimmer",
+    ].includes(params.voice_id)
         ? params.voice_id
         : "alloy";
     const mp3 = await openai.audio.speech.create({

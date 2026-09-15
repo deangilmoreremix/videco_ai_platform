@@ -62,7 +62,11 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
             success: true,
-            data: { status: row.media_status, ai_preview: row.ai_preview, url: row.url },
+            data: {
+                status: row.media_status,
+                ai_preview: row.ai_preview,
+                url: row.url,
+            },
         });
     }
 
