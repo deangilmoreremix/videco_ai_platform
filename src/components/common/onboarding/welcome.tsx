@@ -192,10 +192,7 @@ export const Onboarding: FC<OnboardingProps> = () => {
                 console.warn("[onboarding] pollJob failed:", e),
             );
         }
-        await generateScript(`Welcome ${fullname}`, {
-            tenant_id: user?.app_metadata?.tenant_id,
-            user_id: user.id,
-        });
+        await generateScript(`Welcome ${fullname}`);
         if (error) {
             console.log(error);
             setCreatingProfile(false);

@@ -23,7 +23,7 @@ export const StepImport: React.FC<StepImportProps> = ({
     const { CSVReader } = useCSVReader();
     const convertCsvData = (data: unknown[]): unknown[] => {
         // Extract the keys from the first sub-array
-        const keys = data[0];
+        const keys = data[0] as string[];
 
         // Map over the remaining arrays to create objects
         const result = data.slice(1).map((item) => {
@@ -31,7 +31,7 @@ export const StepImport: React.FC<StepImportProps> = ({
             return keys.reduce((acc, key, index) => {
                 acc[key] = item[index];
                 return acc;
-            }, {});
+            }, {} as Record<string, unknown>);
         });
         return result;
     };

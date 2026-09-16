@@ -3,6 +3,7 @@ import { Box, Button, Progress } from "@chakra-ui/react";
 import { useS3Upload } from "next-s3-upload";
 import { supabase } from "src/services";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 interface VideoPreviewProps {
     src: string;
@@ -102,7 +103,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
                 </Button>
 
                 <Box w="full" bg="transparent">
-                    {files.map((file: { progress: number }, index: number) => (
+                    {_files.map((file: { progress: number }, index: number) => (
                         <div key={index}>
                             <Progress
                                 w="full"
@@ -116,12 +117,12 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
                 </Box>
             </Box>
             {preview && (
-                <>
+                <Box position="relative" w="full" h="300px">
                     <Image
                         src={preview}
-                        objectFit="cover"
-                        width="full"
-                        height="300px"
+                        alt="Preview"
+                        fill
+                        style={{ objectFit: "cover" }}
                     />
                     <Button
                         mt={2}
@@ -132,7 +133,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
                     >
                         Remove Preview Image
                     </Button>
-                </>
+                </Box>
             )}
         </Box>
     );

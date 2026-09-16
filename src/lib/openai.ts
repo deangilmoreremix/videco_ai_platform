@@ -80,6 +80,12 @@ export async function transcribeAudio(
  * Generate a personalized 30-60s video script for cold outreach.
  * Uses structured outputs (Responses API style via chat + JSON mode for broad compatibility).
  */
+type PersonalizedScript = {
+    greeting?: string;
+    body?: string;
+    cta?: string;
+};
+
 export async function generatePersonalizedScript(params: {
     leadName?: string;
     company?: string;
@@ -139,9 +145,9 @@ export async function generatePersonalizedScript(params: {
     }
 
     const raw = completion.choices[0]?.message?.content || "{}";
-    let parsed: unknown;
+    let parsed: PersonalizedScript;
     try {
-        parsed = JSON.parse(raw);
+        parsed = JSON.parse(raw) as PersonalizedScript;
     } catch {
         parsed = { greeting: "", body: raw, cta: "" };
     }

@@ -28,7 +28,7 @@ export const TopAnalytics: React.FC = () => {
             status?: string;
             analytics: Array<{
                 id: string;
-                data: { count?: number };
+                data: { count?: number; user_agent?: string };
                 event: string;
             }>;
         }>
@@ -50,7 +50,17 @@ export const TopAnalytics: React.FC = () => {
             }
 
             if (data) {
-                setVideoData(data ?? []);
+                setVideoData((data ?? []) as Array<{
+                    id: string;
+                    name?: string;
+                    size?: string;
+                    status?: string;
+                    analytics: Array<{
+                        id: string;
+                        data: { count?: number; user_agent?: string };
+                        event: string;
+                    }>;
+                }>);
             }
         } catch (error) {
             console.log(error);

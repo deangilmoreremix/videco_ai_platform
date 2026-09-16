@@ -130,3 +130,24 @@ export type ILanguageState = {
     setLanguage: (language: ILanguage) => void;
     clearLanguage: () => void;
 };
+
+// Database rows
+export type AiVideoRow = {
+    id: string;
+    created_at: string;
+    user_id: string;
+    og_video_id: string;
+    og_video_url: string;
+    url: string;
+    preview: string;
+    status: string;
+    notes?: string;
+    contact?: {
+        fname?: string;
+        email?: string;
+        website?: string;
+        [k: string]: unknown;
+    };
+    training_audio?: string;
+    language?: string;
+};

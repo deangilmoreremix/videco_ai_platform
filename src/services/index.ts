@@ -37,15 +37,18 @@ export async function callMuapi<T = unknown>(
     } = await supabase.auth.getSession();
     const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
         ?.tenant_id;
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+    };
+    if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+    }
+    if (tenantId) {
+        headers["x-tenant-id"] = tenantId as string;
+    }
     const res = await fetch(`${FN_BASE}/${endpoint}`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...(session?.access_token
-                ? { Authorization: `Bearer ${session.access_token}` }
-                : {}),
-            ...(tenantId ? { "x-tenant-id": tenantId } : {}),
-        },
+        headers,
         body: JSON.stringify(body),
     });
     if (!res.ok) {
@@ -61,14 +64,16 @@ export async function callMuapiGet<T = unknown>(endpoint: string): Promise<T> {
     } = await supabase.auth.getSession();
     const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
         ?.tenant_id;
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+    }
+    if (tenantId) {
+        headers["x-tenant-id"] = tenantId as string;
+    }
     const res = await fetch(`${FN_BASE}/${endpoint}`, {
         method: "GET",
-        headers: {
-            ...(session?.access_token
-                ? { Authorization: `Bearer ${session.access_token}` }
-                : {}),
-            ...(tenantId ? { "x-tenant-id": tenantId } : {}),
-        },
+        headers,
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -109,6 +114,14 @@ export const removeImageBackground = (
 // ============================================================================
 // VIDEO GENERATION (Muapi text-to-video + image-to-video + effects + lip-sync + face-swap)
 // ============================================================================
+export interface MuapiJobResponse {
+    job: {
+        id: string;
+        [k: string]: unknown;
+    };
+    [k: string]: unknown;
+}
+
 export const generateVideo = (
     prompt: string,
     opts: {
@@ -120,7 +133,8 @@ export const generateVideo = (
         quality?: string;
         [k: string]: unknown;
     } = {},
-) => callMuapi("videos/text-to-video", { prompt, ...opts });
+): Promise<MuapiJobResponse> =>
+    callMuapi<MuapiJobResponse>("videos/text-to-video", { prompt, ...opts });
 
 export const submitTextToVideo = generateVideo;
 
@@ -215,14 +229,16 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     } = await supabase.auth.getSession();
     const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
         ?.tenant_id;
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+    }
+    if (tenantId) {
+        headers["x-tenant-id"] = tenantId as string;
+    }
     const res = await fetch(`${FN_BASE}/upload`, {
         method: "POST",
-        headers: {
-            ...(session?.access_token
-                ? { Authorization: `Bearer ${session.access_token}` }
-                : {}),
-            ...(tenantId ? { "x-tenant-id": tenantId } : {}),
-        },
+        headers,
         body: fd,
     });
     if (!res.ok) {

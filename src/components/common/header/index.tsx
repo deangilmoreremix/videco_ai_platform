@@ -40,13 +40,13 @@ export const Header: FC<HeaderProps> = ({ pageTitle }) => {
     const user = session?.user;
     const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
-type Trail = {
-    free_trial_start_date?: string;
-    status?: string;
-    free_trial_ended?: boolean;
-};
+    type Trail = {
+        free_trial_start_date?: string;
+        status?: string;
+        free_trial_ended?: boolean;
+    };
 
-// ... inside component
+    // ... inside component
     const [trail, setTrail] = React.useState<Trail | null>(null);
 
     useEffect(() => {

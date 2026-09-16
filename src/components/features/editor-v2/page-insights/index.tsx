@@ -18,6 +18,30 @@ import { LatestAnalytics } from "@components/features/analytics/latest";
 import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import "ka-table/style.css";
+
+type VideoAnalytics = {
+    id: string;
+    data: {
+        count?: number;
+        user_agent?: string;
+        lead?: string;
+        event?: string;
+        [k: string]: unknown;
+    };
+    event: string;
+};
+
+type VideoWithAnalytics = {
+    name?: string;
+    id: string;
+    size?: string;
+    status?: string;
+    analytics: VideoAnalytics[];
+    leads: Array<{ id: string }>;
+    feedback: Array<{ id: string }>;
+    count?: number;
+    user_agent?: string;
+};
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FiEye, FiPlay } from "react-icons/fi";
@@ -36,15 +60,15 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
 }) => {
     const router = useRouter();
     const { getBrandKit } = useBrandKit();
-    const [videoData, setVideoData] = useState<Record<string, unknown>[]>([]);
+    const [videoData, setVideoData] = useState<VideoWithAnalytics[]>([]);
     const [leadsData, setLeadsData] = useState<
         { name: string; status: string }[]
     >([]);
     const [filterById] = useState<string | undefined>(
         router.query?.id as string | undefined,
     );
-    const [_loading, _setLoading] = useState(false);
-    const [_filterByRange, _setFilterByRange] = useState<string>("7d");
+    const [loading, setLoading] = useState(false);
+    const [filterByRange, setFilterByRange] = useState<number>(7);
     const session = useSession();
     const user = session?.user;
     useEffect(() => {

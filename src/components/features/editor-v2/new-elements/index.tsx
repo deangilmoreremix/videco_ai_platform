@@ -92,17 +92,17 @@ export const NewElements = ({
                     cursor="pointer"
                     border="1px solid #dddddd"
                     pos="relative"
-                    onMouseEnter={() => setIsHovered("link")}
+                    onMouseEnter={() => _setIsHovered("link")}
                     onMouseLeave={() => {
-                        setIsHovered("");
+                        _setIsHovered("");
                         setTimeout(() => {
-                            setActive("");
+                            _setActive("");
                         }, 1000);
                     }}
                     _hover={{ bg: "gray.100" }}
                     onClick={() => {
                         onSettingsActive({ type: "link" });
-                        setActive("link");
+                        _setActive("link");
                     }}
                     shadow="md"
                     py={3}
@@ -120,16 +120,16 @@ export const NewElements = ({
                         if (plan === "free" || plan === undefined) {
                             setShowPricing(true);
                         } else {
-                            onSettingsActive({ type: "form" });
-                            setActive("form");
+                        onSettingsActive({ type: "form" });
+                        _setActive("form");
                         }
                     }}
                     display="flex"
-                    onMouseEnter={() => setIsHovered("form")}
+                    onMouseEnter={() => _setIsHovered("form")}
                     onMouseLeave={() => {
-                        setIsHovered("");
+                        _setIsHovered("");
                         setTimeout(() => {
-                            setActive("");
+                            _setActive("");
                         }, 1000);
                     }}
                     _hover={{ bg: "gray.100" }}
@@ -149,11 +149,11 @@ export const NewElements = ({
                     display="flex"
                     cursor="pointer"
                     pos="relative"
-                    onMouseEnter={() => setIsHovered("questions")}
+                    onMouseEnter={() => _setIsHovered("questions")}
                     onMouseLeave={() => {
-                        setIsHovered("");
+                        _setIsHovered("");
                         setTimeout(() => {
-                            setActive("");
+                            _setActive("");
                         }, 1000);
                     }}
                     _hover={{ bg: "gray.100" }}
@@ -171,7 +171,7 @@ export const NewElements = ({
                                 setShowPricing(true);
                             } else {
                                 onSettingsActive({ type: "questions" });
-                                setActive("questions");
+                                _setActive("questions");
                             }
                         }}
                         display="flex"
@@ -184,11 +184,11 @@ export const NewElements = ({
                     display="flex"
                     cursor="pointer"
                     pos="relative"
-                    onMouseEnter={() => setIsHovered("calander")}
+                    onMouseEnter={() => _setIsHovered("calander")}
                     onMouseLeave={() => {
-                        setIsHovered("");
+                        _setIsHovered("");
                         setTimeout(() => {
-                            setActive("");
+                            _setActive("");
                         }, 1000);
                     }}
                     border="1px solid #dddddd"
@@ -197,7 +197,7 @@ export const NewElements = ({
                             setShowPricing(true);
                         } else {
                             onSettingsActive({ type: "calander" });
-                            setActive("calander");
+                            _setActive("calander");
                         }
                     }}
                     shadow="md"
@@ -214,7 +214,7 @@ export const NewElements = ({
                                 setShowPricing(true);
                             } else {
                                 onSettingsActive({ type: "calander" });
-                                setActive("calander");
+                                _setActive("calander");
                             }
                         }}
                         display="flex"

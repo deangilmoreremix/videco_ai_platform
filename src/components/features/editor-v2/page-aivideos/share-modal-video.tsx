@@ -52,6 +52,7 @@ const ShareModalVideo = ({
                 }
             })(),
             provider.value,
+            "",
         );
 
         document.body.appendChild(container);

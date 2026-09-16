@@ -2,11 +2,17 @@
 // No Cloudinary, no Brevo, no Stripe. Embeds are plain iframe/video tags.
 
 export const emailProvidersList = () => [
-    { value: "html", label: "HTML", description: "Plain HTML embed code" },
+    {
+        value: "html",
+        label: "HTML",
+        description: "Plain HTML embed code",
+        fileType: "png",
+    },
     {
         value: "mjml",
         label: "MJML",
         description: "MJML markup for email clients",
+        fileType: "png",
     },
 ];
 

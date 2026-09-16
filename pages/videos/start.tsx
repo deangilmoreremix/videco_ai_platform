@@ -8,8 +8,8 @@ import {
     Flex,
     useSteps,
     Button,
+    Image,
 } from "@chakra-ui/react";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";

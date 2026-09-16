@@ -15,7 +15,10 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { FiShare2 } from "react-icons/fi";
-import { emailProvidersList, getEmailEmbedCode } from "src/utils/getEmailEmbedCode";
+import {
+    emailProvidersList,
+    getEmailEmbedCode,
+} from "src/utils/getEmailEmbedCode";
 
 interface ShareModalProps {
     videoId: string;
@@ -41,6 +44,7 @@ const ShareModal = ({ videoId, ogURL }: ShareModalProps) => {
                 }
             })(),
             provider.value,
+            "",
         );
 
         document.body.appendChild(container);

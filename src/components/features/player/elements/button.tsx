@@ -133,14 +133,13 @@ export const InteractiveButton = ({
                     w="full"
                     alignItems="center"
                 >
-                    {element?.name}{" "}
+                    {element?.name}
                     <FiArrowRight
                         style={{
                             marginLeft: "5px",
                             marginTop: "2px",
                         }}
                     />
-                    {console.log("element", element)}
                 </Box>
             </Link>
         </motion.div>

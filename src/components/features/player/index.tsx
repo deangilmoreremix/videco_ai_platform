@@ -112,7 +112,7 @@ export const Player = ({
         setVolumeBar(val);
     };
     const handleDragEnd = (e, data) => {
-        setActiveElement(e);
+        _setActiveElement(e);
         const updatedActiveElement = {
             ...e,
             defaultPosition: {
@@ -220,13 +220,13 @@ export const Player = ({
                             <>
                                 {element?.type === "link" && (
                                     <InteractiveButton
-                                        handleDragEnd={handleDragEnd}
+                                        _handleDragEnd={handleDragEnd}
                                         element={element}
-                                        id={id as string}
-                                        handleDragStart={handleDragStart}
+                                        _handleDragStart={handleDragStart}
                                         embeded={embeded}
-                                        constraintsRef={constraintsRef}
-                                        isLargerThan800={isLargerThan800}
+                                        _constraintsRef={constraintsRef}
+                                        _isLargerThan800={isLargerThan800}
+                                        id={id as string}
                                         updateClickAnalytics={
                                             updateClickAnalytics
                                         }
@@ -320,7 +320,7 @@ export const Player = ({
                 }}
                 onClickPreview={() => {
                     setUpdatedPlaying(!updatedPlaying);
-                    setPreviewFinished(true);
+                    _setPreviewFinished(true);
                 }}
                 onPlay={() => {
                     onPlayerPlay?.();

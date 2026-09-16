@@ -16,7 +16,7 @@ const ThemeSidebar: React.FC = () => {
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
-            setPlan(fetchPlan?.[0]?.plan_name);
+            setPlan(fetchPlan?.[0]);
         };
         plan();
     }, []);
@@ -41,7 +41,7 @@ const ThemeSidebar: React.FC = () => {
                 ]}
                 circleSpacing={25}
                 onChangeComplete={(color) => {
-                    if (plan === "free" || plan === undefined) {
+                    if (plan?.plan_name === "free" || plan === undefined) {
                         setShowPricing(true);
                     } else {
                         setVideoMeta({

@@ -20,7 +20,6 @@ type VideoData = {
 export const ClickAnalytics: React.FC<VideoData> = ({
     filterById,
     range = 7,
-    _plan,
 }) => {
     const [videoData, setVideoData] = useState<
         Array<{

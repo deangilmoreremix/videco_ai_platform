@@ -52,7 +52,7 @@ const ElementsLog = () => {
         try {
             await supabase
                 .from("videos")
-                .update({ status: "deleted" })
+                .update({ media_status: "deleted" })
                 .eq("id", router.query.id)
                 .select()
                 .then((_res) => {
@@ -490,8 +490,8 @@ const ElementsLog = () => {
                                                         w="full"
                                                         maxW="32px"
                                                         defaultValue={
-                                                            values?.endTime -
-                                                            values?.time
+                                                            Number(values?.endTime) -
+                                                                Number(values?.time)
                                                         }
                                                         onChange={handleChange}
                                                         placeholder="5"

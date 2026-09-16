@@ -103,7 +103,8 @@ export const SingleAnalytics: React.FC<VideoData> = ({
 
                     // Calculate the difference in days between today and the analytics date
                     const dayDiff = Math.ceil(
-                        (today - createdDate) / (1000 * 60 * 60 * 24),
+                        (today.getTime() - createdDate.getTime()) /
+                            (1000 * 60 * 60 * 24),
                     );
                     // Check if the analytics event occurred within the last 7 days
                     if (dayDiff >= 1 && dayDiff <= 7) {

@@ -59,7 +59,8 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     mediaStatus,
 }) => {
     const router = useRouter();
-    const { meta, setVideoMeta, interactiveElements, setVideo } = useEditorStore();
+    const { meta, setVideoMeta, interactiveElements, setVideo } =
+        useEditorStore();
     const _playerRef = useRef(null);
     const { getBrandKit } = useBrandKit();
     const [_duration, setDuration] = useState(0);
@@ -87,7 +88,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
-            setPlan(fetchPlan?.[0]?.plan_name);
+            setPlan(fetchPlan?.[0]);
         };
         plan();
         getBrandKit(user?.id).then((res) => {
@@ -391,7 +392,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                         <Box display="flex" flexDir="column">
                             <Button
                                 onClick={() => {
-                                    if (plan === "free" || plan === undefined) {
+                                    if (plan?.plan_name === "free" || plan === undefined) {
                                         setShowPricing(true);
                                     } else {
                                         setIsModalOpen(!isModalOpen);
@@ -430,7 +431,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                             </Button>
                             <Button
                                 onClick={() => {
-                                    if (plan === "free" || plan === undefined) {
+                                    if (plan?.plan_name === "free" || plan === undefined) {
                                         setShowPricing(true);
                                     } else {
                                         router.push(
@@ -470,7 +471,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                             </Button>
                             <Button
                                 onClick={() => {
-                                    if (plan === "free" || plan === undefined) {
+                                    if (plan?.plan_name === "free" || plan === undefined) {
                                         setShowPricing(true);
                                     } else {
                                         setIsModalOpen(!isModalOpen);
@@ -509,7 +510,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                             </Button>
                             <Button
                                 onClick={() => {
-                                    if (plan === "free" || plan === undefined) {
+                                    if (plan?.plan_name === "free" || plan === undefined) {
                                         setShowPricing(true);
                                     } else {
                                         setIsModalOpen(!isModalOpen);
@@ -550,7 +551,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
 
                             <Button
                                 onClick={() => {
-                                    if (plan === "free" || plan === undefined) {
+                                    if (plan?.plan_name === "free" || plan === undefined) {
                                         setShowPricing(true);
                                     } else {
                                         setIsModalOpen(!isModalOpen);

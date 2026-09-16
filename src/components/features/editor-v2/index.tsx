@@ -300,9 +300,9 @@ export const Editor: React.FC = () => {
         updateDb();
     }, [interactiveElements]);
 
-    const saveScreenRecordingToCloud = async (file: File, type = "webm") => {
+    const saveScreenRecordingToCloud = async (blobUrl: string, type = "webm") => {
         setLoading(true);
-        const blobFile = await blobUrlToBlob(file);
+        const blobFile = await blobUrlToBlob(blobUrl);
         // Upload to Supabase Storage (stack: Supabase only, no Cloudinary)
         const fileName = `${user.id}-${Date.now()}-screen-record.${type}`;
         const fileToUpload = new File([blobFile], fileName, {

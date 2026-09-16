@@ -54,7 +54,7 @@ export const Upload: React.FC<UploadProps> = ({
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
-            setPlan(fetchPlan?.[0]?.plan_name);
+            setPlan(fetchPlan?.[0]);
         };
         plan();
     }, []);
@@ -73,7 +73,7 @@ export const Upload: React.FC<UploadProps> = ({
             });
     };
 
-    const handleRecordFinish = async (data: File) => {
+    const handleRecordFinish = async (data: string) => {
         setRecodPreview(true);
         saveScreenRecordingToCloud(data);
         const blobFile = await blobUrlToBlob(data);
@@ -579,7 +579,7 @@ export const Upload: React.FC<UploadProps> = ({
 
 type UploadProps = {
     externalVideo: (url: string) => void;
-    saveScreenRecordingToCloud: (file: File, type?: string) => Promise<void>;
+    saveScreenRecordingToCloud: (blobUrl: string, type?: string) => Promise<void>;
     isReady: boolean;
     isPorcessing?: boolean;
     children?: React.ReactNode;

@@ -21,7 +21,8 @@ import "ka-table/style.css";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useBrandKit } from "src/hooks/getBrandKit";
-import { useUserPlan } from "src/hooks/useUserPlan";
+import { useUserPlan, PlanRow } from "src/hooks/useUserPlan";
+import { VideoInfo } from "src/store/editor";
 import Image from "next/image";
 import { StepGenerate } from "./steps/generate";
 import { supabase } from "src/services";
@@ -47,7 +48,7 @@ import ShareModalVideo from "./share-modal-video";
 type PagePreviewProps = {
     videoUrl: string;
     videoType: string;
-    meta: Record<string, unknown>;
+    meta: VideoInfo;
 };
 export const PageAiVideos: React.FC<PagePreviewProps> = ({
     videoUrl,
@@ -70,7 +71,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
         primary_text_color: "#ffffff",
         secondary_text_color: "#ffffff",
     });
-    const [plan, setPlan] = useState<unknown>();
+    const [plan, setPlan] = useState<PlanRow | undefined>();
     const session = useSession();
     const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
@@ -200,7 +201,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                 <Pricing hidePiricng={() => setShowPricing(false)} />
             )}
 
-            {plan && plan.name !== "free" ? (
+            {plan && plan.plan_name !== "free" ? (
                 <>
                     <Box
                         w="full"
@@ -268,6 +269,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                     options={emailProvidersList()}
                                                     onChange={(e: {
                                                         value: string;
+                                                        label: string;
                                                     }) => setEmailProvider(e)}
                                                 />
                                                 {emailProvider && (
@@ -280,31 +282,32 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                             }
                                                             onClick={() => {
                                                                 navigator.clipboard.writeText(
-                                                                    getEmailEmbedCode(
-                                                                        `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}`,
-                                                                        `${videoUrl
-                                                                            .split(
-                                                                                "/",
-                                                                            )
-                                                                            .pop()
-                                                                            .replace(
-                                                                                ".mp4",
-                                                                                ".gif",
-                                                                            )
-                                                                            .replace(
-                                                                                ".mov",
-                                                                                ".gif",
-                                                                            )
-                                                                            .replace(
-                                                                                ".m3u8",
-                                                                                ".gif",
-                                                                            )
-                                                                            .replace(
-                                                                                ".webm",
-                                                                                ".gif",
-                                                                            )}`,
-                                                                        emailProvider.value,
-                                                                    ),
+                                                                     getEmailEmbedCode(
+                                                                         `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}`,
+                                                                         `${videoUrl
+                                                                             .split(
+                                                                                 "/",
+                                                                             )
+                                                                             .pop()
+                                                                             .replace(
+                                                                                 ".mp4",
+                                                                                 ".gif",
+                                                                             )
+                                                                             .replace(
+                                                                                 ".mov",
+                                                                                 ".gif",
+                                                                             )
+                                                                             .replace(
+                                                                                 ".m3u8",
+                                                                                 ".gif",
+                                                                             )
+                                                                             .replace(
+                                                                                 ".webm",
+                                                                                 ".gif",
+                                                                             )}`,
+                                                                         emailProvider.value,
+                                                                         "",
+                                                                     ),
                                                                 );
                                                                 toast({
                                                                     title: "Embed code copied.",
@@ -351,7 +354,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                             ) : (
                                 <StepGenerate
                                     setIsOpen={onOpen}
-                                    user={user.id}
+                                    user={user}
                                 />
                             )}
                         </Box>
@@ -419,7 +422,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                             platform
                                         </Text>
                                         <ShareModal
-                                            videoId={router.query.id}
+                                            videoId={router.query.id as string}
                                             ogURL={videoUrl}
                                         />
                                         {/* <Select
@@ -437,29 +440,30 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                                     leftIcon={<FiCopy />}
                                                     onClick={() => {
                                                         navigator.clipboard.writeText(
-                                                            getEmailEmbedCode(
-                                                                `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}`,
-                                                                `${videoUrl
-                                                                    .split("/")
-                                                                    .pop()
-                                                                    .replace(
-                                                                        ".mp4",
-                                                                        ".gif",
-                                                                    )
-                                                                    .replace(
-                                                                        ".mov",
-                                                                        ".gif",
-                                                                    )
-                                                                    .replace(
-                                                                        ".m3u8",
-                                                                        ".gif",
-                                                                    )
-                                                                    .replace(
-                                                                        ".webm",
-                                                                        ".gif",
-                                                                    )}`,
-                                                                emailProvider.value,
-                                                            ),
+                                                             getEmailEmbedCode(
+                                                                 `${process.env.NEXT_PUBLIC_SITE_URL}/embed/${router.query.id}`,
+                                                                 `${videoUrl
+                                                                     .split("/")
+                                                                     .pop()
+                                                                     .replace(
+                                                                         ".mp4",
+                                                                         ".gif",
+                                                                     )
+                                                                     .replace(
+                                                                         ".mov",
+                                                                         ".gif",
+                                                                     )
+                                                                     .replace(
+                                                                         ".m3u8",
+                                                                         ".gif",
+                                                                     )
+                                                                     .replace(
+                                                                         ".webm",
+                                                                         ".gif",
+                                                                     )}`,
+                                                                 emailProvider.value,
+                                                                 "",
+                                                             ),
                                                         );
 
                                                         toast({
@@ -532,7 +536,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                         maxW="md"
                                     >
                                         <ShareModalVideo
-                                            videoId={router.query.id}
+                                            videoId={router.query.id as string}
                                             ogURL={videoUrl}
                                         />
                                     </Box>

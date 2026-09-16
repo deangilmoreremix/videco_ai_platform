@@ -43,6 +43,7 @@ const ShareModal = ({ videoId, ogURL }: { videoId: string; ogURL: string }) => {
                 ?.replace(".m3u8", ".gif")
                 ?.replace(".webm", ".gif")}`,
             provider.value,
+            "",
         );
 
         if (provider.value === "html") {
@@ -57,6 +58,7 @@ const ShareModal = ({ videoId, ogURL }: { videoId: string; ogURL: string }) => {
                         ?.replace(".m3u8", ".gif")
                         ?.replace(".webm", ".gif")}`,
                     provider.value,
+                    "",
                 ),
             );
         } else {

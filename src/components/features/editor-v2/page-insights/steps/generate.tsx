@@ -20,6 +20,7 @@ import {
     Select,
 } from "@chakra-ui/react";
 import { submitTextToVideo, pollJob } from "src/services";
+import { AiVideoRow } from "src/store/types";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "src/services";
@@ -34,9 +35,9 @@ interface StepImportProps {
 }
 export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
     const [, setLoading] = useState(false);
-    const [AIVideos, setAIVideos] = useState<Record<string, unknown>[]>([]);
+    const [AIVideos, setAIVideos] = useState<AiVideoRow[]>([]);
     const [activePreviewVideo, setActivePreviewVideo] =
-        useState<Record<string, unknown>>();
+        useState<AiVideoRow | null>(null);
     const [_originalVideoPubId, _setOriginalVideoPubId] = useState<string>("");
     const { isOpen, onClose } = useDisclosure();
     const previewModal = useDisclosure();
@@ -44,7 +45,7 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
     const [greeting, setGreeting] = useState("Hello");
     const [background, setBackground] = useState("website");
     const [regenerateData, setRegenerateData] =
-        useState<Record<string, unknown>>();
+        useState<AiVideoRow | null>(null);
     const [language, setLanguage] = useState<string>("");
     const session = useSession();
     const user = session?.user;
@@ -82,7 +83,9 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
                 (payload) => {
                     setAIVideos((prev) =>
                         prev.map((video) =>
-                            video.id === payload.new.id ? payload.new : video,
+                            video.id === (payload.new as AiVideoRow).id
+                                ? (payload.new as AiVideoRow)
+                                : video,
                         ),
                     );
                 },
@@ -118,7 +121,7 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
                 .select("url, preview, campaign_name, language")
                 .eq("id", router.query.id);
             if (data) {
-                setOriginalVideoPubId(
+                _setOriginalVideoPubId(
                     data[0]?.url.split("/").pop().replace(".mp4", ""),
                 );
                 setLanguage(data[0]?.language);
@@ -162,10 +165,10 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
             <Modal
                 size="2xl"
                 isOpen={previewModal.isOpen}
-                onClose={() => {
-                    previewModal.onClose();
-                    setActivePreviewVideo("");
-                }}
+                    onClose={() => {
+                        previewModal.onClose();
+                        setActivePreviewVideo(null);
+                    }}
             >
                 <ModalOverlay />
                 <ModalContent>
@@ -219,7 +222,7 @@ export const StepGenerate: React.FC<StepImportProps> = ({ setIsOpen }) => {
                         AIVideos.length > 0 &&
                         AIVideos?.map((video, index) => (
                             <Card
-                                key={video.fname}
+                                key={video.id}
                                 ml="1"
                                 mb={6}
                                 boxShadow="none"

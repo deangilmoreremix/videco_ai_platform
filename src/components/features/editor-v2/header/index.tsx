@@ -52,6 +52,13 @@ import {
 } from "src/utils/getEmailEmbedCode";
 import { CheckIcon, CloseIcon } from "@chakra-ui/icons";
 
+type ShareDataType = {
+    preview?: string;
+    url: string;
+    final_url: string;
+    type?: string;
+};
+
 type HeaderProps = {
     activeItem: "page" | "editor" | "aivideos" | "insights";
     campaignName?: string;
@@ -65,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
     const { isOpen, onClose } = useDisclosure();
     const chatBotModal = useDisclosure();
 
-    const [shareData, setShareData] = useState<Record<string, unknown>>();
+    const [shareData, setShareData] = useState<ShareDataType | undefined>();
     const [imageLoading, setImageLoading] = useState<boolean>(true);
     const [emailProvider, setEmailProvider] = useState<{
         value: string;
@@ -792,9 +799,10 @@ export const Header: React.FC<HeaderProps> = ({
                                             <Select
                                                 placeholder="Select your email provider"
                                                 options={emailProvidersList()}
-                                                onChange={(e: {
-                                                    value: string;
-                                                }) => setEmailProvider(e)}
+                                            onChange={(e: {
+                                                value: string;
+                                                label: string;
+                                            }) => setEmailProvider(e)}
                                             />
                                             {emailProvider && (
                                                 <>
@@ -808,6 +816,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                                     shareData.final_url,
                                                                     shareData.url,
                                                                     emailProvider.value,
+                                                                    "",
                                                                 ),
                                                             );
                                                             toast({

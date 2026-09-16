@@ -48,7 +48,7 @@ export const Timeline = ({
     }
 
     const handleDragStop = (
-        e: React.MouseEvent,
+        e: MouseEvent,
         data: {
             element: { id: string; name: string; endTime: number; pos: number };
         },
@@ -166,15 +166,32 @@ export const Timeline = ({
                         bounds="parent"
                         axis="x"
                         disabled={false}
-                        // scale={1}
+                        scale={1}
+                        grid={[1, 1]}
+                        onDrag={() => {}}
+                        onStart={() => {}}
                         onStop={(e, data) =>
                             handleDragStop(e, { ...data, element: el })
                         }
+                        position={{ x: 0, y: 0 }}
+                        onMouseDown={() => {}}
+                        allowAnyClick={false}
+                        allowMobileScroll={false}
+                        cancel=""
+                        offsetParent={null as unknown as HTMLElement}
+                        nonce=""
+                        positionOffset={{ x: 0, y: 0 }}
+                        enableUserSelectHack={false}
+                        handle=""
+                        defaultClassName=""
+                        defaultClassNameDragging=""
+                        defaultClassNameDragged=""
+                        defaultPosition={{ x: 0, y: 0 }}
                     >
                         <Box
                             w={Number(el?.endTime) * 50}
                             key={el.id}
-                            onClick={() => toggleSettingsWindow(el)}
+                            onClick={() => toggleSettingsWindow(el.id)}
                             left={`${Number(el?.pos)}%`} //TODO: put on the correct position
                             bg="#adffdb"
                             border="2px solid #1c2227"
