@@ -13,7 +13,7 @@ import { supabase } from "src/services";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { v4 as uuidv4 } from "uuid";
-import { useEditorStore } from "src/store/editor";
+import { useEditorStore, InteractiveElementType } from "src/store/editor";
 import { NewElements } from "./new-elements";
 import { Header } from "./header";
 import { Player } from "../player";
@@ -94,33 +94,33 @@ export const Editor: React.FC = () => {
                 "url, name, elements, type, media_status, embed_code, campaign_name, password_protection, meta_data, endCTAlink, remove_logo, endCTAtitle, endCTAtext, brand, secondary_link, desc, primary_link, primary_text, secondary_text, platform, preview",
             )
             .match({ id: router.query.id })
-            .then((res) => {
-                setVideoUrl(res.data?.[0].url);
-                setCampaignName(res.data?.[0].campaign_name);
-                setVideoType(res.data?.[0].type);
-                setMediaStatus(res.data?.[0].media_status);
+            .then((_res) => {
+                setVideoUrl(_res.data?.[0].url);
+                setCampaignName(_res.data?.[0].campaign_name);
+                setVideoType(_res.data?.[0].type);
+                setMediaStatus(_res.data?.[0].media_status);
                 setVideoMeta({
-                    title: res.data?.[0].name,
-                    desc: res.data?.[0].desc,
-                    embed_code: res.data?.[0].embed_code,
-                    platform: res.data?.[0].platform,
-                    secondary_link: res.data?.[0]?.secondary_link,
-                    primary_link: res.data?.[0]?.primary_link,
-                    primary_text: res.data?.[0]?.primary_text,
-                    preview: res.data?.[0]?.preview,
-                    secondary_text: res.data?.[0]?.secondary_text,
-                    password_protection: res.data?.[0]?.password_protection,
-                    remove_logo: res.data?.[0]?.remove_logo,
+                    title: _res.data?.[0].name,
+                    desc: _res.data?.[0].desc,
+                    embed_code: _res.data?.[0].embed_code,
+                    platform: _res.data?.[0].platform,
+                    secondary_link: _res.data?.[0]?.secondary_link,
+                    primary_link: _res.data?.[0]?.primary_link,
+                    primary_text: _res.data?.[0]?.primary_text,
+                    preview: _res.data?.[0]?.preview,
+                    secondary_text: _res.data?.[0]?.secondary_text,
+                    password_protection: _res.data?.[0]?.password_protection,
+                    remove_logo: _res.data?.[0]?.remove_logo,
                     player: {
-                        bg: res.data?.[0].meta_data?.player?.bg,
-                        color: res.data?.[0].meta_data?.player?.color,
+                        bg: _res.data?.[0].meta_data?.player?.bg,
+                        color: _res.data?.[0].meta_data?.player?.color,
                     },
-                    endCTAlink: res.data?.[0]?.endCTAlink,
-                    endCTAtitle: res.data?.[0]?.endCTAtitle,
-                    endCTAtext: res.data?.[0]?.endCTAtext,
+                    endCTAlink: _res.data?.[0]?.endCTAlink,
+                    endCTAtitle: _res.data?.[0]?.endCTAtitle,
+                    endCTAtext: _res.data?.[0]?.endCTAtext,
                 });
-                res.data?.[0].elements?.length > 0 &&
-                    setInteractiveElementsFromDB(res.data?.[0].elements);
+                _res.data?.[0].elements?.length > 0 &&
+                    setInteractiveElementsFromDB(_res.data?.[0].elements);
                 setLoading(false);
             });
         setLoading(false);
@@ -193,7 +193,7 @@ export const Editor: React.FC = () => {
         type: "link" | "endcta" | "questions" | "form" | "calendar";
     }) => {
         setSettingsActive(!settingsActive);
-        let newElement: Record<string, unknown> = {
+        let newElement: InteractiveElementType = {
             id: uuidv4(),
             name: "Button",
             type: type,
@@ -228,6 +228,7 @@ export const Editor: React.FC = () => {
             newElement = {
                 id: uuidv4(),
                 user_id: user?.id,
+                name: "Calendar",
                 type: type,
                 url: "",
                 pos: activeTimeLineValue,
@@ -243,6 +244,7 @@ export const Editor: React.FC = () => {
                 user_id: user?.id,
                 name: "How are you today?",
                 type: type,
+                url: "",
                 answers: "Good,Bad,Ok",
                 answer_placeholder: "What's your email address?",
                 answer_type: "list",
@@ -288,7 +290,7 @@ export const Editor: React.FC = () => {
                     })
                     .eq("id", router.query.id)
                     .select()
-            .then((res) => {
+                    .then((_res) => {
                         console.log("success..");
                     });
             } catch (error) {
@@ -309,7 +311,7 @@ export const Editor: React.FC = () => {
 
         try {
             const { uploadFile } = await import("src/services");
-            void uploadFile(fileToUpload, "videos", user.id);
+            void uploadFile(fileToUpload);
 
             const publicUrl = "";
             if (router.query.id) {
@@ -340,7 +342,7 @@ export const Editor: React.FC = () => {
             .from("videos")
             .update({
                 user_id: user?.id,
-                status: "draft",
+                media_status: "draft",
                 url: videoOnboardReady.url,
                 preview: (function () {
                     try {
@@ -355,7 +357,6 @@ export const Editor: React.FC = () => {
                 platform: videoOnboardReady?.platform ?? "videco",
                 name: videoOnboardReady.name,
                 meta_data: { type: ".mp4" },
-                workspace_id: workspace.id,
                 size: videoOnboardReady.size ?? 0,
             })
             .eq("id", videoId)
@@ -420,14 +421,12 @@ export const Editor: React.FC = () => {
             .from("videos")
             .insert({
                 user_id: user?.id,
-                status: "draft",
                 media_status: "in_progress",
                 passthrough_id: passthrough_id,
                 url: videoOnboardReady?.url,
                 platform: videoOnboardReady.platform,
                 name: videoOnboardReady.name,
                 meta_data: { type: ".mp4" },
-                workspace_id: workspace.id,
                 size: videoOnboardReady.size,
             })
             .select("id");
@@ -464,7 +463,7 @@ export const Editor: React.FC = () => {
         try {
             await supabase
                 .from("videos")
-                .update({ status: "deleted" })
+                .update({ media_status: "deleted" })
                 .eq("id", router.query.id)
                 .select()
                 .then((_res) => {

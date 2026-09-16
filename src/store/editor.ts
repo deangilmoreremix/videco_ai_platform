@@ -33,16 +33,20 @@ export type InteractiveElementType = {
     url: string;
     type: string;
     butonPosition?: string;
+    buttonPosition?: string;
+    link?: string;
+    defaultPosition?: { x: number; y: number };
+    user_id?: string;
+    time: number | string;
+    endTime: number | string;
     form_submit_text?: string;
-    answers?: unknown[];
-    answer_placeholder?: unknown;
-    answer_type?: unknown;
-    form_enable_name?: unknown;
-    form_enable_email?: unknown;
-    form_enable_message?: unknown;
+    form_enable_name?: boolean;
+    form_enable_email?: boolean;
+    form_enable_message?: boolean;
+    answer_type?: string;
+    answers?: string;
+    answer_placeholder?: string;
     pos: string | number;
-    time: number;
-    endTime: number;
 };
 
 export type EditorState = {

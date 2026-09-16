@@ -34,7 +34,6 @@ export const LeadsContent: React.FC = () => {
             id: string;
             name?: string;
             email?: string;
-            company?: string;
         }>
     >();
     const [showPricing, setShowPricing] = useState(false);
@@ -243,20 +242,11 @@ export const LeadsContent: React.FC = () => {
                                             ]}
                                             data={leadsData ?? []}
                                             search={({
-                                                searchText: searchTextValue,
-                                                rowData,
-                                                column,
+                                                searchText: _searchTextValue,
+                                                rowData: _rowData,
+                                                column: _column,
                                             }) => {
-                                                if (column.key === "passed") {
-                                                    return (
-                                                        (searchTextValue ===
-                                                            "false" &&
-                                                            !rowData.passed) ||
-                                                        (searchTextValue ===
-                                                            "true" &&
-                                                            rowData.passed)
-                                                    );
-                                                }
+                                                return false;
                                             }}
                                             rowKeyField={"id"}
                                             childComponents={{

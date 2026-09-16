@@ -85,7 +85,7 @@ const VideosContent: React.FC = () => {
         try {
             await supabase
                 .from("videos")
-                .update({ status: "deleted" })
+                .update({ media_status: "deleted" })
                 .eq("id", id)
                 .select()
                 .then((_res) => {

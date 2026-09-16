@@ -51,7 +51,7 @@ const Upload: React.FC = () => {
             setLoading(true);
 
             const data = await getData("videos", {
-                col: "status",
+                col: "media_status",
                 val: "deleted",
             });
 

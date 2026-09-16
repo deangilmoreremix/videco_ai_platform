@@ -70,7 +70,7 @@ const Start: React.FC = () => {
     const [voiceID, setVoiceID] = useState<string>("");
     const [language, setLanguage] = useState("english");
     const [greeting, setGreeting] = useState<string>("Hello");
-    const { workspace } = useWorkspaces();
+    const { workspace: _workspace } = useWorkspaces();
     const [_videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();
     const [video, setVideo] = useState<{
@@ -144,7 +144,7 @@ const Start: React.FC = () => {
             setLoading(true);
             getFullName();
             const data = await getData("videos", {
-                col: "status",
+                col: "media_status",
                 val: "deleted",
             });
 
@@ -345,7 +345,6 @@ const Start: React.FC = () => {
                 type: "Personalized Campaign",
                 name: (Math.random() + 1).toString(36).substring(7),
                 meta_data: { type: ".mp4" },
-                workspace_id: workspace.id,
                 size: size,
             })
             .eq("id", router.query.id)

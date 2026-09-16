@@ -39,12 +39,13 @@ type PlayerTypes = {
     elements?: Array<{
         id: string;
         type: string;
-        time?: number | string;
-        endTime?: number | string;
-        name?: string;
-        url?: string;
+        time: number | string;
+        endTime: number | string;
+        name: string;
+        url: string;
         link?: string;
         butonPosition?: string;
+        buttonPosition?: string;
         defaultPosition?: { x: number; y: number };
         user_id?: string;
         form_enable_name?: boolean;
@@ -54,6 +55,7 @@ type PlayerTypes = {
         answer_type?: string;
         answers?: string;
         answer_placeholder?: string;
+        pos: number | string;
     }>;
     isEditor?: boolean;
     setDuration: (value: number) => void;
@@ -220,7 +222,7 @@ export const Player = ({
                                     <InteractiveButton
                                         handleDragEnd={handleDragEnd}
                                         element={element}
-                                        id={id}
+                                        id={id as string}
                                         handleDragStart={handleDragStart}
                                         embeded={embeded}
                                         constraintsRef={constraintsRef}
@@ -244,7 +246,7 @@ export const Player = ({
                                             ) => {
                                                 await submitFeedback(data);
                                             }}
-                                            id={id}
+                                            id={id as string}
                                             setAnswerSubmitted={
                                                 setAnswerSubmitted
                                             }
@@ -273,7 +275,7 @@ export const Player = ({
                                         ) => {
                                             await submitForm(data);
                                         }}
-                                        id={id}
+                                        id={id as string}
                                         setFormSubmitted={setFormSubmitted}
                                         setHideForm={setHideForm}
                                         formSubmitted={formSubmitted}

@@ -8,7 +8,7 @@ import {
 import { FiMove } from "react-icons/fi";
 import Draggable from "react-draggable";
 import React, { useEffect, useRef, useState } from "react";
-import { useEditorStore } from "src/store/editor";
+import { useEditorStore, InteractiveElementType } from "src/store/editor";
 
 type TimelineProps = {
     elements: { id: string; name: string; endTime: number; pos: number }[];
@@ -78,7 +78,7 @@ export const Timeline = ({
                 ).toFixed(2),
             ),
             pos: finalPositionInPresentage,
-        });
+        } as InteractiveElementType);
     };
     const timelimeLength = Array.from(
         { length: Number(video.duration.toFixed(0)) * 2 },

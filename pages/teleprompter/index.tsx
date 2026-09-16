@@ -92,7 +92,7 @@ const TeleprompterContent: React.FC = () => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);
 
-            setPlan(fetchPlan?.[0]);
+            setPlan(fetchPlan?.[0]?.plan_name);
         };
         plan();
     }, [user, supabase]);
@@ -101,7 +101,7 @@ const TeleprompterContent: React.FC = () => {
             setLoading(true);
             getFullName();
             const data = await getData("videos", {
-                col: "status",
+                col: "media_status",
                 val: "deleted",
             });
 

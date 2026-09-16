@@ -21,7 +21,14 @@ export function normalizeMediaUrl(urlOrPath: string | undefined | null) {
     )}/storage/v1/object/public/${bucket}/${encodeURI(path)}`;
 }
 
-export function getPublicMediaUrl(videoRow: unknown) {
+export function getPublicMediaUrl(videoRow: {
+    final_url?: string | null;
+    finalUrl?: string | null;
+    preview?: string | null;
+    url?: string | null;
+    public_url?: string | null;
+    path?: string | null;
+}) {
     const candidates = [
         videoRow?.final_url,
         videoRow?.finalUrl,

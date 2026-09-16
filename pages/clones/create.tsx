@@ -51,7 +51,7 @@ export const CreateContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [videoLoading, setVideoLoading] = useState(false);
     const [, setJobsGenerated] = useState(false);
-    const { workspace } = useWorkspaces();
+    const { workspace: _workspace } = useWorkspaces();
     const [campaignName, setCampaignName] = useState("");
     const [voiceID, setVoiceID] = useState<string>("");
     const [language, setLanguage] = useState("english");
@@ -131,7 +131,7 @@ export const CreateContent: React.FC = () => {
             setLoading(true);
             getFullName();
             const data = await getData("videos", {
-                col: "status",
+                col: "media_status",
                 val: "deleted",
             });
 
@@ -323,7 +323,6 @@ export const CreateContent: React.FC = () => {
             .from("videos")
             .update({
                 user_id: user?.id,
-                status: "draft",
                 media_status: "in_progress",
                 passthrough_id: "no",
                 preview: url,
@@ -332,7 +331,6 @@ export const CreateContent: React.FC = () => {
                 type: videoTypes.clone,
                 name: (Math.random() + 1).toString(36).substring(7),
                 meta_data: { type: ".mp4" },
-                workspace_id: workspace.id,
                 size: size,
             })
             .eq("id", router.query.id)

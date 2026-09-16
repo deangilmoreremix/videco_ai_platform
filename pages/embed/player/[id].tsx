@@ -274,7 +274,11 @@ const Edit: React.FC = () => {
                         onPlayerPlay={onPlayerPlay}
                         height="100%"
                         width="100%"
-                        id={router.query.id}
+                        id={
+                            Array.isArray(router.query.id)
+                                ? router.query.id[0]
+                                : router.query.id
+                        }
                         elements={_interactiveElements}
                         platform={videoRest.platform}
                         videoUrl={videoUrl}

@@ -45,10 +45,31 @@ import { AuthGuard } from "src/hoc/withAuthGuard";
 
 const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
-    const [videoData, setVideoData] =
-        useState<
-            Array<{ id: string; type?: string; name?: string; status?: string }>
-        >();
+    const [videoData, setVideoData] = useState<
+        Array<{
+            id: string;
+            type?: string;
+            name?: string;
+            url?: string;
+            final_url?: string;
+            preview?: string;
+            embed_code?: string;
+            campaign_name?: string;
+            media_status?: string;
+            created_at?: string;
+            platform?: string;
+            desc?: string;
+            primary_link?: string;
+            primary_text?: string;
+            secondary_link?: string;
+            secondary_text?: string;
+            password_protection?: boolean;
+            brand?: unknown;
+            endCTAlink?: string;
+            endCTAtitle?: string;
+            endCTAtext?: string;
+        }>
+    >();
     const [filterVideos, _setFilterVideos] = useState(videoTypes.video);
     const filteredVideos = filterVideos
         ? videoData?.filter((video) => video.type === filterVideos)
@@ -79,7 +100,7 @@ const VideosContent: React.FC = () => {
         try {
             await supabase
                 .from("videos")
-                .update({ status: "deleted" })
+                .update({ media_status: "deleted" })
                 .eq("id", id)
                 .select()
                 .then((_res) => {

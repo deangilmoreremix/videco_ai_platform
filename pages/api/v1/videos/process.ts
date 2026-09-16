@@ -62,7 +62,7 @@ export default async function handler(req, res) {
         .from("jobs")
         .insert([
             {
-                job_details: {
+                input: {
                     ai_video_id: ai_video_id,
                 },
                 status: "pending",

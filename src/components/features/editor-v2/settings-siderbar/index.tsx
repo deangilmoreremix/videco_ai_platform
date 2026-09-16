@@ -12,11 +12,11 @@ import {
 import React from "react";
 import { CloseIcon } from "@chakra-ui/icons";
 import { Formik } from "formik";
-import { useEditorStore } from "src/store/editor";
+import { useEditorStore, InteractiveElementType } from "src/store/editor";
 
 type SettingsSidebarProps = {
-    toggleSettingsWindow?: (element: unknown) => void;
-    activeElement?: Record<string, unknown>;
+    toggleSettingsWindow?: () => void;
+    activeElement?: InteractiveElementType;
 };
 
 export const SettingsSidebar = ({

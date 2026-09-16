@@ -90,7 +90,7 @@ export async function createAIClone(params: {
 
     const { error } = await supabase
         .from("jobs")
-        .update([{ job_details: params, status: JOB_DETAILS.processing }])
+        .update([{ input: params, status: JOB_DETAILS.processing }])
         .eq("id", params.ai_video_id)
         .single();
 

@@ -18,28 +18,13 @@ import React from "react";
 import { useEffect } from "react";
 import ReactPlayer from "react-player";
 import { FiTrash2 } from "react-icons/fi";
-import { useEditorStore } from "src/store/editor";
+import { useEditorStore, InteractiveElementType } from "src/store/editor";
 
 export const SettingsHover = ({
     activeElement,
     playerRef,
 }: {
-    activeElement: {
-        id: string;
-        type?: string;
-        name?: string;
-        url?: string;
-        butonPosition?: string;
-        form_submit_text?: string;
-        answers?: string;
-        time?: number | string;
-        endTime?: number | string;
-        answer_placeholder?: string;
-        answer_type?: string;
-        form_enable_name?: boolean;
-        form_enable_email?: boolean;
-        form_enable_message?: boolean;
-    };
+    activeElement?: InteractiveElementType;
     playerRef: React.RefObject<ReactPlayer>;
 }) => {
     const { updateInteractiveElements, deleteInteractiveElement } =
@@ -141,7 +126,7 @@ export const SettingsHover = ({
                                 updateInteractiveElements({
                                     ...activeElement,
                                     ...formattedVlaues,
-                                });
+                                } as InteractiveElementType);
                                 toast({
                                     title: "Element Updated!",
                                     status: "success",
@@ -371,7 +356,7 @@ export const SettingsHover = ({
                                         <FiTrash2
                                             onClick={() =>
                                                 deleteInteractiveElement(
-                                                    activeElement,
+                                                    activeElement as InteractiveElementType,
                                                 )
                                             }
                                             cursor="pointer"

@@ -173,7 +173,9 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
     const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
     const { getData } = useFetchTeamData();
-    const [trail, setTrail] = React.useState<unknown>(null);
+    const [trail, setTrail] = React.useState<
+        import("src/hooks/useUserPlan").PlanRow | null
+    >(null);
     const [, setVideos] = React.useState<number>(0);
     const [, setVideoSize] = React.useState<number>(0);
     const calculateTotalSize = (data) => {
@@ -189,7 +191,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
             setPlan(fetchPlan?.[0]?.plan_name);
             setTrail(fetchPlan?.[0]);
             const data = await getData("videos", {
-                col: "status",
+                col: "media_status",
                 val: "deleted",
             });
             data && setVideoSize(calculateTotalSize(data));

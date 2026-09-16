@@ -40,7 +40,9 @@ export const WorkspaceSwitcher = () => {
     const [workspaces, setWorkspaces] = useState<
         Array<{ id: string; name?: string; image?: string }>
     >([]);
-    const [isUpdate, setIsUpdate] = useState<unknown>(); //Workspace data as a json {id,name,image}
+    const [isUpdate, setIsUpdate] = useState<
+        { id: string; name: string; image?: string } | undefined
+    >(); //Workspace data as a json {id,name,image}
     const user = session?.user;
     const fetchWorkspaces = async () => {
         await supabase
@@ -156,7 +158,7 @@ export const WorkspaceSwitcher = () => {
                 isOpen={isOpen}
                 onClose={() => {
                     onClose();
-                    setIsUpdate("");
+                    setIsUpdate(undefined);
                 }}
             >
                 <ModalOverlay />
@@ -273,74 +275,79 @@ export const WorkspaceSwitcher = () => {
                     overflowX="hidden"
                 >
                     {!!workspaces?.length &&
-                        [{ name: "Default", id: 1 }, ...workspaces].map(
-                            (workspace) => (
-                                <Stack
-                                    direction="row"
-                                    align="center"
-                                    mx={2}
-                                    mt={1}
-                                    key={workspace.id}
-                                    position="relative"
-                                    zIndex={2}
-                                    cursor="pointer"
-                                    _hover={{
-                                        bg: "#DADADA",
-                                    }}
-                                    bg="#F8F8F8"
-                                    p={2}
-                                    rounded="md"
-                                >
-                                    <>
-                                        <Box
+                        [
+                            {
+                                name: "Default",
+                                id: "1",
+                                image: undefined as string | undefined,
+                            },
+                            ...workspaces,
+                        ].map((workspace) => (
+                            <Stack
+                                direction="row"
+                                align="center"
+                                mx={2}
+                                mt={1}
+                                key={workspace.id}
+                                position="relative"
+                                zIndex={2}
+                                cursor="pointer"
+                                _hover={{
+                                    bg: "#DADADA",
+                                }}
+                                bg="#F8F8F8"
+                                p={2}
+                                rounded="md"
+                            >
+                                <>
+                                    <Box
+                                        display="flex"
+                                        justifyContent="space-between"
+                                        w="full"
+                                        alignItems="center"
+                                        onClick={() =>
+                                            switchWorkspace(
+                                                workspace.name,
+                                                workspace.id,
+                                            )
+                                        }
+                                    >
+                                        <Avatar
+                                            border="1px solid #DADADA"
+                                            size="sm"
+                                            mr={2}
+                                            name="Dan Abrahmov"
+                                            src="/default_icon.png"
+                                        />
+                                        <Text
+                                            as="span"
+                                            height="full"
                                             display="flex"
                                             justifyContent="space-between"
                                             w="full"
+                                            flexDir="row"
                                             alignItems="center"
-                                            onClick={() =>
-                                                switchWorkspace(
-                                                    workspace.name,
-                                                    workspace.id,
-                                                )
-                                            }
                                         >
-                                            <Avatar
-                                                border="1px solid #DADADA"
-                                                size="sm"
-                                                mr={2}
-                                                name="Dan Abrahmov"
-                                                src="/default_icon.png"
-                                            />
-                                            <Text
-                                                as="span"
-                                                height="full"
-                                                display="flex"
-                                                justifyContent="space-between"
-                                                w="full"
-                                                flexDir="row"
-                                                alignItems="center"
-                                            >
-                                                {workspace.name}
-                                            </Text>
-                                        </Box>
-                                        <Text
-                                            as="span"
-                                            cursor="pointer"
-                                            onClick={() => {
-                                                onOpen();
-                                                setIsUpdate({
-                                                    id: workspace.id,
-                                                    name: workspace.name,
-                                                    image: workspace.image,
-                                                });
-                                            }}
-                                        >
-                                            <FiSettings />
+                                            {workspace.name}
                                         </Text>
-                                    </>
-                                </Stack>
-                            ),
-                        )}
+                                    </Box>
+                                    <Text
+                                        as="span"
+                                        cursor="pointer"
+                                        onClick={() => {
+                                            onOpen();
+                                            setIsUpdate({
+                                                id: workspace.id,
+                                                name: workspace.name,
+                                                image: workspace.image,
+                                            });
+                                        }}
+                                    >
+                                        <FiSettings />
+                                    </Text>
+                                </>
+                            </Stack>
+                        ))}
                     <Button
                         mt={2}
                         mx={2}
