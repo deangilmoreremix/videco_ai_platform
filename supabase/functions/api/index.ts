@@ -38,6 +38,28 @@ const WEBHOOK_SHARED_SECRET = Deno.env.get("WEBHOOK_SHARED_SECRET") || "";
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 const MUAPI_BASE = "https://api.muapi.ai/api/v1";
 
+// Optional: a public URL Muapi should call when a prediction finishes
+// (e.g. https://<site>/functions/v1/webhooks/muapi behind an endpoint that
+// does not require a Supabase JWT). Unset by default: jobs are completed by
+// the client polling GET /api/jobs?id=..&action=poll (pollUntilDone).
+// Muapi cannot send custom headers, so the shared secret rides as ?secret=.
+const MUAPI_WEBHOOK_URL = Deno.env.get("MUAPI_WEBHOOK_URL") || "";
+const WEBHOOK_URL = MUAPI_WEBHOOK_URL
+  ? `${MUAPI_WEBHOOK_URL}${MUAPI_WEBHOOK_URL.includes("?") ? "&" : "?"}${
+      WEBHOOK_SHARED_SECRET ? `secret=${encodeURIComponent(WEBHOOK_SHARED_SECRET)}` : ""
+    }`.replace(/[?&]$/, "")
+  : "";
+
+const LIPSYNC_MODEL = Deno.env.get("MUAPI_LIPSYNC_MODEL") || "sync-lipsync";
+const T2V_MODEL = "veo3-fast-text-to-video";
+
+const requestIdOf = (submit: any): string | undefined =>
+  submit?.request_id || submit?.data?.request_id || submit?.id;
+
+const uploadedUrlOf = (upload: any): string | undefined =>
+  upload?.url || upload?.public_url || upload?.data?.url ||
+  (typeof upload === "string" ? upload : undefined);
+
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: corsHeaders });
 
@@ -50,7 +72,9 @@ async function muapiSubmit(
   queryParams: Record<string, string> = {}
 ): Promise<any> {
   const url = new URL(`${MUAPI_BASE}/${endpoint}`);
-  for (const [k, v] of Object.entries(queryParams)) url.searchParams.set(k, v);
+  const params = { ...queryParams };
+  if (!params.webhook && WEBHOOK_URL) params.webhook = WEBHOOK_URL;
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const res = await fetch(url.toString(), {
     method: "POST",
     headers: { "x-api-key": MUAPI_API_KEY, "Content-Type": "application/json" },
@@ -124,6 +148,34 @@ async function openaiResponses(
   return res.json();
 }
 
+/** OpenAI TTS -> upload to Muapi -> hosted audio URL usable by lipsync. */
+async function synthesizeVoiceToMuapi(text: string, voice = "alloy"): Promise<string> {
+  const allowed = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+  const res = await fetch("https://api.openai.com/v1/audio/speech", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "tts-1",
+      input: text,
+      voice: allowed.includes(voice) ? voice : "alloy",
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI TTS failed: ${res.status} ${await res.text()}`);
+  const fd = new FormData();
+  fd.append("file", new Blob([await res.arrayBuffer()], { type: "audio/mpeg" }), "voice.mp3");
+  const upload = await fetch(`${MUAPI_BASE}/upload_file`, {
+    method: "POST",
+    headers: { "x-api-key": MUAPI_API_KEY },
+    body: fd,
+  }).then((r) => r.json());
+  const url = uploadedUrlOf(upload);
+  if (!url) throw new Error(`Muapi audio upload failed: ${JSON.stringify(upload)}`);
+  return url;
+}
+
 async function openaiExtractText(resp: any): Promise<string> {
   return (
     resp.output_text ||
@@ -151,7 +203,11 @@ type JobType =
   | "music-extend"
   | "audio-t2a"
   | "audio-v2v"
-  | "storyboard-asset";
+  | "storyboard-asset"
+  | "ai-preview"
+  | "ai-clone"
+  | "ai-process"
+  | "ai-onboarding";
 
 type ResourceType = "video" | "image" | "audio" | "music" | "storyboard";
 
@@ -183,20 +239,57 @@ async function recordJob(opts: {
   return data;
 }
 
+/** Normalise Muapi result shapes into a list of URLs. */
+function extractOutputUrls(result: any): string[] {
+  const raw = result?.outputs ?? result?.data?.outputs;
+  if (Array.isArray(raw) && raw.length) {
+    return raw
+      .map((o: any) => (typeof o === "string" ? o : o?.url))
+      .filter(Boolean);
+  }
+  const single =
+    result?.video?.url || result?.image?.url || result?.url || result?.public_url;
+  return single ? [single] : [];
+}
+
+/**
+ * When a job was started for an existing row (clone -> videos.id,
+ * campaign -> ai_videos.id), write the result back to that row so the
+ * UI's realtime subscriptions pick it up.
+ */
+async function updateSourceRows(job: any, status: "completed" | "failed", url?: string) {
+  const videoId = job?.input?.video_id;
+  const aiVideoId = job?.input?.ai_video_id;
+  if (videoId) {
+    await supabase
+      .from("videos")
+      .update(
+        status === "completed"
+          ? { final_url: url, url, preview: url, media_status: "completed" }
+          : { media_status: "failed" },
+      )
+      .eq("id", videoId);
+  }
+  if (aiVideoId) {
+    await supabase
+      .from("ai_videos")
+      .update(status === "completed" ? { status: "completed", url } : { status: "failed" })
+      .eq("id", aiVideoId);
+  }
+}
+
 async function persistOutputs(
   job: any,
   result: any,
   resourceType: ResourceType
 ): Promise<{ outputs: string[]; resource?: any }> {
-  const outputs: string[] =
-    result.outputs ||
-    result.video?.url
-      ? [result.video.url]
-      : result.image?.url
-      ? [result.image.url]
-      : result.url
-      ? [result.url]
-      : [];
+  const outputs = extractOutputUrls(result);
+
+  if (job?.input?.video_id || job?.input?.ai_video_id) {
+    // Result belongs to an existing row; don't create a duplicate video.
+    if (outputs.length) await updateSourceRows(job, "completed", outputs[0]);
+    return { outputs };
+  }
 
   if (!outputs.length || !job) return { outputs };
 
@@ -276,17 +369,54 @@ async function finalizeJob(
 // Auth helpers
 // ============================================================================
 async function getTenantFromRequest(req: Request): Promise<string | null> {
-  // Option 1: x-tenant-id header (preferred for browser SDK calls)
-  const headerTenant = req.headers.get("x-tenant-id");
-  if (headerTenant) return headerTenant;
-
-  // Option 2: JWT-based tenant_id
+  // Derive the tenant from the verified user JWT only. A caller-supplied
+  // x-tenant-id header is not trusted (it would let any caller act as any
+  // tenant).
   const auth = req.headers.get("authorization");
   if (!auth) return null;
   const token = auth.replace("Bearer ", "");
   const { data } = await supabase.auth.getUser(token);
-  const tenantId = (data.user?.app_metadata as any)?.tenant_id;
-  return tenantId || null;
+  const user = data.user;
+  if (!user) return null;
+
+  // Signup historically stored tenant_id in user_metadata; accept both.
+  const fromMeta =
+    (user.app_metadata as any)?.tenant_id || (user.user_metadata as any)?.tenant_id;
+  if (fromMeta) return fromMeta;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  let tenantId: string | null = (profile as any)?.tenant_id || null;
+
+  // Last resort: provision a tenant so the user isn't locked out.
+  if (!tenantId) {
+    const { data: tenant, error } = await supabase
+      .from("tenants")
+      .insert({ name: user.email ?? "Default Tenant" })
+      .select("id")
+      .single();
+    if (error) {
+      console.error("[api] tenant provisioning failed", error);
+      return null;
+    }
+    tenantId = tenant.id;
+    await supabase.from("profiles").update({ tenant_id: tenantId }).eq("id", user.id);
+  }
+
+  await supabase.auth.admin.updateUserById(user.id, {
+    app_metadata: { ...(user.app_metadata || {}), tenant_id: tenantId },
+  });
+  return tenantId;
+}
+
+async function getUserIdFromRequest(req: Request): Promise<string | null> {
+  const auth = req.headers.get("authorization");
+  if (!auth) return null;
+  const { data } = await supabase.auth.getUser(auth.replace("Bearer ", ""));
+  return data.user?.id || null;
 }
 
 // ============================================================================
@@ -369,13 +499,14 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     if (segments[0] === "webhooks" && segments[1] === "muapi") {
       if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
-      const provided = req.headers.get("x-muapi-webhook-secret");
+      const provided =
+        req.headers.get("x-muapi-webhook-secret") || url.searchParams.get("secret");
       if (WEBHOOK_SHARED_SECRET && provided !== WEBHOOK_SHARED_SECRET) {
         return json({ error: "Invalid webhook secret" }, 401);
       }
       const payload = await req.json();
-      const requestId = payload.id;
-      const status = payload.status;
+      const requestId = payload.request_id || payload.id || payload.data?.request_id;
+      const status = payload.status || payload.data?.status;
 
       if (requestId) {
         const { data: job } = await supabase
@@ -392,6 +523,7 @@ Deno.serve(async (req: Request) => {
             await persistOutputs(job, result, resourceType);
             await finalizeJob(job.id, "completed", result);
           } else if (status === "failed") {
+            await updateSourceRows(job, "failed");
             await finalizeJob(job.id, "failed", payload, payload.error);
           }
         }
@@ -859,6 +991,10 @@ Deno.serve(async (req: Request) => {
           .eq("id", id)
           .single();
         if (!job) return json({ error: "Job not found" }, 404);
+        if (job.status === "completed" || job.status === "failed") {
+          return json({ status: job.status, outputs: extractOutputUrls(job.output), error: job.error });
+        }
+        if (!job.request_id) return json({ status: job.status });
         const result = await muapiPoll(job.request_id);
         const status = result.status || result.data?.status;
         if (status === "completed") {
@@ -870,6 +1006,7 @@ Deno.serve(async (req: Request) => {
           return json({ status: "completed", outputs, resource });
         }
         if (status === "failed") {
+          await updateSourceRows(job, "failed");
           await finalizeJob(job.id, "failed", result, result.error || result.data?.error);
           return json({ status: "failed", error: result.error });
         }
@@ -1114,84 +1251,94 @@ Deno.serve(async (req: Request) => {
       return json(data, 201);
     }
 
-    if (segments[0] === "videos" && segments[1] === "preview" && req.method === "POST") {
+    // ========================================================================
+    // PERSONALIZED VIDEO FLOWS (clone / preview / campaign / onboarding)
+    // All return { data: { job_id, request_id, mode: "muapi" } }.
+    // ========================================================================
+    if (
+      segments[0] === "videos" &&
+      ["preview", "clone", "process", "onboarding"].includes(segments[1]) &&
+      req.method === "POST"
+    ) {
       const tenantId = await getTenantFromRequest(req);
       if (!tenantId) return json({ error: "Auth required" }, 401);
+      const userId = (await getUserIdFromRequest(req)) || null;
       const body = await req.json();
-      const { data, error } = await supabase
-        .from("jobs")
-        .insert({
-          tenant_id: tenantId,
-          user_id: body.user_id || null,
-          type: "ai-preview",
-          model: body.model || "gpt-4o-mini",
-          input: body,
-          status: "processing",
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return json({ job_id: data.id }, 201);
-    }
+      const kind = segments[1];
 
-    if (segments[0] === "videos" && segments[1] === "clone" && req.method === "POST") {
-      const tenantId = await getTenantFromRequest(req);
-      if (!tenantId) return json({ error: "Auth required" }, 401);
-      const body = await req.json();
-      const { data, error } = await supabase
-        .from("jobs")
-        .insert({
-          tenant_id: tenantId,
-          user_id: body.user_id || null,
-          type: "ai-clone",
-          model: body.model || "sync-lipsync",
-          input: body,
-          status: "processing",
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return json({ job_id: data.id }, 201);
-    }
+      let type: JobType;
+      let model: string;
+      let payload: Record<string, unknown>;
 
-    if (segments[0] === "videos" && segments[1] === "process" && req.method === "POST") {
-      const tenantId = await getTenantFromRequest(req);
-      if (!tenantId) return json({ error: "Auth required" }, 401);
-      const body = await req.json();
-      const { data, error } = await supabase
-        .from("jobs")
-        .insert({
-          tenant_id: tenantId,
-          user_id: body.user_id || null,
-          type: "ai-process",
-          model: body.model || "generate_wan_ai_effects",
-          input: body,
-          status: "processing",
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return json({ job_id: data.id }, 201);
-    }
+      if (kind === "onboarding") {
+        type = "ai-onboarding";
+        model = pickModel(body.model, T2V_MODEL);
+        const prompt = body.prompt || body.text;
+        if (!prompt) return json({ error: "prompt required" }, 400);
+        payload = { prompt };
+      } else {
+        // Lip-sync a source video to a voice track.
+        type = kind === "clone" ? "ai-clone" : kind === "preview" ? "ai-preview" : "ai-process";
+        model = body.model || LIPSYNC_MODEL;
 
-    if (segments[0] === "videos" && segments[1] === "onboarding" && req.method === "POST") {
-      const tenantId = await getTenantFromRequest(req);
-      if (!tenantId) return json({ error: "Auth required" }, 401);
-      const body = await req.json();
-      const { data, error } = await supabase
-        .from("jobs")
-        .insert({
-          tenant_id: tenantId,
-          user_id: body.user_id || null,
-          type: "ai-onboarding",
-          model: body.model || "veo3-fast-text-to-video",
-          input: body,
-          status: "processing",
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return json({ job_id: data.id }, 201);
+        let videoUrl: string | undefined = body.video_url || body.og_video_url;
+        if (!videoUrl && body.video_id) {
+          const { data: v } = await supabase
+            .from("videos")
+            .select("url, final_url")
+            .eq("id", body.video_id)
+            .maybeSingle();
+          videoUrl = (v as any)?.url || (v as any)?.final_url;
+        }
+        if (!videoUrl && typeof body.og_video_public_id === "string" &&
+            body.og_video_public_id.startsWith("http")) {
+          videoUrl = body.og_video_public_id;
+        }
+        if (!videoUrl) return json({ error: "video_url (or video_id with a url) required" }, 400);
+
+        let audioUrl: string | undefined = body.audio_url || body.audio;
+        if (!audioUrl) {
+          const script = kind === "process"
+            ? [body.greeting, body.text].filter(Boolean).join(" ")
+            : body.text || [body.greeting, body.text].filter(Boolean).join(" ");
+          if (!script) return json({ error: "text or audio_url required" }, 400);
+          audioUrl = await synthesizeVoiceToMuapi(script, body.voice_id);
+        }
+        payload = { video_url: videoUrl, audio_url: audioUrl };
+      }
+
+      const submit = await muapiSubmit(model, payload);
+      const requestId = requestIdOf(submit);
+      if (!requestId) return json({ error: "Muapi submit failed", detail: submit }, 502);
+
+      const job = await recordJob({
+        tenantId,
+        userId: body.user_id || body.userId || userId,
+        type,
+        model,
+        requestId,
+        input: {
+          ...payload,
+          video_id: body.video_id || null,
+          ai_video_id: body.ai_video_id && body.ai_video_id !== "test_id" ? body.ai_video_id : null,
+        },
+        resourceType: "video",
+      });
+
+      if (body.video_id) {
+        await supabase
+          .from("videos")
+          .update({ ai_preview: requestId, media_status: "in_progress" })
+          .eq("id", body.video_id);
+      }
+      if (job.input.ai_video_id) {
+        await supabase
+          .from("ai_videos")
+          .update({ status: "in_progress", ai_preview: requestId })
+          .eq("id", job.input.ai_video_id);
+      }
+
+      return json({ data: { job_id: job.id, request_id: requestId, mode: "muapi" } }, 201);
     }
 
     // ========================================================================

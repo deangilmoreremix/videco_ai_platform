@@ -21,7 +21,7 @@ import { motion } from "framer-motion";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { isTrialExpired } from "src/utils/isTrialExpierd";
-import { generateScript, submitTextToVideo, pollJob } from "src/services";
+import { generateScript, submitTextToVideo, pollUntilDone } from "src/services";
 import { FiArrowRight } from "react-icons/fi";
 import { useRouter } from "next/router";
 
@@ -176,16 +176,18 @@ export const Onboarding: FC<OnboardingProps> = () => {
             website ? `Website: ${website}` : ""
         }`;
         const { job } = await submitTextToVideo(prompt, {
-            tenant_id: user?.app_metadata?.tenant_id,
+            tenant_id:
+                user?.app_metadata?.tenant_id ?? user?.user_metadata?.tenant_id,
             user_id: user.id,
         });
         if (job?.id) {
-            pollJob(job.id).catch((e) =>
-                console.warn("[onboarding] pollJob failed:", e),
+            pollUntilDone(job.id).catch((e) =>
+                console.warn("[onboarding] polling failed:", e),
             );
         }
         await generateScript(`Welcome ${fullname}`, {
-            tenant_id: user?.app_metadata?.tenant_id,
+            tenant_id:
+                user?.app_metadata?.tenant_id ?? user?.user_metadata?.tenant_id,
             user_id: user.id,
         });
         if (error) {

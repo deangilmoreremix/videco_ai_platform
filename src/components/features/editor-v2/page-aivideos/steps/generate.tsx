@@ -19,7 +19,8 @@ import {
     ModalOverlay,
     Select,
 } from "@chakra-ui/react";
-import { submitTextToVideo, pollJob } from "src/services";
+import { pollUntilDone } from "src/services";
+import { processAIVideos } from "src/services/api/createAIPreview";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "src/services";
@@ -45,6 +46,7 @@ export const StepGenerate: React.FC<StepImportProps> = () => {
     const [regenerateData, setRegenerateData] =
         useState<Record<string, unknown>>();
     const [language, setLanguage] = useState<string>("");
+    const [sourceVideoUrl, setSourceVideoUrl] = useState<string>("");
     const session = useSession();
     const user = session?.user;
 
@@ -116,6 +118,7 @@ export const StepGenerate: React.FC<StepImportProps> = () => {
                 .eq("id", router.query.id);
             if (data) {
                 setLanguage(data[0]?.language);
+                setSourceVideoUrl(data[0]?.url || "");
             }
         } catch (error) {
             console.log("error..", error);
@@ -127,17 +130,18 @@ export const StepGenerate: React.FC<StepImportProps> = () => {
         fname: string,
         website: string,
     ) => {
-        const prompt = `${the_greeting(language, greeting)} ${fname} ${
-            background === "website" ? website : ""
-        }`.trim();
-        const { job } = await submitTextToVideo(prompt, {
-            tenant_id: user?.app_metadata?.tenant_id,
+        // Re-run the lipsync for this lead (same path as the campaign step).
+        const res = (await processAIVideos({
+            ai_video_id,
+            video_url: sourceVideoUrl,
+            greeting: the_greeting(language, greeting),
+            text: fname,
+            website: background === "website" ? website : undefined,
             user_id: user?.id,
-        });
-        // Optionally poll in background or let user poll later
-        if (job?.id) {
-            pollJob(job.id).catch((e) =>
-                console.warn("[generate] pollJob failed:", e),
+        })) as { data?: { job_id?: string } };
+        if (res?.data?.job_id) {
+            pollUntilDone(res.data.job_id).catch((e) =>
+                console.warn("[generate] polling failed:", e),
             );
         }
     };

@@ -29,7 +29,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "src/services";
+import { supabase, pollUntilDone } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { AudioRecorder } from "react-audio-voice-recorder";
 import { processAIVideos } from "src/services/api/createAIPreview";
@@ -215,6 +215,9 @@ const Start: React.FC = () => {
                 runningJobID.current = (
                     startJob as { data: { job_id: string } }
                 ).data.job_id;
+                pollUntilDone(runningJobID.current).catch((e) =>
+                    console.warn("[preview] polling failed:", e),
+                );
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -506,8 +509,12 @@ const Start: React.FC = () => {
                 `${el.website}&cookies=li_at=${linkedinCookie};+Domain=www.linkedin.com;+Secure;+HttpOnly`,
             );
 
-            const _startJob = await processAIVideos({
+            const startJob = (await processAIVideos({
                 og_video_public_id: originalVideoPubId,
+                // Lipsync needs a fetchable URL. Do not send video_id here:
+                // the server would overwrite the template video with each
+                // lead's personalised result.
+                video_url: video?.url,
                 voice_id: voiceID,
                 background: background,
                 ai_video_id: dbData?.[0].id,
@@ -516,7 +523,14 @@ const Start: React.FC = () => {
                 text: el.fname,
                 website: `${el.website}&cookies=li_at=${linkedinCookie};+Domain=www.linkedin.com;+Secure;+HttpOnly`,
                 voiceCloningEnabled: voiceCloningEnabled,
-            });
+            })) as { data?: { job_id?: string } };
+            // Drive the job to completion; the poll updates ai_videos,
+            // which the generate step's realtime subscription listens to.
+            if (startJob?.data?.job_id) {
+                pollUntilDone(startJob.data.job_id).catch((e) =>
+                    console.warn("[campaign] polling failed:", e),
+                );
+            }
         });
         setJobsGenerated(true);
     };

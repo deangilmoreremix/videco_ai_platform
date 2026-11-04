@@ -37,6 +37,7 @@ export async function callFunction<T = unknown>(
             ...(session?.user?.id
                 ? {
                       "x-tenant-id": (session.user.app_metadata?.tenant_id ||
+                          session.user.user_metadata?.tenant_id ||
                           "") as string,
                   }
                 : {}),

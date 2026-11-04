@@ -9,7 +9,7 @@ import {
     useToast,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { supabase } from "src/services";
+import { supabase, pollUntilDone, firstOutputUrl } from "src/services";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { v4 as uuidv4 } from "uuid";
@@ -27,7 +27,6 @@ import { PageAiVideos } from "./page-aivideos";
 import { blobUrlToBlob } from "src/utils/video";
 import { useWorkspaces } from "src/store/workspace";
 import { PageInsights } from "./page-insights";
-import { pollUntilComplete } from "src/services/api/pollMuapi";
 
 export const Editor: React.FC = () => {
     const router = useRouter();
@@ -142,16 +141,26 @@ export const Editor: React.FC = () => {
                 typeof requestId === "string" &&
                 requestId.length < 100
             ) {
-                let cancelled = false;
+                const signal = { cancelled: false };
                 (async () => {
                     try {
-                        const res = await pollUntilComplete(requestId, videoId);
+                        // Look up our job for this Muapi request, then poll it
+                        // through the `api` Edge Function. (Calling Muapi from
+                        // the browser can't work: the API key is server-only.)
+                        const { data: job } = await supabase
+                            .from("jobs")
+                            .select("id")
+                            .eq("request_id", requestId)
+                            .maybeSingle();
+                        if (!job?.id) return;
+                        const res = await pollUntilDone(job.id, { signal });
+                        const finalUrl = firstOutputUrl(res);
                         if (
                             res.status === "completed" &&
-                            res.final_url &&
-                            !cancelled
+                            finalUrl &&
+                            !signal.cancelled
                         ) {
-                            setVideoUrl(res.final_url);
+                            setVideoUrl(finalUrl);
                             setMediaStatus("completed");
                             // Refresh video data
                             getVideoByID();
@@ -162,7 +171,7 @@ export const Editor: React.FC = () => {
                 })();
 
                 return () => {
-                    cancelled = true;
+                    signal.cancelled = true;
                 };
             }
         }

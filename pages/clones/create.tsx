@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "src/services";
+import { supabase, pollUntilDone } from "src/services";
 import { useEditorStore } from "src/store/editor";
 import { AudioRecorder } from "react-audio-voice-recorder";
 import { createAIClone } from "src/services/api/createAIPreview";
@@ -202,6 +202,9 @@ export const CreateContent: React.FC = () => {
                 runningJobID.current = (
                     startJob as { data: { job_id: string } }
                 ).data.job_id;
+                pollUntilDone(runningJobID.current).catch((e) =>
+                    console.warn("[preview] polling failed:", e),
+                );
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -406,49 +409,27 @@ export const CreateContent: React.FC = () => {
             voice_id: voiceID,
             text: aiCloneText,
             video_url: video.url,
-            ai_video_id: "test_id",
             language: language,
+            user_id: user?.id,
         })) as {
-            data: {
+            data?: {
                 mode?: string;
-                result?: { request_id?: string };
+                job_id?: string;
+                request_id?: string;
                 url?: string;
             };
         };
 
-        const response = startJob.data;
+        const response = startJob?.data;
 
-        // New Muapi + OpenAI path support (2026)
-        if (response?.mode === "muapi" && response.result?.request_id) {
-            // Store the Muapi job id so the video edit page can poll for completion
-            await supabase
-                .from("videos")
-                .update({
-                    ai_preview: response.result.request_id,
-                    media_status: "in_progress",
-                })
-                .eq("id", router.query.id);
+        if (response?.mode === "muapi" && response.job_id) {
+            // The api Edge Function already set videos.ai_preview +
+            // media_status=in_progress. Poll until Muapi finishes; the poll
+            // writes final_url back to the video row on completion.
+            pollUntilDone(response.job_id).catch((e) =>
+                console.warn("[clone] polling failed:", e),
+            );
 
-            // Optionally kick off background polling via Edge (non-blocking)
-            fetch(
-                `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ai-orchestrator`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-                    },
-                    body: JSON.stringify({
-                        action: "poll",
-                        request_id: response.result.request_id,
-                        video_id: router.query.id,
-                    }),
-                },
-            ).catch((e) =>
-                console.warn("[clone] background generation failed:", e),
-            ); // fire and forget
-
-            // UI feedback: notify user generation started
             toast({
                 title: "AI generation started",
                 description:

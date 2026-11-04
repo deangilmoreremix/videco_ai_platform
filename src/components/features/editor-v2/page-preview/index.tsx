@@ -92,28 +92,23 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
             const interval = setInterval(async () => {
                 try {
                     // Poll the Muapi job via Supabase Edge Function
-                    const { supabase } = await import("src/services");
+                    const { supabase, pollJob } = await import("src/services");
                     const { data: jobs } = await supabase
                         .from("jobs")
                         .select("*")
                         .eq("user_id", user?.id)
-                        .eq("status", "processing")
+                        .eq("type", "ai-clone")
                         .order("created_at", { ascending: false })
                         .limit(1);
 
                     if (jobs?.[0]?.id) {
-                        const res = await fetch(
-                            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/jobs?id=${jobs[0].id}&action=poll`,
-                            {
-                                method: "GET",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "x-tenant-id":
-                                        user?.app_metadata?.tenant_id || "",
-                                },
-                            },
-                        );
-                        const data = await res.json();
+                        // Goes through the `api` Edge Function with the
+                        // user's session token (the old direct fetch had no
+                        // Authorization header and was rejected).
+                        const data = (await pollJob(jobs[0].id)) as {
+                            status?: string;
+                            outputs?: string[];
+                        };
                         if (data.status === "completed" && data.outputs?.[0]) {
                             setLatestUrl(data.outputs[0]);
                             setLatestMediaStatus("ready");

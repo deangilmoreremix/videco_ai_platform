@@ -490,5 +490,6 @@ export const MUAPI_MODELS = {
     FAST_I2V: "seedance-lite-i2v",
     HIGH_QUALITY_I2V: "kling-o1-standard-image-to-video",
     OMNI_REFERENCE: "sd-2-omni-reference",
-    LIPSYNC: "ai-video-lipsync", // TODO [Muapi catalog]: confirm exact endpoint slug for lipsync service
+    // Must match the default used by the `api` Edge Function (LIPSYNC_MODEL).
+    LIPSYNC: process.env.MUAPI_LIPSYNC_MODEL || "sync-lipsync",
 } as const;

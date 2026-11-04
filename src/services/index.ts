@@ -28,26 +28,46 @@ const FN_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
     : "https://placeholder.supabase.co/functions/v1";
 
-export async function callMuapi<T = unknown>(
-    endpoint: string,
-    body: Record<string, unknown> = {},
-): Promise<T> {
+// All Muapi/OpenAI routes live in the single `api` Edge Function
+// (supabase/functions/api). Supabase routes /functions/v1/<name>/... to the
+// function called <name>, so every endpoint must be prefixed with `api/`.
+// Previously calls like "videos/clone" hit the CRUD-only `videos` function.
+const API_BASE = `${FN_BASE}/api`;
+
+type MaybeTenantUser =
+    | {
+          app_metadata?: Record<string, unknown>;
+          user_metadata?: Record<string, unknown>;
+      }
+    | null
+    | undefined;
+
+/**
+ * Resolve the tenant id for a user. Signup historically wrote tenant_id to
+ * user_metadata (auth.updateUser({ data })), while newer code expects it in
+ * app_metadata, so check both.
+ */
+export function getTenantId(user: MaybeTenantUser): string | undefined {
+    const id =
+        (user?.app_metadata?.tenant_id as string | undefined) ||
+        (user?.user_metadata?.tenant_id as string | undefined);
+    return id || undefined;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
     const {
         data: { session },
     } = await supabase.auth.getSession();
-    const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
-        ?.tenant_id;
-    const res = await fetch(`${FN_BASE}/${endpoint}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...(session?.access_token
-                ? { Authorization: `Bearer ${session.access_token}` }
-                : {}),
-            ...(tenantId ? { "x-tenant-id": tenantId } : {}),
-        },
-        body: JSON.stringify(body),
-    });
+    const tenantId = getTenantId(session?.user);
+    return {
+        ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        ...(tenantId ? { "x-tenant-id": tenantId } : {}),
+    };
+}
+
+async function parseResponse<T>(res: Response): Promise<T> {
     if (!res.ok) {
         const err = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(err.error || res.statusText);
@@ -55,26 +75,27 @@ export async function callMuapi<T = unknown>(
     return res.json();
 }
 
-export async function callMuapiGet<T = unknown>(endpoint: string): Promise<T> {
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
-        ?.tenant_id;
-    const res = await fetch(`${FN_BASE}/${endpoint}`, {
-        method: "GET",
+export async function callMuapi<T = unknown>(
+    endpoint: string,
+    body: Record<string, unknown> = {},
+): Promise<T> {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
+        method: "POST",
         headers: {
-            ...(session?.access_token
-                ? { Authorization: `Bearer ${session.access_token}` }
-                : {}),
-            ...(tenantId ? { "x-tenant-id": tenantId } : {}),
+            "Content-Type": "application/json",
+            ...(await authHeaders()),
         },
+        body: JSON.stringify(body),
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || res.statusText);
-    }
-    return res.json();
+    return parseResponse<T>(res);
+}
+
+export async function callMuapiGet<T = unknown>(endpoint: string): Promise<T> {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
+        method: "GET",
+        headers: await authHeaders(),
+    });
+    return parseResponse<T>(res);
 }
 
 // ============================================================================
@@ -191,6 +212,46 @@ export const videoToAudio = (
 export const pollJob = (jobId: string) =>
     callMuapiGet(`jobs?id=${jobId}&action=poll`);
 
+export type JobPollResult = {
+    status?: string;
+    outputs?: Array<string | { url?: string }>;
+    error?: string;
+    [k: string]: unknown;
+};
+
+/**
+ * Poll a job until Muapi reports completed/failed. Each poll hits the `api`
+ * Edge Function, which persists outputs + updates the originating row on
+ * completion. The Muapi webhook does the same server-side; this is the
+ * client fallback for when the webhook is not reachable (e.g. local dev).
+ */
+export async function pollUntilDone(
+    jobId: string,
+    opts: {
+        intervalMs?: number;
+        maxAttempts?: number;
+        onUpdate?: (res: JobPollResult) => void;
+        signal?: { cancelled: boolean };
+    } = {},
+): Promise<JobPollResult> {
+    const { intervalMs = 5000, maxAttempts = 120, onUpdate, signal } = opts;
+    for (let i = 0; i < maxAttempts; i++) {
+        if (signal?.cancelled) return { status: "cancelled" };
+        const res = (await pollJob(jobId)) as JobPollResult;
+        onUpdate?.(res);
+        if (res?.status === "completed" || res?.status === "failed") {
+            return res;
+        }
+        await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    throw new Error(`Timed out waiting for job ${jobId}`);
+}
+
+export const firstOutputUrl = (res: JobPollResult): string | undefined => {
+    const o = res?.outputs?.[0];
+    return typeof o === "string" ? o : o?.url;
+};
+
 export const listJobs = (type?: string) =>
     callMuapiGet(`jobs${type ? `?type=${encodeURIComponent(type)}` : ""}`);
 
@@ -210,26 +271,12 @@ export const listAudios = () => callMuapiGet("audios");
 export async function uploadFile(file: File): Promise<{ url: string }> {
     const fd = new FormData();
     fd.append("file", file);
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
-    const tenantId = (session?.user?.app_metadata as Record<string, unknown>)
-        ?.tenant_id;
-    const res = await fetch(`${FN_BASE}/upload`, {
+    const res = await fetch(`${API_BASE}/upload`, {
         method: "POST",
-        headers: {
-            ...(session?.access_token
-                ? { Authorization: `Bearer ${session.access_token}` }
-                : {}),
-            ...(tenantId ? { "x-tenant-id": tenantId } : {}),
-        },
+        headers: await authHeaders(),
         body: fd,
     });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || res.statusText);
-    }
-    return res.json();
+    return parseResponse<{ url: string }>(res);
 }
 
 // ============================================================================
@@ -388,6 +435,7 @@ export const muapi = {
     videoToAudio,
     // Jobs
     pollJob,
+    pollUntilDone,
     listJobs,
     // Library
     listVideos,

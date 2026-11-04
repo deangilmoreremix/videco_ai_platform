@@ -135,20 +135,31 @@ const Login: React.FC = () => {
                                             });
 
                                         if (!error && data?.user) {
+                                            // The assign_tenant_to_new_user DB
+                                            // trigger provisions a tenant and
+                                            // stores it in app_metadata; reuse
+                                            // it so we don't create a second one.
+                                            const assignedTenant = data.user
+                                                .app_metadata?.tenant_id as
+                                                | string
+                                                | undefined;
                                             const tenantId =
+                                                assignedTenant ||
                                                 crypto.randomUUID();
                                             const { error: tenantError } =
-                                                await supabase
-                                                    .from("tenants")
-                                                    .insert([
-                                                        {
-                                                            id: tenantId,
-                                                            name:
-                                                                data.user
-                                                                    .email ??
-                                                                "Default Tenant",
-                                                        },
-                                                    ]);
+                                                assignedTenant
+                                                    ? { error: null }
+                                                    : await supabase
+                                                          .from("tenants")
+                                                          .insert([
+                                                              {
+                                                                  id: tenantId,
+                                                                  name:
+                                                                      data.user
+                                                                          .email ??
+                                                                      "Default Tenant",
+                                                              },
+                                                          ]);
 
                                             if (!tenantError) {
                                                 await supabase.auth.updateUser({
