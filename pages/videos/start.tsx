@@ -8,6 +8,7 @@ import {
     Flex,
     useSteps,
     Button,
+    Image,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -19,7 +20,7 @@ import { videoTypes } from "src/utils/video";
 
 const Start: React.FC = () => {
     const [, setLoading] = useState(true);
-    const [, setLoadingCampaign] = useState(false);
+    const [loadingCampaign, setLoadingCampaign] = useState(false);
     const [, setLoadingUpload] = useState(false);
     const [_videoData, setVideoData] =
         useState<Array<{ id: string; name?: string; status?: string }>>();
@@ -125,15 +126,15 @@ const Start: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { _activeStep, _setActiveStep } = useSteps({
+    const { activeStep, setActiveStep: _setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
 
-    const _activeStepText = steps[_activeStep].description;
+    const _activeStepText = steps[activeStep].description;
 
     const max = steps.length - 1;
-    const _progressPercent = (_activeStep / max) * 100;
+    const _progressPercent = (activeStep / max) * 100;
     return (
         <>
             {!session ? (

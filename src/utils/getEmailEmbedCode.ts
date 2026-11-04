@@ -24,7 +24,7 @@ export const getEmailEmbedCode = (
     url: string,
     og_url: string,
     provider: string,
-    fname: string,
+    fname = "",
 ) => {
     const gifUrl = (function () {
         try {
@@ -40,7 +40,7 @@ export const getEmailEmbedCode = (
     if (provider === "html") {
         return `
       <div style="position: relative; display: inline-block; padding: 5px; background: white;">
-        <video controls src="${url}" poster="${ogUrl}" style="max-width: 480px; border-radius: 8px;"></video>
+        <video controls src="${url}" poster="${gifUrl}" style="max-width: 480px; border-radius: 8px;"></video>
         <p style="font-family: Arial; color: #05405A; margin: 0; padding-top: 5px;">${fname}</p>
       </div>
     `;
@@ -66,7 +66,7 @@ export const getEmailEmbedCode = (
 </div>`;
 
     const aweber = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-        <a href="${url}?fname={{subscriber.firstname}}&lname={{subscriber.lastname}}" style="display: inline-block;">
+        <a href="${url}?fname={{subscriber.firstname}}&lname={{subscriber.lastname}}&ai_email={{ subscriber.email }}" style="display: inline-block;">
             <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
             <br />
             <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
@@ -74,7 +74,7 @@ export const getEmailEmbedCode = (
         </div>`;
 
     const apollo = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{first_name}}&lname={{last_name}}" style="display: inline-block;">
+                <a href="${url}?fname={{first_name}}&lname={{last_name}}&ai_email={{email}}" style="display: inline-block;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
@@ -82,7 +82,7 @@ export const getEmailEmbedCode = (
             </div>`;
 
     const smartlead = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{first_name}}&lname={{last_name}}" style="display: inline-block;">
+                <a href="${url}?fname={{first_name}}&lname={{last_name}}&ai_email={{email}}" style="display: inline-block;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
@@ -90,7 +90,7 @@ export const getEmailEmbedCode = (
             </div>`;
 
     const lemlist = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{firstName}}&lname={{lastName}}" style="display: inline-block;">
+                <a href="${url}?fname={{firstName}}&lname={{lastName}}&ai_email={{email}}" style="display: inline-block;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
@@ -98,14 +98,21 @@ export const getEmailEmbedCode = (
             </div>`;
 
     const gohighlevel = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{contact.name}}&lname={{contact.last_name}}" style="display: inline-block;">
+                <a href="${url}?fname={{contact.name}}&lname={{contact.last_name}}&ai_email={{contact.email}}" style="display: inline-block;">
+                    <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
+                    <br />
+                    <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
+                </a>
+            </div>`;
+    const nethunt = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
+                <a href="${url}?fname={{field:First name:}}&lname={{field:Last name:}}&ai_email={{recipient:Email address:}}" style="display: inline-block;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
                 </a>
             </div>`;
     const lagrowthmachine = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname={{firstname}}&lname={{lastname}}" style="display: inline-block;">
+                <a href="${url}?fname={{firstname}}&lname={{lastname}}&ai_email={{proEmail}}" style="display: inline-block;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
@@ -115,14 +122,14 @@ export const getEmailEmbedCode = (
     const salesflow = `We made a video for you:  ${url}?fname={first_name}&lname={last_name}&ai_email={custom_variable_1|fallback@videco.io}`;
 
     const activecampaign = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname=%FNAME%&lname=%LNAME%" style="display: inline-block;">
+                <a href="${url}?fname=%FNAME%&lname=%LNAME%&ai_email=%EMAIL%" style="display: inline-block;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
                 </a>
             </div>`;
     const other = `<div style="position: relative; display: inline-block; padding: 5px; background: white;">
-                <a href="${url}?fname=%FNAME%&lname=%LNAME%" style="display: inline-block;  background: white;">
+                <a href="${url}?fname=%FNAME%&lname=%LNAME%&ai_email=%EMAIL%" style="display: inline-block;  background: white;">
                     <img width="360px" src="${gifUrl}" alt="Watch the video" style="display: block;  background: white; border-radius: 30px;" />
                     <br />
                     <span style="display: block; font-family: Arial, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">Watch the video ▶</span>
@@ -187,7 +194,7 @@ export const getEmailEmbedCodeForSimpleVideos = (
     url: string,
     og_url: string,
     provider: string,
-    fname: string,
+    fname = "",
 ) => {
     const gifUrl = (function () {
         try {
@@ -203,7 +210,7 @@ export const getEmailEmbedCodeForSimpleVideos = (
     if (provider === "html") {
         return `
       <div style="position: relative; display: inline-block; padding: 5px; background: white;">
-        <video controls src="${url}" poster="${ogUrl}" style="max-width: 480px; border-radius: 8px;"></video>
+        <video controls src="${url}" poster="${gifUrl}" style="max-width: 480px; border-radius: 8px;"></video>
         <p style="font-family: Arial; color: #05405A; margin: 0; padding-top: 5px;">${fname}</p>
       </div>
     `;

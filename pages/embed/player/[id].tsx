@@ -16,7 +16,6 @@ import {
 } from "@chakra-ui/react";
 import { Player } from "@components/features/player";
 import { useRouter } from "next/router";
-import { Player } from "@components/features/player";
 import { useEditorStore } from "src/store/editor";
 import { supabase } from "src/services";
 
@@ -45,17 +44,17 @@ const Edit: React.FC = () => {
         endCTAtext: "",
         endCTAtitle: "",
     });
-    const [, setPlaying] = useState(false);
-    const [, setInput] = useState("");
+    const [playing, setPlaying] = useState(false);
+    const [input, setInput] = useState("");
 
     const handleInputChange = (e) => setInput(e.target.value);
 
     const [, setDuration] = useState(0);
     const playerRef = useRef(null);
     const {
-        setVideo: _setVideo,
-        setInteractiveElements: _setInteractiveElements,
-        interactiveElements: _interactiveElements,
+        setVideo,
+        setInteractiveElements,
+        interactiveElements,
         video: _video,
     } = useEditorStore();
     const getAIVideoByID = useCallback(async (_og_url: string) => {

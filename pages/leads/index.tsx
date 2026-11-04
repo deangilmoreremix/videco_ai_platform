@@ -17,9 +17,12 @@ import {
     MenuItem,
     MenuList,
 } from "@chakra-ui/react";
+import { Sidebar } from "@components/common/sidebar";
+import { Header } from "@components/common/header";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "src/services";
 import { useEditorStore } from "src/store/editor";
+import { FiSettings, FiUpload } from "react-icons/fi";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import Pricing from "@components/common/pricing";
 import { AuthGuard } from "src/hoc/withAuthGuard";
@@ -32,6 +35,7 @@ export const LeadsContent: React.FC = () => {
             name?: string;
             email?: string;
             company?: string;
+            passed?: boolean;
         }>
     >();
     const session = useSession();

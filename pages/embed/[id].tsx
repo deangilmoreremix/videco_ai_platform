@@ -28,9 +28,8 @@ import { usePersonalizedContent } from "src/hooks/usePersonalizedContent";
 import Head from "next/head";
 import { supabase } from "src/services";
 
-const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
-    videoData,
-}) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
     const router = useRouter();
     const { personalizedContent } = usePersonalizedContent();
     const { onClose } = useDisclosure();
@@ -63,7 +62,7 @@ const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
         secondary_text_color: "#ffffff",
     });
     const [, _setPlaying] = useState(false);
-    const [, setInput] = useState("");
+    const [input, setInput] = useState("");
     const { getBrandKit } = useBrandKit();
     const handleInputChange = (e) => setInput(e.target.value);
 
@@ -71,7 +70,7 @@ const Edit: React.FC<{ videoData: Record<string, unknown> }> = ({
     const _playerRef = useRef<HTMLVideoElement | null>(null);
     const {
         setVideo: _setVideo,
-        setInteractiveElements: _setInteractiveElements,
+        setInteractiveElements,
         interactiveElements: _interactiveElements,
         video: _video,
     } = useEditorStore();

@@ -3,8 +3,11 @@ import {
     Box,
     Heading,
     Flex,
+    Card,
     Text,
     Button,
+    Spinner,
+    Avatar,
     useDisclosure,
     Drawer,
     DrawerBody,
@@ -13,6 +16,7 @@ import {
     DrawerHeader,
     DrawerOverlay,
     Divider,
+    Tag,
     Modal,
     ModalBody,
     ModalContent,
@@ -44,7 +48,7 @@ const InviteUsersContent: React.FC = () => {
     const [memberEmail, setMemberEmail] = useState<string | null>(null);
     const [teamMembers, setTeamMembers] = useState<
         Array<{
-            id: string;
+            id?: string;
             name?: string;
             role?: string;
             shared_account?: string;

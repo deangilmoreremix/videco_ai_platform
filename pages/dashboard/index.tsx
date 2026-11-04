@@ -3,8 +3,25 @@ import {
     Box,
     Heading,
     Flex,
+    Card,
     Text,
     Button,
+    Avatar,
+    Drawer,
+    DrawerBody,
+    DrawerCloseButton,
+    DrawerContent,
+    DrawerHeader,
+    DrawerOverlay,
+    Tag,
+    ModalBody,
+    ModalFooter,
+    Table,
+    TableContainer,
+    Tbody,
+    Td,
+    Tr,
+    Alert,
     Link,
     Divider,
     useDisclosure,
@@ -15,12 +32,21 @@ import {
 } from "@chakra-ui/react";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
-import { FiEdit, FiUserPlus, FiVideo } from "react-icons/fi";
+import {
+    FiBarChart,
+    FiBarChart2,
+    FiEdit,
+    FiUpload,
+    FiUserPlus,
+    FiVideo,
+} from "react-icons/fi";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { Invite } from "@components/features/invite";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
+import { TopAnalytics } from "@components/features/analytics/top";
+import { LatestAnalytics } from "@components/features/analytics/latest";
 import Pricing from "@components/common/pricing";
 import { supabase } from "src/services";
 import { AuthGuard } from "src/hoc/withAuthGuard";
@@ -33,6 +59,7 @@ const DashboardContent: React.FC = () => {
     const [memberEmail, setMemberEmail] = useState<string | null>(null);
     const [teamMembers, setTeamMembers] = useState<
         Array<{
+            id?: string;
             shared_account: any;
             name: any;
             role: any;

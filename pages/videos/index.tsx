@@ -31,6 +31,7 @@ import {
 } from "@chakra-ui/react";
 import moment from "moment";
 import { useRouter } from "next/router";
+import { useSession } from "@supabase/auth-helpers-react";
 import { Sidebar } from "@components/common/sidebar";
 import { Header } from "@components/common/header";
 import { supabase } from "src/services";
@@ -44,10 +45,8 @@ import { AuthGuard } from "src/hoc/withAuthGuard";
 
 const VideosContent: React.FC = () => {
     const [loading, setLoading] = useState(true);
-    const [videoData, setVideoData] =
-        useState<
-            Array<{ id: string; type?: string; name?: string; status?: string }>
-        >();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [videoData, setVideoData] = useState<any[]>();
     const [filterVideos, _setFilterVideos] = useState(videoTypes.video);
     const filteredVideos = filterVideos
         ? videoData?.filter((video) => video.type === filterVideos)

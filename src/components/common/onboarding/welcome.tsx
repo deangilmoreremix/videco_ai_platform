@@ -52,12 +52,13 @@ export const Onboarding: FC<OnboardingProps> = () => {
     const user = session?.user;
     const [_plan, setPlan] = useState<string | null>(null);
     const [, setShowCongratz] = useState(false);
-    const [, setTrail] = useState<unknown>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [trail, setTrail] = useState<any>(null);
     const [, setVideos] = useState<number>(0);
     const [, setVideoSize] = useState<number>(0);
     const { getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
-    const { _activeStep, setActiveStep } = useSteps({
+    const { setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });
@@ -175,19 +176,16 @@ export const Onboarding: FC<OnboardingProps> = () => {
         const prompt = `Hi ${fullname}, welcome to videco! ${
             website ? `Website: ${website}` : ""
         }`;
-        const { job } = await submitTextToVideo(prompt, {
-            tenant_id:
-                user?.app_metadata?.tenant_id ?? user?.user_metadata?.tenant_id,
+        // The api Edge Function derives the tenant from the session token.
+        const { job } = (await submitTextToVideo(prompt, {
             user_id: user.id,
-        });
+        })) as { job?: { id?: string } };
         if (job?.id) {
             pollUntilDone(job.id).catch((e) =>
                 console.warn("[onboarding] polling failed:", e),
             );
         }
         await generateScript(`Welcome ${fullname}`, {
-            tenant_id:
-                user?.app_metadata?.tenant_id ?? user?.user_metadata?.tenant_id,
             user_id: user.id,
         });
         if (error) {

@@ -28,7 +28,7 @@ import Pricing from "../pricing";
 type HeaderProps = {
     pageTitle: string;
 };
-export const Header: FC<HeaderProps> = () => {
+export const Header: FC<HeaderProps> = (props) => {
     const [, setLoading] = useState(true);
     const [, setFullname] = useState(null);
     const create = useDisclosure();
@@ -40,7 +40,8 @@ export const Header: FC<HeaderProps> = () => {
     const user = session?.user;
     const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
-    const [trail, setTrail] = React.useState<unknown>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [trail, setTrail] = React.useState<any>(null);
 
     useEffect(() => {
         // Dynamically add the ProductLift SDK script
