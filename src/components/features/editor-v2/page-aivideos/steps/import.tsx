@@ -21,7 +21,7 @@ export const StepImport: React.FC<StepImportProps> = ({
     onCsvDataChange,
 }) => {
     const { CSVReader } = useCSVReader();
-    const convertCsvData = (data: unknown[]): unknown[] => {
+    const convertCsvData = (data: string[][]): Record<string, string>[] => {
         // Extract the keys from the first sub-array
         const keys = data[0];
 
@@ -127,7 +127,7 @@ export const StepImport: React.FC<StepImportProps> = ({
                                         text: "Your CSV data preview will be here",
                                         hideHeader: true,
                                     }}
-                                    data={convertCsvData(csvData)}
+                                    data={convertCsvData(csvData as string[][])}
                                     editingMode={EditingMode.Cell}
                                     rowKeyField={"id"}
                                     sortingMode={SortingMode.Single}

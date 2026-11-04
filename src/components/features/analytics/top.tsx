@@ -22,13 +22,13 @@ import { FiPlay } from "react-icons/fi";
 export const TopAnalytics: React.FC = () => {
     const [videoData, setVideoData] = useState<
         Array<{
-            id: string;
+            id?: string;
             name?: string;
             size?: string;
             status?: string;
             analytics: Array<{
                 id: string;
-                data: { count?: number };
+                data: { count?: number; user_agent?: string };
                 event: string;
             }>;
         }>

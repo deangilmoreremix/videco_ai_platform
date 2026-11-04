@@ -18,7 +18,7 @@ import {
 } from "react-icons/fi";
 import ReactPlayer from "react-player";
 import { submitForm, submitFeedback } from "src/services";
-import { useEditorStore } from "src/store/editor";
+import { useEditorStore, InteractiveElementType } from "src/store/editor";
 import { SettingsHover } from "./settings-hover";
 import { useAnalytics } from "src/hooks/useAnalytics";
 import { InteractiveButton } from "./elements/button";
@@ -36,25 +36,7 @@ type PlayerTypes = {
     playing: boolean;
     embeded?: boolean;
     videcoBrandingRemoved?: boolean;
-    elements?: Array<{
-        id: string;
-        type: string;
-        time?: number | string;
-        endTime?: number | string;
-        name?: string;
-        url?: string;
-        link?: string;
-        butonPosition?: string;
-        defaultPosition?: { x: number; y: number };
-        user_id?: string;
-        form_enable_name?: boolean;
-        form_enable_email?: boolean;
-        form_enable_message?: boolean;
-        form_submit_text?: string;
-        answer_type?: string;
-        answers?: string;
-        answer_placeholder?: string;
-    }>;
+    elements?: InteractiveElementType[];
     isEditor?: boolean;
     setDuration: (value: number) => void;
     width?: string | number;
@@ -218,7 +200,7 @@ export const Player = ({
                                     <InteractiveButton
                                         handleDragEnd={handleDragEnd}
                                         element={element}
-                                        id={id}
+                                        id={id as string}
                                         handleDragStart={handleDragStart}
                                         embeded={embeded}
                                         constraintsRef={constraintsRef}
@@ -242,7 +224,7 @@ export const Player = ({
                                             ) => {
                                                 await submitFeedback(data);
                                             }}
-                                            id={id}
+                                            id={id as string}
                                             setAnswerSubmitted={
                                                 setAnswerSubmitted
                                             }
@@ -271,7 +253,7 @@ export const Player = ({
                                         ) => {
                                             await submitForm(data);
                                         }}
-                                        id={id}
+                                        id={id as string}
                                         setFormSubmitted={setFormSubmitted}
                                         setHideForm={setHideForm}
                                         formSubmitted={formSubmitted}

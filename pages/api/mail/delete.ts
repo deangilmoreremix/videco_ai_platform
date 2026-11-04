@@ -34,7 +34,7 @@ export default async function handler(
 ) {
     const supabase = createClientComponentClient();
 
-    const invitationUpdated = async () => {
+    const _invitationUpdated = async () => {
         try {
             await supabase
                 .from("profiles")
@@ -43,7 +43,7 @@ export default async function handler(
                 })
                 .eq("id", req.body.user_id)
                 .select("deleted")
-                .then((res) => {
+                .then((_res) => {
                     console.log("success..");
                 });
         } catch (error) {

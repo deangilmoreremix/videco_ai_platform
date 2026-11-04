@@ -21,7 +21,7 @@ import "ka-table/style.css";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useBrandKit } from "src/hooks/getBrandKit";
-import { useUserPlan } from "src/hooks/useUserPlan";
+import { useUserPlan, PlanRow } from "src/hooks/useUserPlan";
 import Image from "next/image";
 import { StepGenerate } from "./steps/generate";
 import { supabase } from "src/services";
@@ -47,7 +47,7 @@ import ShareModalVideo from "./share-modal-video";
 type PagePreviewProps = {
     videoUrl: string;
     videoType: string;
-    meta: Record<string, unknown>;
+    meta: { title?: string; desc?: string; [key: string]: unknown };
 };
 export const PageAiVideos: React.FC<PagePreviewProps> = ({
     videoUrl,
@@ -58,7 +58,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
     const toast = useToast();
     const [emailProvider, setEmailProvider] = useState<{
         value: string;
-        label: string;
+        label?: string;
     }>();
     const { getBrandKit } = useBrandKit();
     const [loading, setLoading] = useState(false);
@@ -70,7 +70,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
         primary_text_color: "#ffffff",
         secondary_text_color: "#ffffff",
     });
-    const [plan, setPlan] = useState<unknown>();
+    const [plan, setPlan] = useState<PlanRow & { name?: string }>();
     const session = useSession();
     const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
@@ -419,7 +419,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                             platform
                                         </Text>
                                         <ShareModal
-                                            videoId={router.query.id}
+                                            videoId={router.query.id as string}
                                             ogURL={videoUrl}
                                         />
                                         {/* <Select
@@ -532,7 +532,7 @@ export const PageAiVideos: React.FC<PagePreviewProps> = ({
                                         maxW="md"
                                     >
                                         <ShareModalVideo
-                                            videoId={router.query.id}
+                                            videoId={router.query.id as string}
                                             ogURL={videoUrl}
                                         />
                                     </Box>

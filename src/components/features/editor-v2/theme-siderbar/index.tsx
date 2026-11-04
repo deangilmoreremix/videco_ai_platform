@@ -12,7 +12,7 @@ const ThemeSidebar: React.FC = () => {
     const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
     const { getPlan } = useUserPlan();
-    const [plan, setPlan] = useState<{ plan_name?: string } | undefined>();
+    const [plan, setPlan] = useState<string | undefined>();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);

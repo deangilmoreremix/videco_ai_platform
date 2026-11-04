@@ -25,7 +25,9 @@ export default async function handler(
                 .json({ result: { success: false, error: error.message } });
         }
 
-        return res.status(200).json({ result: { success: true, assets: data } });
+        return res
+            .status(200)
+            .json({ result: { success: true, assets: data } });
     }
 
     return res.status(405).json({ result: { message: "Method Not Allowed" } });

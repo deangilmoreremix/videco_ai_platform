@@ -13,15 +13,12 @@ interface ElementData {
 }
 
 interface InteractiveButtonProps {
-    _handleDragEnd: (element: ElementData, d: { x: number; y: number }) => void;
+    handleDragEnd?: (element: unknown, d: unknown) => void;
     element: ElementData;
-    _handleDragStart: (
-        element: ElementData,
-        d: { x: number; y: number },
-    ) => void;
+    handleDragStart?: (element: unknown, d: unknown) => void;
     embeded: boolean;
-    _constraintsRef: { current: HTMLElement | null };
-    _isLargerThan800: boolean;
+    constraintsRef?: { current: HTMLElement | null };
+    isLargerThan800?: boolean;
     id: string;
     updateClickAnalytics: (
         videoId: string,
@@ -30,12 +27,12 @@ interface InteractiveButtonProps {
 }
 
 export const InteractiveButton = ({
-    _handleDragEnd,
+    handleDragEnd: _handleDragEnd,
     element,
-    _handleDragStart,
+    handleDragStart: _handleDragStart,
     embeded,
-    _constraintsRef,
-    _isLargerThan800,
+    constraintsRef: _constraintsRef,
+    isLargerThan800: _isLargerThan800,
     id,
     updateClickAnalytics,
 }: InteractiveButtonProps) => {
@@ -140,7 +137,7 @@ export const InteractiveButton = ({
                             marginTop: "2px",
                         }}
                     />
-                    {console.log("element", element)}
+                    {console.log("element", element) as undefined}
                 </Box>
             </Link>
         </motion.div>

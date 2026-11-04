@@ -31,20 +31,18 @@ import { greetings, the_greeting } from "src/utils/voice";
 interface StepImportProps {
     children?: React.ReactNode;
     setIsOpen?: () => void;
-    user?: { id?: string; app_metadata?: Record<string, unknown> };
+    user?: string | { id?: string; app_metadata?: Record<string, unknown> };
 }
 export const StepGenerate: React.FC<StepImportProps> = () => {
     const [, setLoading] = useState(false);
-    const [AIVideos, setAIVideos] = useState<Record<string, unknown>[]>([]);
-    const [activePreviewVideo, setActivePreviewVideo] =
-        useState<Record<string, unknown>>();
+    const [AIVideos, setAIVideos] = useState<any[]>([]);
+    const [activePreviewVideo, setActivePreviewVideo] = useState<any>();
     const { isOpen, onOpen, onClose } = useDisclosure();
     const previewModal = useDisclosure();
     const router = useRouter();
     const [greeting, setGreeting] = useState("Hello");
     const [background, setBackground] = useState("website");
-    const [regenerateData, setRegenerateData] =
-        useState<Record<string, unknown>>();
+    const [regenerateData, setRegenerateData] = useState<any>();
     const [language, setLanguage] = useState<string>("");
     const [_originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
     const [sourceVideoUrl, setSourceVideoUrl] = useState<string>("");

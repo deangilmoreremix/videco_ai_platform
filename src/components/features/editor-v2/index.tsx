@@ -202,7 +202,7 @@ export const Editor: React.FC = () => {
         type: "link" | "endcta" | "questions" | "form" | "calendar";
     }) => {
         setSettingsActive(!settingsActive);
-        let newElement: Record<string, unknown> = {
+        let newElement: any = {
             id: uuidv4(),
             name: "Button",
             type: type,
@@ -307,7 +307,10 @@ export const Editor: React.FC = () => {
         updateDb();
     }, [interactiveElements]);
 
-    const saveScreenRecordingToCloud = async (file: File, type = "webm") => {
+    const saveScreenRecordingToCloud = async (
+        file: string | File,
+        type = "webm",
+    ) => {
         setLoading(true);
         const blobFile = await blobUrlToBlob(file);
         // Upload to Supabase Storage (stack: Supabase only, no Cloudinary)

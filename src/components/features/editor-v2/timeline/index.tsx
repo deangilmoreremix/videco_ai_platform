@@ -6,15 +6,21 @@ import {
     SliderTrack,
 } from "@chakra-ui/react";
 import { FiMove } from "react-icons/fi";
-import Draggable from "react-draggable";
+import DraggableBase, { DraggableProps } from "react-draggable";
 import React, { useEffect, useRef, useState } from "react";
-import { useEditorStore } from "src/store/editor";
+import { useEditorStore, InteractiveElementType } from "src/store/editor";
+
+// react-draggable's bundled typings require every defaultProp; alias with
+// Partial props so optional ones can be omitted (same component at runtime).
+const Draggable = DraggableBase as unknown as React.ComponentType<
+    Partial<DraggableProps>
+>;
 
 type TimelineProps = {
-    elements: { id: string; name: string; endTime: number; pos: number }[];
+    elements: InteractiveElementType[];
     saveTimeLineValue: (value: number) => void;
     videoUrl: string;
-    toggleSettingsWindow: (id: string) => void;
+    toggleSettingsWindow: (element: InteractiveElementType) => void;
 };
 export const Timeline = ({
     elements,
@@ -48,9 +54,9 @@ export const Timeline = ({
     }
 
     const handleDragStop = (
-        e: React.MouseEvent,
+        e: MouseEvent,
         data: {
-            element: { id: string; name: string; endTime: number; pos: number };
+            element: InteractiveElementType;
         },
     ) => {
         const TIMELINE_WIDTH = timelineRef.current.clientWidth - 48;

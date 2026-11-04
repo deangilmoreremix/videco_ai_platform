@@ -1,13 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import axios from "axios";
 import { verifyToken } from "src/utils/apiAuth";
 
 type ResponseData = {
     result: any;
 };
 
-const secretKey = process.env.VIDECO_SECRET_KEY;
+const _secretKey = process.env.VIDECO_SECRET_KEY;
 
 export default async function handler(
     req: any,

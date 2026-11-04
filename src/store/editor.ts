@@ -28,21 +28,24 @@ export type VideoInfo = {
     endCTAtitle: string;
 };
 export type InteractiveElementType = {
-    id: string;
+    id: any;
     name: string;
     url: string;
     type: string;
     butonPosition?: string;
     form_submit_text?: string;
-    answers?: unknown[];
-    answer_placeholder?: unknown;
-    answer_type?: unknown;
-    form_enable_name?: unknown;
-    form_enable_email?: unknown;
-    form_enable_message?: unknown;
+    answers?: any;
+    answer_placeholder?: any;
+    answer_type?: any;
+    form_enable_name?: any;
+    form_enable_email?: any;
+    form_enable_message?: any;
     pos: string | number;
     time: number;
     endTime: number;
+    link?: string;
+    defaultPosition?: { x: number; y: number };
+    user_id?: string;
 };
 
 export type EditorState = {

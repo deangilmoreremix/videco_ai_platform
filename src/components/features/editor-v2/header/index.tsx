@@ -65,11 +65,16 @@ export const Header: React.FC<HeaderProps> = ({
     const { isOpen, onClose } = useDisclosure();
     const chatBotModal = useDisclosure();
 
-    const [shareData, setShareData] = useState<Record<string, unknown>>();
+    const [shareData, setShareData] = useState<{
+        preview?: string;
+        url?: string;
+        final_url?: string;
+        [key: string]: unknown;
+    }>();
     const [imageLoading, setImageLoading] = useState<boolean>(true);
     const [emailProvider, setEmailProvider] = useState<{
         value: string;
-        label: string;
+        label?: string;
     }>();
     const [creatingPreview, setCreatingPreview] = useState<boolean>(false);
     const meta = useEditorStore((s) => s.meta);

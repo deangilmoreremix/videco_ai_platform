@@ -23,7 +23,8 @@ import {
 interface Provider {
     value: string;
     label: string;
-    fileType: string;
+    description?: string;
+    fileType?: string;
 }
 
 const ShareModal = ({ videoId, ogURL }: { videoId: string; ogURL: string }) => {
@@ -83,7 +84,7 @@ const ShareModal = ({ videoId, ogURL }: { videoId: string; ogURL: string }) => {
         }, 9000);
     };
 
-    const filteredProviders = emailProvidersList().filter(
+    const filteredProviders: Provider[] = emailProvidersList().filter(
         (provider: Provider) =>
             provider.label.toLowerCase().includes(search.toLowerCase()),
     );

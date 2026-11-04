@@ -40,9 +40,7 @@ export const Upload: React.FC<UploadProps> = ({
     const [recodDataURL, setRecodDataURL] = React.useState<string>();
     const [confirmRecodPreview, setConfirmRecodPreview] =
         React.useState<boolean>(false);
-    const [_plan, setPlan] = React.useState<
-        { plan_name?: string } | undefined
-    >();
+    const [_plan, setPlan] = React.useState<string | undefined>();
     const { getPlan } = useUserPlan();
     const { getData: _getData } = useFetchTeamData();
     const { type, varient } = router.query;
@@ -73,7 +71,7 @@ export const Upload: React.FC<UploadProps> = ({
             });
     };
 
-    const handleRecordFinish = async (data: File) => {
+    const handleRecordFinish = async (data: string) => {
         setRecodPreview(true);
         saveScreenRecordingToCloud(data);
         const blobFile = await blobUrlToBlob(data);
@@ -579,7 +577,10 @@ export const Upload: React.FC<UploadProps> = ({
 
 type UploadProps = {
     externalVideo: (url: string) => void;
-    saveScreenRecordingToCloud: (file: File, type?: string) => Promise<void>;
+    saveScreenRecordingToCloud: (
+        file: string | File,
+        type?: string,
+    ) => Promise<void>;
     isReady: boolean;
     isPorcessing?: boolean;
     children?: React.ReactNode;

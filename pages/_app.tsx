@@ -36,10 +36,10 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
         return null;
     });
     const router = useRouter();
-    const env = process.env.NODE_ENV;
+    const _env = process.env.NODE_ENV;
 
-    const { language, languages, setLanguage } = useLanguageStore();
-    const [currentLanguage, setCurrentLanguage] = useState<
+    const { language } = useLanguageStore();
+    const [_currentLanguage, setCurrentLanguage] = useState<
         ILanguage | undefined
     >();
 
@@ -77,10 +77,7 @@ function MyApp({ Component, pageProps }: AppProps): JSX.Element {
     // anonymously so useSession() resolves to a user and all gated UI renders.
     // This is for local visual review only — disable in production.
     useEffect(() => {
-        if (
-            process.env.NEXT_PUBLIC_ALLOW_ANON !== "true" ||
-            !supabase
-        ) {
+        if (process.env.NEXT_PUBLIC_ALLOW_ANON !== "true" || !supabase) {
             return;
         }
         let cancelled = false;

@@ -36,7 +36,7 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
 }) => {
     const router = useRouter();
     const { getBrandKit } = useBrandKit();
-    const [videoData, setVideoData] = useState<Record<string, unknown>[]>([]);
+    const [videoData, setVideoData] = useState<any[]>([]);
     const [leadsData, setLeadsData] = useState<
         { name: string; status: string }[]
     >([]);

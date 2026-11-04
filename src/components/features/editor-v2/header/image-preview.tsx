@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Progress } from "@chakra-ui/react";
+import { Box, Button, Image, Progress } from "@chakra-ui/react";
 import { useS3Upload } from "next-s3-upload";
 import { supabase } from "src/services";
 import { useRouter } from "next/router";

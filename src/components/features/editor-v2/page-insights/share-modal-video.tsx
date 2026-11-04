@@ -20,6 +20,13 @@ import {
     getEmailEmbedCodeForSimpleVideos,
 } from "src/utils/getEmailEmbedCode";
 
+interface Provider {
+    value: string;
+    label: string;
+    description?: string;
+    fileType?: string;
+}
+
 interface ShareModalVideoProps {
     videoId: string;
     ogURL: string;
@@ -68,8 +75,9 @@ const ShareModalVideo = ({ videoId, ogURL }: ShareModalVideoProps) => {
         }, 9000);
     };
 
-    const filteredProviders = emailProvidersList().filter((_provider) =>
-        _provider.label.toLowerCase().includes(search.toLowerCase()),
+    const filteredProviders: Provider[] = emailProvidersList().filter(
+        (_provider) =>
+            _provider.label.toLowerCase().includes(search.toLowerCase()),
     );
 
     return (
