@@ -23,11 +23,11 @@ import {
     FiPlay,
     FiStopCircle,
 } from "react-icons/fi";
-import { useUserPlan } from "src/hooks/useUserPlan";
+import { useUserPlan, PlanRow } from "src/hooks/useUserPlan";
 import { Templates } from "@components/features/ai-clone/templates";
 import { AuthGuard } from "src/hoc/withAuthGuard";
 const TeleprompterContent: React.FC = () => {
-    const [, setPlan] = useState<string | null>(null);
+    const [, setPlan] = useState<PlanRow | null>(null);
     const [, setLoading] = useState(true);
     const [started, setStarted] = useState(false);
 

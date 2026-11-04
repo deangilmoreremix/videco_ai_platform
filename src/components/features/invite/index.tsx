@@ -17,7 +17,6 @@ import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Formik, Form, Field } from "formik";
 import React from "react";
-import { supabase } from "src/services";
 import { useWorkspaces } from "src/store/workspace";
 
 export const Invite: React.FC<InviteProps> = ({

@@ -56,10 +56,11 @@ const SettingsContent: React.FC = () => {
     const toast = useToast();
     const [, setTeamMembers] = useState<
         Array<{
-            id: string;
+            id?: string;
             name?: string;
             role?: string;
             shared_account?: string;
+            shared_account_user?: boolean;
         }>
     >();
     const [, setDeleted] = useState(false);

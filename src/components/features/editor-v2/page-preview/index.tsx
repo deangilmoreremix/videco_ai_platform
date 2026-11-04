@@ -1,4 +1,9 @@
-import { CheckIcon, CloseIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import {
+    CheckIcon,
+    CloseIcon,
+    ArrowForwardIcon,
+    ChevronDownIcon,
+} from "@chakra-ui/icons";
 import {
     Box,
     Button,
@@ -16,6 +21,7 @@ import {
     MenuButton,
     MenuItem,
     MenuList,
+    Popover,
     PopoverArrow,
     PopoverBody,
     PopoverCloseButton,
@@ -33,7 +39,15 @@ import { Formik, Form, Field } from "formik";
 import { useRouter } from "next/router";
 import { rem } from "polished";
 import { useEffect, useRef, useState } from "react";
-import { FiEdit2 } from "react-icons/fi";
+import {
+    FiArrowRight,
+    FiEdit2,
+    FiEyeOff,
+    FiFlag,
+    FiImage,
+    FiLink,
+    FiRepeat,
+} from "react-icons/fi";
 import { useBrandKit } from "src/hooks/getBrandKit";
 import { useUserPlan } from "src/hooks/useUserPlan";
 import { useEditorStore } from "src/store/editor";
@@ -49,7 +63,8 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     mediaStatus,
 }) => {
     const router = useRouter();
-    const { meta, setVideoMeta } = useEditorStore();
+    const { meta, setVideoMeta, setVideo, interactiveElements } =
+        useEditorStore();
     const _playerRef = useRef(null);
     const { getBrandKit } = useBrandKit();
     const [_duration, setDuration] = useState(0);
@@ -73,7 +88,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     const [showPricing, setShowPricing] = useState<boolean>(false);
     const user = session?.user;
     const { getPlan } = useUserPlan();
-    const [plan, setPlan] = useState<{ plan_name?: string } | undefined>();
+    const [plan, setPlan] = useState<string | undefined>();
     useEffect(() => {
         const plan = async () => {
             const fetchPlan = await getPlan(user?.id);

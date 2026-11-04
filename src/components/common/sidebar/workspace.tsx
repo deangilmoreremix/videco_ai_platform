@@ -40,7 +40,11 @@ export const WorkspaceSwitcher = () => {
     const [workspaces, setWorkspaces] = useState<
         Array<{ id: string; name?: string; image?: string }>
     >([]);
-    const [isUpdate, setIsUpdate] = useState<unknown>(); //Workspace data as a json {id,name,image}
+    const [isUpdate, setIsUpdate] = useState<{
+        id?: string | number;
+        name?: string;
+        image?: string;
+    }>(); //Workspace data as a json {id,name,image}
     const user = session?.user;
     const fetchWorkspaces = async () => {
         await supabase
@@ -156,7 +160,7 @@ export const WorkspaceSwitcher = () => {
                 isOpen={isOpen}
                 onClose={() => {
                     onClose();
-                    setIsUpdate("");
+                    setIsUpdate(undefined);
                 }}
             >
                 <ModalOverlay />
@@ -217,7 +221,9 @@ export const WorkspaceSwitcher = () => {
                                             colorScheme="red"
                                             isLoading={props.isSubmitting}
                                             onClick={() =>
-                                                deleteWorkspaces(isUpdate.id)
+                                                deleteWorkspaces(
+                                                    String(isUpdate.id),
+                                                )
                                             }
                                         >
                                             Delete Workspace
@@ -331,7 +337,11 @@ export const WorkspaceSwitcher = () => {
                                                 setIsUpdate({
                                                     id: workspace.id,
                                                     name: workspace.name,
-                                                    image: workspace.image,
+                                                    image: (
+                                                        workspace as {
+                                                            image?: string;
+                                                        }
+                                                    ).image,
                                                 });
                                             }}
                                         >

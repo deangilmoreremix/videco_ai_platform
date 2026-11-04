@@ -388,12 +388,11 @@ export async function uploadImage(
     file: Buffer | Blob | File,
 ): Promise<{ url: string }> {
     const isFile = typeof File !== "undefined" && file instanceof File;
-    const filename = isFile
-        ? file.name
-        : (file as Blob | Buffer).name || "upload.png";
+    const filename = isFile ? (file as File).name : "upload.png";
+    const blob: Blob = Buffer.isBuffer(file) ? new Blob([file]) : file;
 
     const form = new FormData();
-    form.append("image", file, filename);
+    form.append("image", blob, filename);
 
     const { data } = await axios.post(`${MUAPI_BASE}/upload_image`, form, {
         headers: {

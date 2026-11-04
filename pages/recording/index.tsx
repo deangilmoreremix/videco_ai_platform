@@ -12,10 +12,11 @@ const RecordingContent: React.FC = () => {
     const user = session?.user;
     const [, setTeamMembers] = useState<
         Array<{
-            id: string;
+            id?: string;
             name?: string;
             role?: string;
             shared_account?: string;
+            shared_account_user?: boolean;
         }>
     >();
     const { getTeamUserIds, getData } = useFetchTeamData();

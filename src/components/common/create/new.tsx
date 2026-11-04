@@ -175,7 +175,7 @@ const New: React.FC = () => {
         { title: "CSV Upload", description: "CSV Upload" },
     ];
 
-    const { _activeStep, _setActiveStep } = useSteps({
+    const { activeStep: _activeStep, setActiveStep: _setActiveStep } = useSteps({
         index: 1,
         count: steps.length,
     });

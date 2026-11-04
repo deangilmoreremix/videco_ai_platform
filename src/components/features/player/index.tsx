@@ -82,6 +82,7 @@ export const Player = ({
     elements,
     setVideo,
 }: PlayerTypes) => {
+    const [_activeElement, setActiveElement] = useState(null);
     const [isMouseInside, setIsMouseInside] = useState(false);
     const [updatedPlaying, setUpdatedPlaying] = useState(playing);
     const [isVolueClicked, setIsVolueClicked] = useState(false);
@@ -95,6 +96,7 @@ export const Player = ({
     const [hideForm, setHideForm] = useState(false);
     const [hideQuestion, setHideQuestion] = useState(false);
     const [activeAnswerType, setActiveAnswerType] = useState("list");
+    const [_previewFinished, setPreviewFinished] = useState(false);
     const [isLargerThan800] = useMediaQuery("(min-width: 670px)");
 
     const [volumeBar, setVolumeBar] = useState(1);
@@ -117,8 +119,8 @@ export const Player = ({
 
         updateInteractiveElements(updatedActiveElement);
     };
-    const handleDragStart = (_e, _data) => {
-        // kept for prop compatibility; activeElement tracking removed
+    const handleDragStart = (e, _data) => {
+        setActiveElement(e);
     };
 
     const addOpacityToHexColor = (hexColor, opacity) => {

@@ -60,6 +60,7 @@
   ],
   "exclude": [
     "node_modules",
+    "supabase/functions",
     "test/*",
     "**/*.spec.ts",
     "**/*.spec.tsx",

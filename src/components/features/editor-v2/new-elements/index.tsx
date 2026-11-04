@@ -21,6 +21,8 @@ export const NewElements = ({
     const session = useSession();
     const user = session?.user;
     const [plan, setPlan] = React.useState<unknown>();
+    const [_active, setActive] = React.useState<string>("");
+    const [_isHovered, setIsHovered] = React.useState("");
     const { getPlan } = useUserPlan();
     const [showPricing, setShowPricing] = React.useState<boolean>(false);
     const meta = useEditorStore((s) => s.meta);

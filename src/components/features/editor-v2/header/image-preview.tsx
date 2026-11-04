@@ -9,7 +9,7 @@ interface VideoPreviewProps {
 }
 
 export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
-    const { uploadToS3, FileInput, openFileDialog } = useS3Upload();
+    const { files, uploadToS3, FileInput, openFileDialog } = useS3Upload();
     const router = useRouter();
     const [preview, setPreview] = useState<string>("");
     const [_url, setUrl] = useState<string>("");
@@ -95,7 +95,11 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
                     position="relative"
                     zIndex={1}
                 >
-                    {preview
+                    {files.length > 0
+                        ? preview
+                            ? "Uploaded"
+                            : "Uploading..."
+                        : preview
                         ? "Change preview image"
                         : "Click to upload preview image"}
                 </Button>

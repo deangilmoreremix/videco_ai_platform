@@ -1,4 +1,8 @@
-import { logger } from "./log";
+// Minimal structured logger (was a broken self-import of "./log").
+const logger = {
+    info: (message: string, meta?: Record<string, unknown>) =>
+        console.info(message, meta ?? {}),
+};
 
 interface UsageLog {
     user_id?: string;

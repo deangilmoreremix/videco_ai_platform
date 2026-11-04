@@ -38,7 +38,7 @@ export const StepGenerate: React.FC<StepImportProps> = () => {
     const [AIVideos, setAIVideos] = useState<Record<string, unknown>[]>([]);
     const [activePreviewVideo, setActivePreviewVideo] =
         useState<Record<string, unknown>>();
-    const { isOpen, onClose } = useDisclosure();
+    const { isOpen, onOpen, onClose } = useDisclosure();
     const previewModal = useDisclosure();
     const router = useRouter();
     const [greeting, setGreeting] = useState("Hello");
@@ -46,6 +46,7 @@ export const StepGenerate: React.FC<StepImportProps> = () => {
     const [regenerateData, setRegenerateData] =
         useState<Record<string, unknown>>();
     const [language, setLanguage] = useState<string>("");
+    const [_originalVideoPubId, setOriginalVideoPubId] = useState<string>("");
     const [sourceVideoUrl, setSourceVideoUrl] = useState<string>("");
     const session = useSession();
     const user = session?.user;

@@ -3,9 +3,12 @@ import {
     Button,
     Input,
     Drawer,
+    DrawerBody,
     DrawerCloseButton,
     Text,
     DrawerContent,
+    DrawerHeader,
+    DrawerOverlay,
     useDisclosure,
     Heading,
     useToast,
@@ -17,6 +20,8 @@ import {
     ModalBody,
     ModalCloseButton,
     ModalContent,
+    ModalOverlay,
+    useEditableControls,
     ButtonGroup,
     IconButton,
     Editable,
@@ -152,6 +157,37 @@ export const Header: React.FC<HeaderProps> = ({
             </Flex>
         );
     }
+    const updateBranding = async () => {
+        try {
+            await supabase
+                .from("videos")
+                .update({
+                    name: meta.title,
+                    desc: meta.desc,
+                    primary_link: meta.primary_link,
+                    primary_text: meta.primary_text,
+                    secondary_text: meta.secondary_text,
+                    secondary_link: meta.secondary_link,
+                    password_protection: meta.password_protection,
+                    remove_logo: meta.remove_logo,
+                })
+                .eq("id", router.query.id)
+                .select()
+                .then((res) => {
+                    setShareData(res.data?.[0]);
+                });
+        } catch (error) {
+            toast({
+                title: "Something went wrong.",
+                description:
+                    "Something went wronge while saving your video. Please cotnact our support team.",
+                status: "error",
+                duration: 1000,
+                isClosable: true,
+            });
+        }
+    };
+
     useEffect(() => {
         updateBranding();
     }, [meta]);

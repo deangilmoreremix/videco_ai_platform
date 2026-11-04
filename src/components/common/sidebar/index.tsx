@@ -41,7 +41,7 @@ import { IconType } from "react-icons";
 import { useRouter } from "next/router";
 import { useSession } from "@supabase/auth-helpers-react";
 import { planUsage } from "src/utils/plans";
-import { useUserPlan } from "src/hooks/useUserPlan";
+import { useUserPlan, PlanRow } from "src/hooks/useUserPlan";
 import { useFetchTeamData } from "src/hooks/useFetchTeamData";
 import { WorkspaceSwitcher } from "./workspace";
 import { SupportIcon } from "../icons";
@@ -173,7 +173,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
     const [plan, setPlan] = React.useState<string | null>(null);
     const { getPlan } = useUserPlan();
     const { getData } = useFetchTeamData();
-    const [trail, setTrail] = React.useState<unknown>(null);
+    const [trail, setTrail] = React.useState<PlanRow | null>(null);
     const [, setVideos] = React.useState<number>(0);
     const [, setVideoSize] = React.useState<number>(0);
     const calculateTotalSize = (data) => {

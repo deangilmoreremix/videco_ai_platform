@@ -139,7 +139,7 @@ export async function generatePersonalizedScript(params: {
     }
 
     const raw = completion.choices[0]?.message?.content || "{}";
-    let parsed: unknown;
+    let parsed: { greeting?: string; body?: string; cta?: string };
     try {
         parsed = JSON.parse(raw);
     } catch {

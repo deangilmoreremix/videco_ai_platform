@@ -32,7 +32,7 @@ type InviteListProps = {
 export const InviteList: React.FC<InviteListProps> = () => {
     const [teamMembers, setTeamMembers] = useState<
         Array<{
-            id: string;
+            id?: string;
             name?: string;
             role?: string;
             shared_account?: string;

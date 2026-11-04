@@ -1,7 +1,7 @@
 import { supabase } from "src/services";
 
 export async function verifyToken(
-    req: { body: { api_key: string } },
+    req: { body: { api_key: string }; user?: string },
     res: {
         status: (code: number) => {
             json: (body: Record<string, string>) => void;

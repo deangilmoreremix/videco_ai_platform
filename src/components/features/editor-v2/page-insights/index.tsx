@@ -19,7 +19,7 @@ import { supabase } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import "ka-table/style.css";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FiEye, FiPlay } from "react-icons/fi";
 
 import { useBrandKit } from "src/hooks/getBrandKit";
@@ -40,16 +40,21 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
     const [leadsData, setLeadsData] = useState<
         { name: string; status: string }[]
     >([]);
+    const [videoViews, setVideoViews] = useState<number>(0);
+    const [_loading, setLoading] = useState<boolean>(false);
+    const [videoPlays, setVideoPlays] = useState<number>(0);
+    const [linkClicks, setLinkClicks] = useState<number>(0);
     const [filterById] = useState<string | undefined>(
         router.query?.id as string | undefined,
     );
+    const [filterByRange] = useState<number>(7);
     const session = useSession();
     const user = session?.user;
     useEffect(() => {
         getBrandKit(user?.id);
-    }, [user, getBrandKit]);
+    }, []);
 
-    const getProfile = async () => {
+    const getProfile = useCallback(async () => {
         try {
             setLoading(true);
             let query = supabase
@@ -78,7 +83,7 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, supabase, filterById]);
 
     useEffect(() => {
         if (user) {
@@ -92,6 +97,20 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
     }));
 
     useEffect(() => {
+        let viewsCount = 0;
+        let playCount = 0;
+        let clickCount = 0;
+        if (processedVideoData) {
+            processedVideoData.forEach((item) => {
+                // Iterate through the analytics array of the item
+                item.analytics.forEach((analytic) => {
+                    // set the lenght as view count
+                    if (analytic.event === "view") viewsCount += 1;
+                    if (analytic.event === "video_play") playCount += 1;
+                    if (analytic.event === "link_click") clickCount += 1;
+                });
+            });
+        }
         const statusMapping: Record<string, string> = {
             page_view: "Landing Page Visit",
             video_play: "Landing Page Visit",
@@ -113,6 +132,9 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                 status: statusMapping[item.event] || "Unknown Event",
             }));
         setLeadsData(leads);
+        setLinkClicks(clickCount);
+        setVideoViews(viewsCount);
+        setVideoPlays(playCount);
     }, [videoData]);
 
     return (
@@ -261,7 +283,9 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                                     display="flex"
                                     mt={1}
                                     alignItems="center"
-                                ></Box>
+                                >
+                                    <Text> {videoViews} </Text>
+                                </Box>
                             </Box>
                             <Box
                                 display="flex"
@@ -292,7 +316,9 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                                     display="flex"
                                     mt={1}
                                     alignItems="center"
-                                ></Box>
+                                >
+                                    <Text> {videoPlays} </Text>
+                                </Box>
                             </Box>
                             <Box
                                 display="flex"
@@ -323,7 +349,9 @@ export const PageInsights: React.FC<PageInsightsProps> = ({
                                     display="flex"
                                     mt={1}
                                     alignItems="center"
-                                ></Box>
+                                >
+                                    <Text> {linkClicks} </Text>
+                                </Box>
                             </Box>
                         </Box>
                         <Flex

@@ -93,7 +93,7 @@ export const Editor: React.FC = () => {
                 "url, name, elements, type, media_status, embed_code, campaign_name, password_protection, meta_data, endCTAlink, remove_logo, endCTAtitle, endCTAtext, brand, secondary_link, desc, primary_link, primary_text, secondary_text, platform, preview",
             )
             .match({ id: router.query.id })
-            .then((_res) => {
+            .then((res) => {
                 setVideoUrl(res.data?.[0].url);
                 setCampaignName(res.data?.[0].campaign_name);
                 setVideoType(res.data?.[0].type);
@@ -317,10 +317,15 @@ export const Editor: React.FC = () => {
         });
 
         try {
-            const { uploadFile } = await import("src/services");
-            void uploadFile(fileToUpload, "videos", user.id);
+            const { uploadToStorage } = await import("src/services");
+            const result = await uploadToStorage(
+                fileToUpload,
+                "videos",
+                user.id,
+            );
 
-            const publicUrl = "";
+            setLoading(false);
+            const publicUrl = result.url;
             if (router.query.id) {
                 const theVideoId = router.query.id
                     ? router.query.id.toString()
