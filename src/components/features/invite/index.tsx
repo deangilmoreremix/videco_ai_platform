@@ -13,7 +13,7 @@ import {
     Select,
     useToast,
 } from "@chakra-ui/react";
-import { supabase } from "src/services";
+import { supabase, inviteTeamMember } from "src/services";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Formik, Form, Field } from "formik";
 import React from "react";
@@ -64,10 +64,9 @@ export const Invite: React.FC<InviteProps> = ({
             if (error) throw error;
             // Use Supabase Auth invite (sends a magic-link invitation email via Supabase Auth).
             // The stack is Supabase + Muapi + OpenAI only, so we delegate to Supabase's built-in invite.
-            await supabase.auth.admin.inviteUserByEmail(email, {
-                data: { full_name: name, tenant_id: workspace?.id },
-                redirectTo: `${window.location.origin}/auth/login`,
-            });
+            // auth.admin.* needs the service-role key, so the browser call
+            // always failed; the api Edge Function sends the invite.
+            await inviteTeamMember(email, name, workspace?.id);
             setInviteSent(true);
             setInviteUpdated(true);
         } catch (error) {

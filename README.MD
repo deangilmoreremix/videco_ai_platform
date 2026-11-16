@@ -149,13 +149,16 @@ The browser calls everything through `src/services` (`callMuapi`), which targets
 1. **Environment.** Copy `env.example` to `.env.local` and fill it in. Set the same
    values in Netlify. Edge Function keys go in Supabase secrets, as listed at the
    bottom of `env.example`.
-2. **Database.** Videco shares its Supabase project with other apps. Apply only
+2. **Database.** Apply `supabase/migrations/20261116_videco_pipeline_columns.sql`
+   and `20261117_videco_public_player.sql`. The second adds the public-player
+   RPCs that anonymous viewers need. Videco shares its Supabase project with other apps. Apply only
    Videco's migration files, one at a time, through the SQL editor or
    `apply_migration`. **Do not run `supabase db push`** against a shared project.
    Never add triggers on `auth.users`; Videco creates tenants per user, on demand.
-3. **Edge Function.** Deploy it:
+3. **Edge Functions.** Deploy `api`, plus the retired stubs that replace the
+   old, unsafe functions:
    ```bash
-   supabase functions deploy api --project-ref <ref>
+   supabase functions deploy api videos jobs images leads auth ai-orchestrator --project-ref <ref>
    ```
 4. **Stripe.** Create the Prices, put their ids in `NEXT_PUBLIC_PLAN_*`, and add a
    webhook endpoint at `https://<site>/api/stripe/webhooks`.

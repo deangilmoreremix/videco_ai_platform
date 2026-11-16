@@ -17,14 +17,17 @@ import {
 import { Player } from "@components/features/player";
 import { useRouter } from "next/router";
 import { useEditorStore } from "src/store/editor";
-import { supabase } from "src/services";
+import {
+    getPublicAiVideoUrl,
+    getPublicVideo,
+    trackVideoEvent,
+} from "src/services";
 
 const Edit: React.FC = () => {
     const router = useRouter();
     const { onClose } = useDisclosure();
 
     const [videoUrl, setVideoUrl] = useState("");
-    const [password, setPassword] = useState("");
     const [videoRest, setVideoRest] = useState({
         name: "",
         desc: "",
@@ -57,152 +60,83 @@ const Edit: React.FC = () => {
         interactiveElements,
         video: _video,
     } = useEditorStore();
-    const getAIVideoByID = useCallback(async (_og_url: string) => {
-        if (router.query.ai_email) {
-            await supabase
-                .from("ai_videos")
-                .select("url")
-                .ilike("contact->>email", router.query.ai_email.toString())
-                .eq("og_video_id", router.query.id)
-                .then((res) => {
-                    setVideoUrl(res.data?.[0]?.url);
-                });
-        } else {
-            await supabase
-                .from("ai_videos")
-                .select("url")
-                .match({ id: router.query.ai })
-                .then((res) => {
-                    setVideoUrl(res.data?.[0].url);
-                });
-        }
-    }, []);
-    const getVideoByID = useCallback(async () => {
-        await supabase
-            .from("videos")
-            .select(
-                "url, name, desc, elements, brand, remove_logo, endCTAlink, endCTAtitle, endCTAtext, preview, password_protection, primary_link, primary_text, secondary_text, secondary_link, platform",
-            )
-            .match({ id: router.query.id })
-            .then((res) => {
-                if (!!router.query.ai || !!router.query.ai_email) {
-                    getAIVideoByID(res.data?.[0].url);
-                } else {
-                    setVideoUrl(res.data?.[0].url);
-                }
-                setVideoRest({
-                    name: res.data?.[0].name,
-                    desc: res.data?.[0].desc,
-                    preview: res.data?.[0].preview,
-                    platform: res.data?.[0].platform,
-                    primary_link: res.data?.[0].primary_link,
-                    primary_text: res.data?.[0].primary_text,
-                    secondary_text: res.data?.[0].secondary_text,
-                    secondary_link: res.data?.[0].secondary_link,
-                    password_protection: res.data?.[0].password_protection,
-                    elements: res.data?.[0].elements,
-                    remove_logo: res.data?.[0]?.remove_logo,
-                    brand: res.data?.[0]?.brand,
-                    endCTAlink: res.data?.[0]?.endCTAlink,
-                    endCTAtitle: res.data?.[0]?.endCTAtitle,
-                    endCTAtext: res.data?.[0]?.endCTAtext,
-                });
-                setInteractiveElements(res.data?.[0].elements);
-            });
-    }, []);
+    const [locked, setLocked] = useState(false);
+    const [wrongPassword, setWrongPassword] = useState(false);
+
+    // Loads through the videco_public_video RPC: anonymous viewers can't read
+    // the videos table directly, and the password is checked server-side.
+    const getVideoByID = useCallback(
+        async (passwordAttempt?: string) => {
+            const id = router.query.id as string | undefined;
+            if (!id) return;
+            const video = await getPublicVideo(id, passwordAttempt).catch(
+                (e) => {
+                    console.error("Could not load video", e);
+                    return null;
+                },
+            );
+            if (!video) return;
+            if (video.locked) {
+                setLocked(true);
+                setWrongPassword(!!video.wrong_password);
+                setVideoRest((prev) => ({
+                    ...prev,
+                    name: video.name ?? "",
+                    preview: video.preview ?? "",
+                }));
+                return;
+            }
+            setLocked(false);
+            setWrongPassword(false);
+
+            const aiId = router.query.ai as string | undefined;
+            const aiEmail = router.query.ai_email as string | undefined;
+            if (aiId || aiEmail) {
+                const aiUrl = await getPublicAiVideoUrl(id, {
+                    aiId,
+                    email: aiEmail,
+                }).catch(() => null);
+                setVideoUrl(aiUrl || video.url || "");
+            } else {
+                setVideoUrl(video.url ?? "");
+            }
+            setVideoRest((prev) => ({
+                ...prev,
+                name: video.name ?? "",
+                desc: video.desc ?? "",
+                preview: video.preview ?? "",
+                platform: video.platform ?? prev.platform,
+                primary_link: video.primary_link ?? prev.primary_link,
+                primary_text: video.primary_text ?? prev.primary_text,
+                secondary_text: video.secondary_text ?? prev.secondary_text,
+                secondary_link: video.secondary_link ?? prev.secondary_link,
+                password_protection: "false",
+                elements: (video.elements as never[]) ?? [],
+                remove_logo: video.remove_logo ?? false,
+                brand: (video.brand as typeof prev.brand) ?? prev.brand,
+                endCTAlink: video.endCTAlink ?? "",
+                endCTAtitle: video.endCTAtitle ?? "",
+                endCTAtext: video.endCTAtext ?? "",
+            }));
+            setInteractiveElements((video.elements as never[]) ?? []);
+        },
+        [router.query],
+    );
 
     const setVideoAnalytics = useCallback(async () => {
-        const view = localStorage.getItem("video_view") || false;
-        //create another localstroage item called view_count and increment it when user come to the page
-        const view_count = localStorage.getItem("view_count") || 1;
-
-        if (view) {
-            localStorage.setItem(
-                "view_count",
-                (Number(view_count) + 1).toString(),
-            );
-            await supabase
-                .from("analytics")
-                .update([
-                    {
-                        data: {
-                            user_agent: navigator.userAgent,
-                            count: Number(view_count) + 1,
-                            name: videoRest.name,
-                            lead: router.query.ai_email ?? "",
-                        },
-                    },
-                ])
-                .eq("anoyomous_id", view)
-                .eq("event", "view");
-        } else {
-            localStorage.setItem("view_count", "1");
-            await supabase
-                .from("analytics")
-                .insert([
-                    {
-                        video_id: router.query.id,
-                        event: "view",
-                        data: {
-                            user_agent: navigator.userAgent,
-                            count: view_count,
-                            name: videoRest.name,
-                            lead: router.query.ai_email ?? "",
-                        },
-                    },
-                ])
-                .select("anoyomous_id")
-                .then((res) => {
-                    localStorage.setItem(
-                        "video_view",
-                        res.data[0].anoyomous_id,
-                    );
-                });
-        }
-    }, [router.query]);
+        if (!router.query.id || !videoRest.name || locked) return;
+        await trackVideoEvent(router.query.id as string, "view", {
+            name: videoRest.name,
+            lead: (router.query.ai_email as string) ?? "",
+        });
+    }, [router.query, videoRest.name, locked]);
 
     const onPlayerPlay = async () => {
-        const view = localStorage.getItem("video_play") || false;
-        const view_count = localStorage.getItem("video_play_count") || 1;
-        if (view) {
-            await supabase
-                .from("analytics")
-                .update([
-                    {
-                        data: {
-                            user_agent: navigator.userAgent,
-                            count: Number(view_count) + 1,
-                            name: videoRest.name,
-                            lead: router.query.ai_email ?? "",
-                        },
-                    },
-                ])
-                .eq("anoyomous_id", view)
-                .eq("event", "video_play");
-        } else {
-            localStorage.setItem("video_play_count", "1");
-            await supabase
-                .from("analytics")
-                .insert([
-                    {
-                        video_id: router.query.id,
-                        event: "video_play",
-                        data: {
-                            user_agent: navigator.userAgent,
-                            count: view_count,
-                            name: videoRest.name,
-                            lead: router.query.ai_email ?? "",
-                        },
-                    },
-                ])
-                .select("anoyomous_id")
-                .then((res) => {
-                    localStorage.setItem(
-                        "video_play",
-                        res.data[0].anoyomous_id,
-                    );
-                });
-        }
+        if (!router.query.id) return;
+        await trackVideoEvent(router.query.id as string, "video_play", {
+            name: videoRest.name,
+            lead: (router.query.ai_email as string) ?? "",
+        });
     };
 
     useEffect(() => {
@@ -225,13 +159,7 @@ const Edit: React.FC = () => {
             <>
                 <Modal
                     closeOnOverlayClick={false}
-                    isOpen={
-                        videoRest.password_protection === password ||
-                        videoRest.password_protection === "false" ||
-                        videoRest.password_protection === null
-                            ? false
-                            : true
-                    }
+                    isOpen={locked}
                     onClose={onClose}
                     size="3xl"
                 >
@@ -242,7 +170,11 @@ const Edit: React.FC = () => {
                         </ModalHeader>
                         <ModalBody pb={6}>
                             <FormControl>
-                                <FormLabel>Enter the password</FormLabel>
+                                <FormLabel>
+                                    {wrongPassword
+                                        ? "Wrong password, try again"
+                                        : "Enter the password"}
+                                </FormLabel>
                                 <Input
                                     value={input}
                                     onChange={handleInputChange}
@@ -255,9 +187,7 @@ const Edit: React.FC = () => {
                             <Button
                                 colorScheme="green"
                                 mr={3}
-                                onClick={() => {
-                                    setPassword(input);
-                                }}
+                                onClick={() => getVideoByID(input)}
                             >
                                 Watch
                             </Button>

@@ -1,58 +1,10 @@
-# Netlify Functions directory
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
+# Next.js app on Netlify (API routes run as Netlify functions automatically).
+#
+# The old netlify/functions/* duplicates of the Supabase backend were removed:
+# they used the service-role key and trusted a caller-supplied x-tenant-id
+# header, so anyone could read or write any tenant's data. The browser talks
+# to the Supabase `api` Edge Function (src/services/index.ts).
 
-# Route each Netlify Function endpoint
-[[redirects]]
-  from = "/functions/v1/api/*"
-  to = "/.netlify/functions/api"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/auth/*"
-  to = "/.netlify/functions/auth"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/images/*"
-  to = "/.netlify/functions/images"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/jobs/*"
-  to = "/.netlify/functions/jobs"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/leads/*"
-  to = "/.netlify/functions/leads"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/videos/*"
-  to = "/.netlify/functions/videos"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/webhooks/muapi"
-  to = "/.netlify/functions/ai-orchestrator"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/functions/v1/webhooks/muapi/*"
-  to = "/.netlify/functions/ai-orchestrator"
-  status = 200
-  force = true
-
-# Next.js app routing
 [build]
   command = "yarn build"
   publish = ".next"
@@ -62,9 +14,3 @@
   # Note: do NOT set `port` here. Netlify's framework detector already
   # detects Next.js on port 3000. Setting port = 3000 explicitly triggers
   # "The 'port' option you specified conflicts with the port of your application".
-
-# Example redirect if needed for SPA or API
-# [[redirects]]
-#   from = "/api/*"
-#   to = "/.netlify/functions/:splat"
-#   status = 200

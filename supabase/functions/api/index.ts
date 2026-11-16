@@ -287,7 +287,9 @@ async function speakAsUser(
 }
 
 /** Scrolling screen recording of a website (upstream used ScreenshotOne `animate`). */
-async function fetchWebsiteScroll(website: string): Promise<Uint8Array> {
+async function fetchWebsiteScroll(rawWebsite: string, linkedinCookie?: string): Promise<Uint8Array> {
+  // Older clients appended "&cookies=li_at=..." to the URL; split it off.
+  const [website, legacyCookie] = rawWebsite.split("&cookies=");
   const params = new URLSearchParams({
     access_key: SCREENSHOTONE_ACCESS_KEY,
     url: website,
@@ -309,6 +311,13 @@ async function fetchWebsiteScroll(website: string): Promise<Uint8Array> {
     scroll_easing: "ease_in_out_quint",
     ignore_host_errors: "true",
   });
+  // ScreenshotOne cookie format: name=value; Domain=...; Secure; HttpOnly
+  const cookie = linkedinCookie
+    ? `li_at=${linkedinCookie}; Domain=www.linkedin.com; Secure; HttpOnly`
+    : legacyCookie
+      ? decodeURIComponent(legacyCookie.replace(/\+/g, " "))
+      : "";
+  if (cookie) params.append("cookies", cookie);
   let lastErr = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(`https://api.screenshotone.com/animate?${params}`);
@@ -643,6 +652,23 @@ async function getTenantFromRequest(req: Request): Promise<string | null> {
   return tenantId;
 }
 
+/** Owner of a video, for attributing anonymous viewer submissions. */
+async function videoOwner(videoId: unknown): Promise<{ id: string; user_id: string; tenant_id: string | null } | null> {
+  if (typeof videoId !== "string" || !/^[0-9a-f-]{36}$/i.test(videoId)) return null;
+  const { data } = await supabase.from("videos").select("id, user_id, tenant_id").eq("id", videoId).maybeSingle();
+  return (data as any) || null;
+}
+
+const str = (v: unknown, max: number): string | null =>
+  typeof v === "string" ? v.slice(0, max) : v == null ? null : String(v).slice(0, max);
+
+/** Keep anonymous JSON payloads small. */
+function limitJson(v: unknown): Record<string, unknown> {
+  if (!v || typeof v !== "object") return {};
+  const text = JSON.stringify(v);
+  return text.length > 20000 ? { truncated: true } : (v as Record<string, unknown>);
+}
+
 async function getUserIdFromRequest(req: Request): Promise<string | null> {
   const auth = req.headers.get("authorization");
   if (!auth) return null;
@@ -732,7 +758,9 @@ Deno.serve(async (req: Request) => {
       if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
       const provided =
         req.headers.get("x-muapi-webhook-secret") || url.searchParams.get("secret");
-      if (WEBHOOK_SHARED_SECRET && provided !== WEBHOOK_SHARED_SECRET) {
+      // Without a configured secret anyone could mark jobs complete with
+      // arbitrary URLs, so the webhook is disabled until one is set.
+      if (!WEBHOOK_SHARED_SECRET || provided !== WEBHOOK_SHARED_SECRET) {
         return json({ error: "Invalid webhook secret" }, 401);
       }
       const payload = await req.json();
@@ -762,31 +790,10 @@ Deno.serve(async (req: Request) => {
       return json({ received: true });
     }
 
-    // ========================================================================
-    // MUAPI ACCOUNT (proxy to muapi for balance / keys)
-    // ========================================================================
-    if (segments[0] === "account") {
-      if (req.method === "GET" && segments[1] === "balance") {
-        const result = await muapiGet("account/balance");
-        return json(result);
-      }
-      if (req.method === "POST" && segments[1] === "topup") {
-        const payload = await req.json();
-        const result = await muapiSubmit("account/topup", payload);
-        return json(result);
-      }
-    }
-
-    if (segments[0] === "keys" && req.method === "GET") {
-      return json(await muapiGet("keys"));
-    }
-    if (segments[0] === "keys" && req.method === "POST") {
-      const payload = await req.json();
-      return json(await muapiSubmit("keys", payload));
-    }
-    if (segments[0] === "keys" && req.method === "DELETE") {
-      return json(await muapiDelete(`keys/${segments[1]}`));
-    }
+    // Muapi account / key management is intentionally NOT proxied: the
+    // gateway only requires the public anon JWT, so those routes let anyone
+    // list, create or delete the Muapi API keys and top up the account.
+    // Manage them at https://muapi.ai instead.
 
     // ========================================================================
     // MUAPI MODEL CATALOG (live fetch)
@@ -811,6 +818,7 @@ Deno.serve(async (req: Request) => {
     // MUAPI FILE UPLOAD
     // ========================================================================
     if (segments[0] === "upload" && req.method === "POST") {
+      if (!(await getUserIdFromRequest(req))) return json({ error: "Auth required" }, 401);
       const ct = req.headers.get("content-type") || "";
       if (ct.includes("multipart/form-data")) {
         const fd = await req.formData();
@@ -1221,7 +1229,9 @@ Deno.serve(async (req: Request) => {
           .select("*")
           .eq("id", id)
           .single();
-        if (!job) return json({ error: "Job not found" }, 404);
+        if (!job || !tenantId || job.tenant_id !== tenantId) {
+          return json({ error: "Job not found" }, 404);
+        }
         if (job.status === "completed" || job.status === "failed") {
           return json({ status: job.status, outputs: extractOutputUrls(job.output), error: job.error });
         }
@@ -1423,7 +1433,9 @@ Deno.serve(async (req: Request) => {
     if (segments[0] === "storage" && segments[1] === "signed-url" && req.method === "POST") {
       const tenantId = await getTenantFromRequest(req);
       if (!tenantId) return json({ error: "Auth required" }, 401);
-      const { bucket, path, expiresIn = 3600 } = await req.json();
+      const { bucket = MEDIA_BUCKET, path, expiresIn = 3600 } = await req.json();
+      // Shared project: never sign URLs for other apps' buckets.
+      if (bucket !== MEDIA_BUCKET) return json({ error: "Bucket not allowed" }, 403);
       const { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUrl(path, expiresIn);
@@ -1435,12 +1447,23 @@ Deno.serve(async (req: Request) => {
     // LEADS / SUBMISSIONS / FEEDBACK
     // ========================================================================
     if (segments[0] === "leads" && req.method === "POST") {
+      // Public (video viewers are anonymous): attribute to the video owner.
       const body = await req.json();
-      const tenantId = body.tenant_id || (await getTenantFromRequest(req));
+      const owner = await videoOwner(body.video_id);
+      if (!owner) return json({ error: "Unknown video" }, 404);
       const { data, error } = await supabase
         .from("leads")
-        .insert({ ...body, tenant_id: tenantId })
-        .select()
+        .insert({
+          video_id: owner.id,
+          user_id: owner.user_id,
+          tenant_id: owner.tenant_id,
+          name: str(body.name, 200),
+          email: str(body.email, 320),
+          phone: str(body.phone, 50),
+          message: str(body.message, 5000),
+          data: limitJson(body.data),
+        })
+        .select("id")
         .single();
       if (error) throw error;
       return json(data, 201);
@@ -1459,24 +1482,38 @@ Deno.serve(async (req: Request) => {
     }
 
     if (segments[0] === "submissions" && req.method === "POST") {
-      const body = await req.json();
-      const tenantId = body.tenant_id || (await getTenantFromRequest(req));
+      // Public player form. The table stores the answers as `payload`
+      // (the old code inserted the form fields as columns, which failed).
+      const { video_id, ...fields } = await req.json();
+      const owner = await videoOwner(video_id);
+      if (!owner) return json({ error: "Unknown video" }, 404);
+      delete (fields as Record<string, unknown>).user_id;
+      delete (fields as Record<string, unknown>).tenant_id;
       const { data, error } = await supabase
         .from("submissions")
-        .insert({ ...body, tenant_id: tenantId })
-        .select()
+        .insert({ video_id: owner.id, tenant_id: owner.tenant_id, payload: limitJson(fields) })
+        .select("id")
         .single();
       if (error) throw error;
       return json(data, 201);
     }
 
     if (segments[0] === "feedback" && req.method === "POST") {
+      // Public player question answers.
       const body = await req.json();
-      const tenantId = body.tenant_id || (await getTenantFromRequest(req));
+      const owner = await videoOwner(body.video_id);
+      if (!owner) return json({ error: "Unknown video" }, 404);
       const { data, error } = await supabase
         .from("feedback")
-        .insert({ ...body, tenant_id: tenantId })
-        .select()
+        .insert({
+          video_id: owner.id,
+          user_id: owner.user_id,
+          tenant_id: owner.tenant_id,
+          question: str(body.question, 1000),
+          answer: str(body.answer, 5000),
+          session_id: str(body.session_id, 200),
+        })
+        .select("id")
         .single();
       if (error) throw error;
       return json(data, 201);
@@ -1575,7 +1612,9 @@ Deno.serve(async (req: Request) => {
             if (!SCREENSHOTONE_ACCESS_KEY) {
               return json({ error: "Website backgrounds need SCREENSHOTONE_ACCESS_KEY" }, 503);
             }
-            backgroundId = await cloudinaryUpload(await fetchWebsiteScroll(body.website));
+            backgroundId = await cloudinaryUpload(
+              await fetchWebsiteScroll(body.website, body.linkedin_cookie),
+            );
           }
 
           const finalUrl = composePersonalizedVideo({
@@ -1671,34 +1710,23 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     // AUTH
     // ========================================================================
-    if (segments[0] === "auth" && segments[1] === "signup" && req.method === "POST") {
-      const { email, password, full_name, tenant_id } = await req.json();
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name, tenant_id },
-      });
-      if (error) throw error;
-      if (tenant_id) {
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          tenant_id,
-          email,
-          full_name,
-        });
-      }
-      return json({ user: data.user });
-    }
+    // (auth/signup removed: it let anyone create confirmed users in the
+    // shared auth project with any tenant id. Users sign up through
+    // Supabase Auth on the client.)
 
     if (segments[0] === "auth" && segments[1] === "invite" && req.method === "POST") {
-      const { email, full_name, tenant_id, redirectTo } = await req.json();
+      const tenantId = await getTenantFromRequest(req);
+      const inviterId = await getUserIdFromRequest(req);
+      if (!tenantId || !inviterId) return json({ error: "Auth required" }, 401);
+      const { email, full_name, workspace_id } = await req.json();
+      if (!email || typeof email !== "string") return json({ error: "email required" }, 400);
+      const siteUrl = Deno.env.get("SITE_URL") || "https://app.videco.io";
       const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        data: { full_name, tenant_id },
-        redirectTo: redirectTo || "https://app.videco.io/auth/login",
+        data: { full_name: str(full_name, 200), tenant_id: tenantId, invited_by: inviterId, workspace_id },
+        redirectTo: `${siteUrl}/auth/login`,
       });
       if (error) throw error;
-      return json({ user: data.user });
+      return json({ user: { id: data.user?.id, email: data.user?.email } });
     }
 
     return json({ error: "Not found", path }, 404);

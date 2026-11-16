@@ -23,10 +23,9 @@ import { useRouter } from "next/router";
 import { useEditorStore } from "src/store/editor";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import { FiArrowRight } from "react-icons/fi";
-import { useBrandKit } from "src/hooks/getBrandKit";
 import { usePersonalizedContent } from "src/hooks/usePersonalizedContent";
 import Head from "next/head";
-import { supabase } from "src/services";
+import { getPublicVideo, trackVideoEvent } from "src/services";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
@@ -36,7 +35,6 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
     const [isLargerThan800] = useMediaQuery("(min-width: 800px)");
 
     const [videoUrl, setVideoUrl] = useState("");
-    const [password, setPassword] = useState("");
     const [videoRest, setVideoRest] = useState({
         name: "",
         desc: "",
@@ -63,7 +61,6 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
     });
     const [, _setPlaying] = useState(false);
     const [input, setInput] = useState("");
-    const { getBrandKit } = useBrandKit();
     const handleInputChange = (e) => setInput(e.target.value);
 
     const [, _setDuration] = useState(0);
@@ -74,84 +71,64 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
         interactiveElements: _interactiveElements,
         video: _video,
     } = useEditorStore();
-    const getVideoByID = useCallback(async () => {
-        await supabase
-            .from("videos")
-            .select(
-                "url, name, desc, elements, endCTAlink, endCTAtitle, endCTAtext, brand, preview, password_protection, primary_link, primary_text, secondary_text, secondary_link, platform, user_id",
-            )
-            .match({ id: router.query.id })
-            .then((res) => {
-                setVideoUrl(res.data?.[0].url);
-                setVideoRest({
-                    name: res.data?.[0].name,
-                    desc: res.data?.[0].desc,
-                    preview: res.data?.[0].preview,
-                    platform: res.data?.[0].platform,
-                    primary_link: res.data?.[0].primary_link,
-                    primary_text: res.data?.[0].primary_text,
-                    secondary_text: res.data?.[0].secondary_text,
-                    secondary_link: res.data?.[0].secondary_link,
-                    password_protection: res.data?.[0].password_protection,
-                    elements: res.data?.[0].elements,
-                    brand: res.data?.[0].brand?.[0],
-                    endCTAlink: res.data?.[0]?.endCTAlink,
-                    endCTAtitle: res.data?.[0]?.endCTAtitle,
-                    endCTAtext: res.data?.[0]?.endCTAtext,
-                });
-                setInteractiveElements(res.data?.[0].elements);
-                getBrandKit(res.data?.[0]?.user_id).then((res) => {
-                    if (res?.[0]) {
-                        setBrandKit(res?.[0]);
-                    }
-                });
-            });
-    }, []);
+    const [locked, setLocked] = useState(false);
+    const [wrongPassword, setWrongPassword] = useState(false);
+
+    // Loads through the videco_public_video RPC: anonymous viewers can't read
+    // videos / brand_kit directly, and the password is checked server-side.
+    const getVideoByID = useCallback(
+        async (passwordAttempt?: string) => {
+            const id = router.query.id as string | undefined;
+            if (!id) return;
+            const video = await getPublicVideo(id, passwordAttempt).catch(
+                (e) => {
+                    console.error("Could not load video", e);
+                    return null;
+                },
+            );
+            if (!video) return;
+            if (video.locked) {
+                setLocked(true);
+                setWrongPassword(!!video.wrong_password);
+                return;
+            }
+            setLocked(false);
+            setWrongPassword(false);
+            setVideoUrl(video.url ?? "");
+            setVideoRest((prev) => ({
+                ...prev,
+                name: video.name ?? "",
+                desc: video.desc ?? "",
+                preview: video.preview ?? "",
+                platform: video.platform ?? prev.platform,
+                primary_link: video.primary_link ?? prev.primary_link,
+                primary_text: video.primary_text ?? prev.primary_text,
+                secondary_text: video.secondary_text ?? prev.secondary_text,
+                secondary_link: video.secondary_link ?? prev.secondary_link,
+                password_protection: "false",
+                elements: (video.elements as never[]) ?? [],
+                brand:
+                    (Array.isArray(video.brand)
+                        ? video.brand[0]
+                        : (video.brand as typeof prev.brand)) ?? prev.brand,
+                endCTAlink: video.endCTAlink ?? "",
+                endCTAtitle: video.endCTAtitle ?? "",
+                endCTAtext: video.endCTAtext ?? "",
+            }));
+            setInteractiveElements((video.elements as never[]) ?? []);
+            if (video.brand_kit) {
+                setBrandKit((prev) => ({ ...prev, ...video.brand_kit }));
+            }
+        },
+        [router.query],
+    );
 
     const setVideoAnalytics = useCallback(async () => {
-        const view = localStorage.getItem("page_view") || false;
-        //create another localstroage item called view_count and increment it when user come to the page
-        const view_count = localStorage.getItem("page_view_count") || 1;
-
-        if (view) {
-            localStorage.setItem(
-                "page_view_count",
-                (Number(view_count) + 1).toString(),
-            );
-            await supabase
-                .from("analytics")
-                .update([
-                    {
-                        data: {
-                            user_agent: navigator.userAgent,
-                            count: Number(view_count) + 1,
-                            name: videoRest.name,
-                        },
-                    },
-                ])
-                .eq("anoyomous_id", view)
-                .eq("event", "page_view");
-        } else {
-            localStorage.setItem("page_view_count", "1");
-            await supabase
-                .from("analytics")
-                .insert([
-                    {
-                        video_id: router.query.id,
-                        event: "page_view",
-                        data: {
-                            user_agent: navigator.userAgent,
-                            count: view_count,
-                            name: videoRest.name,
-                        },
-                    },
-                ])
-                .select("anoyomous_id")
-                .then((res) => {
-                    localStorage.setItem("page_view", res.data[0].anoyomous_id);
-                });
-        }
-    }, [router.query]);
+        if (!router.query.id || !videoRest.name || locked) return;
+        await trackVideoEvent(router.query.id as string, "page_view", {
+            name: videoRest.name,
+        });
+    }, [router.query, videoRest.name, locked]);
 
     useEffect(() => {
         getVideoByID();
@@ -227,13 +204,7 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
                 <>
                     <Modal
                         closeOnOverlayClick={false}
-                        isOpen={
-                            videoRest.password_protection === password ||
-                            videoRest.password_protection === "false" ||
-                            videoRest.password_protection === null
-                                ? false
-                                : true
-                        }
+                        isOpen={locked}
                         onClose={onClose}
                         size="3xl"
                     >
@@ -244,7 +215,11 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
                             </ModalHeader>
                             <ModalBody pb={6}>
                                 <FormControl>
-                                    <FormLabel>Enter the password</FormLabel>
+                                    <FormLabel>
+                                        {wrongPassword
+                                            ? "Wrong password, try again"
+                                            : "Enter the password"}
+                                    </FormLabel>
                                     <Input
                                         value={input}
                                         onChange={handleInputChange}
@@ -257,9 +232,7 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
                                 <Button
                                     colorScheme="green"
                                     mr={3}
-                                    onClick={() => {
-                                        setPassword(input);
-                                    }}
+                                    onClick={() => getVideoByID(input)}
                                 >
                                     Watch
                                 </Button>
@@ -397,22 +370,15 @@ const Edit: React.FC<{ videoData: any }> = ({ videoData }) => {
 export default Edit;
 
 export async function getServerSideProps({ params }) {
-    const data = await supabase
-        .from("videos")
-        .select(
-            "url, name, desc, elements, endCTAlink, endCTAtitle, endCTAtext, brand, preview, password_protection, primary_link, primary_text, secondary_text, secondary_link, platform, user_id",
-        )
-        .match({ id: params.id });
-
+    // Link-preview metadata (title / description). Uses the public RPC; the
+    // old direct query returned nothing for anonymous visitors and the page
+    // crashed with a 500 on data.data[0].
+    const video = await getPublicVideo(params.id).catch(() => null);
+    if (!video) return { notFound: true };
     const videoData = {
-        title: data.data[0].name,
-        url: data.data[0].url,
-        desc: data.data[0].desc,
+        title: video.name ?? "Videco",
+        url: video.locked ? null : video.url ?? null,
+        desc: video.locked ? null : video.desc ?? null,
     };
-
-    return {
-        props: {
-            videoData, // Pass fetched data as props
-        },
-    };
+    return { props: { videoData } };
 }

@@ -59,10 +59,13 @@ async function authHeaders(): Promise<Record<string, string>> {
         data: { session },
     } = await supabase.auth.getSession();
     const tenantId = getTenantId(session?.user);
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    // Supabase's gateway rejects requests with no JWT, so anonymous video
+    // viewers (lead / form / feedback submissions) send the public anon key.
+    const token = session?.access_token || anonKey;
     return {
-        ...(session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}` }
-            : {}),
+        ...(anonKey ? { apikey: anonKey } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(tenantId ? { "x-tenant-id": tenantId } : {}),
     };
 }
@@ -280,6 +283,110 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
 }
 
 // ============================================================================
+// PUBLIC VIDEO PLAYER (anonymous viewers)
+// Backed by SECURITY DEFINER RPCs (supabase/migrations/*_videco_public_player)
+// so viewers can watch one video without opening the tables to everyone.
+// ============================================================================
+export type PublicVideo = {
+    locked: boolean;
+    wrong_password?: boolean;
+    id?: string;
+    url?: string;
+    name?: string;
+    desc?: string;
+    elements?: unknown[];
+    brand?: unknown;
+    remove_logo?: boolean;
+    endCTAlink?: string;
+    endCTAtitle?: string;
+    endCTAtext?: string;
+    preview?: string;
+    primary_link?: string;
+    primary_text?: string;
+    secondary_text?: string;
+    secondary_link?: string;
+    platform?: string;
+    user_id?: string;
+    brand_kit?: {
+        primary_color?: string;
+        secondary_color?: string;
+        primary_text_color?: string;
+        secondary_text_color?: string;
+    } | null;
+};
+
+/** One video for the player; `locked` until the right password is given. */
+export async function getPublicVideo(
+    id: string,
+    password?: string,
+): Promise<PublicVideo | null> {
+    const { data, error } = await supabase.rpc("videco_public_video", {
+        p_id: id,
+        p_password: password ?? null,
+    });
+    if (error) throw error;
+    return (data as PublicVideo) ?? null;
+}
+
+/** A lead's personalised campaign video URL (by ai id or lead email). */
+export async function getPublicAiVideoUrl(
+    videoId: string,
+    opts: { aiId?: string | number; email?: string },
+): Promise<string | null> {
+    const { data, error } = await supabase.rpc("videco_public_ai_video", {
+        p_video_id: videoId,
+        p_ai_id: opts.aiId ? Number(opts.aiId) : null,
+        p_email: opts.email ?? null,
+    });
+    if (error) throw error;
+    return (data as string) ?? null;
+}
+
+export type VideoEvent = "view" | "video_play" | "page_view" | "link_click";
+
+/**
+ * Record a viewer event. Repeat events from the same browser update one row
+ * per video+event (count incremented), like upstream, but keyed per video.
+ */
+export async function trackVideoEvent(
+    videoId: string,
+    event: VideoEvent,
+    data: { name?: string; lead?: string } = {},
+): Promise<void> {
+    const rowKey = `videco:${event}:${videoId}`;
+    const countKey = `${rowKey}:count`;
+    let rowId: string | null = null;
+    let count = 1;
+    try {
+        rowId = localStorage.getItem(rowKey);
+        count = Number(localStorage.getItem(countKey) || 0) + 1;
+    } catch {
+        // storage blocked: still record the event
+    }
+    const { data: id, error } = await supabase.rpc("videco_track_event", {
+        p_video_id: videoId,
+        p_event: event,
+        p_row_id: rowId,
+        p_data: {
+            user_agent:
+                typeof navigator !== "undefined" ? navigator.userAgent : "",
+            count,
+            ...data,
+        },
+    });
+    if (error) {
+        console.warn("[analytics]", error.message);
+        return;
+    }
+    try {
+        if (id) localStorage.setItem(rowKey, id as string);
+        localStorage.setItem(countKey, String(count));
+    } catch {
+        // ignore
+    }
+}
+
+// ============================================================================
 // SUPABASE STORAGE (helper for non-AI uploads)
 // ============================================================================
 /**
@@ -293,9 +400,16 @@ export const MEDIA_BUCKET =
 export async function uploadToStorage(
     file: File,
     bucket = MEDIA_BUCKET,
-    tenantId = "default",
+    // Kept for older callers; the folder is always the signed-in user's id,
+    // which the bucket's storage policy requires.
+    _legacyFolder?: string,
 ) {
-    const path = `${tenantId}/${crypto.randomUUID()}-${file.name}`;
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user?.id) throw new Error("Sign in to upload files");
+    const safeName = file.name.replace(/[^\w.-]+/g, "_");
+    const path = `${session.user.id}/${crypto.randomUUID()}-${safeName}`;
     const { data, error } = await supabase.storage
         .from(bucket)
         .upload(path, file, {
@@ -414,11 +528,12 @@ export const submitFeedback = (payload: Record<string, unknown>) =>
 // ============================================================================
 // AUTH (admin invite via Edge Function)
 // ============================================================================
+/** Invite a teammate; the server takes the tenant from the caller's session. */
 export const inviteTeamMember = (
     email: string,
     full_name: string,
-    tenant_id: string,
-) => callMuapi("auth/invite", { email, full_name, tenant_id });
+    workspace_id?: string,
+) => callMuapi("auth/invite", { email, full_name, workspace_id });
 
 // ============================================================================
 // DEFAULT EXPORT: grouped API surface

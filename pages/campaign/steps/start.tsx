@@ -507,11 +507,13 @@ const Start: React.FC = () => {
     };
     const generateVideosAndUploadCSV = async () => {
         convertCsvData(csvData).forEach(async (el) => {
+            // Store the lead's website only; the LinkedIn session cookie is
+            // sent to the server for the screenshot and never saved.
             const dbData = await updateAIDB(
                 el.email,
                 el.fname,
                 el.lname,
-                `${el.website}&cookies=li_at=${linkedinCookie};+Domain=www.linkedin.com;+Secure;+HttpOnly`,
+                el.website,
             );
 
             const startJob = (await processAIVideos({
@@ -526,7 +528,8 @@ const Start: React.FC = () => {
                 language: language,
                 greeting: the_greeting(language, greeting),
                 text: el.fname,
-                website: `${el.website}&cookies=li_at=${linkedinCookie};+Domain=www.linkedin.com;+Secure;+HttpOnly`,
+                website: el.website,
+                linkedin_cookie: linkedinCookie || undefined,
                 voiceCloningEnabled: voiceCloningEnabled,
             })) as { data?: { job_id?: string } };
             // Drive the job to completion; the poll updates ai_videos,
