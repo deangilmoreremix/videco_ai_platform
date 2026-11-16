@@ -30,24 +30,35 @@ export const PricingTable = ({ user, expanded }: PricingTableProps) => {
         await handleSubscriptions();
     };
     const handleSubscriptions = async () => {
-        // Stack is Supabase + Muapi + OpenAI only (no Stripe).
-        // Persist the user's selected plan to their profile for visibility.
-        const isScalePlan = selectedPlan === "scale";
-        if (!isScalePlan) {
+        // Remember the choice, then hand off to hosted Stripe Checkout.
+        // The server picks the price from plan + frequency; the webhook
+        // (/api/stripe/webhooks) activates the plan after payment.
+        try {
             await supabase
                 .from("profiles")
                 .update({
                     desired_plan: planSelector(selectedPlan, frequency),
-                    plan_name: selectedPlan,
                 })
                 .eq("id", user.id);
-            alert(
-                "Plan preference saved. Billing is handled separately from this build.",
-            );
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+            const res = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session?.access_token ?? ""}`,
+                },
+                body: JSON.stringify({ plan: selectedPlan, frequency }),
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok || !body.url) {
+                throw new Error(body.error || "Could not start checkout");
+            }
+            window.location.href = body.url;
+        } catch (e) {
+            alert((e as Error).message);
             setIsLoading(false);
-        } else {
-            setIsLoading(false);
-            alert("this plan is coming soon. Please select another plan");
         }
     };
 
