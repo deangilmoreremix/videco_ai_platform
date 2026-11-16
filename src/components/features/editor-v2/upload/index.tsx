@@ -45,9 +45,11 @@ export const Upload: React.FC<UploadProps> = ({
     const { getData: _getData } = useFetchTeamData();
     const { type, varient } = router.query;
 
-    const client = createClient(
-        process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY ?? "",
-    );
+    // pexels' createClient throws without a key, which used to crash the
+    // whole editor; stock-video search is simply off when it's unset.
+    const client = process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY
+        ? createClient(process.env.NEXT_PUBLIC_UPLOAD_CLIENT_KEY)
+        : null;
 
     useEffect(() => {
         const plan = async () => {

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, Image, Progress } from "@chakra-ui/react";
-import { useS3Upload } from "next-s3-upload";
-import { supabase } from "src/services";
+import { supabase, uploadToStorage } from "src/services";
 import { useRouter } from "next/router";
 
 interface VideoPreviewProps {
@@ -9,7 +8,11 @@ interface VideoPreviewProps {
 }
 
 export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
-    const { files, uploadToS3, FileInput, openFileDialog } = useS3Upload();
+    // Thumbnails go to Supabase Storage like other media (upstream used
+    // next-s3-upload, which needs AWS credentials this deploy doesn't have).
+    const fileInput = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploaded, setUploaded] = useState(false);
     const router = useRouter();
     const [preview, setPreview] = useState<string>("");
     const [_url, setUrl] = useState<string>("");
@@ -34,8 +37,19 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
     }, []);
 
     // called every time a file's `status` changes
-    const handleChangeStatus = async (file: File) => {
-        const uploadedData = await uploadToS3(file);
+    const handleChangeStatus = async (file?: File) => {
+        if (!file) return;
+        setUploading(true);
+        let uploadedData: { url: string };
+        try {
+            uploadedData = await uploadToStorage(file);
+        } catch (error) {
+            console.log("upload failed..", error);
+            setUploading(false);
+            return;
+        }
+        setUploading(false);
+        setUploaded(true);
         setPreview(uploadedData.url);
         try {
             await supabase
@@ -84,39 +98,40 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({ src: _src }) => {
                 w="full"
                 flexDirection="column"
             >
-                <FileInput accept=".jpg, .png" onChange={handleChangeStatus} />
+                <input
+                    ref={fileInput}
+                    type="file"
+                    accept=".jpg, .png"
+                    hidden
+                    onChange={(e) => handleChangeStatus(e.target.files?.[0])}
+                />
 
                 <Button
                     p={12}
                     w="full"
-                    onClick={openFileDialog}
+                    onClick={() => fileInput.current?.click()}
                     fontWeight="normal"
                     fontSize="large"
                     position="relative"
                     zIndex={1}
                 >
-                    {files.length > 0
-                        ? preview
-                            ? "Uploaded"
-                            : "Uploading..."
+                    {uploading
+                        ? "Uploading..."
+                        : uploaded
+                        ? "Uploaded"
                         : preview
                         ? "Change preview image"
                         : "Click to upload preview image"}
                 </Button>
 
-                <Box w="full" bg="transparent">
-                    {files.map((file: { progress: number }, index: number) => (
-                        <div key={index}>
-                            <Progress
-                                w="full"
-                                colorScheme="teal"
-                                size="sm"
-                                value={file.progress}
-                                isIndeterminate={file.progress === 0}
-                            />
-                        </div>
-                    ))}
-                </Box>
+                {uploading && (
+                    <Progress
+                        w="full"
+                        colorScheme="teal"
+                        size="sm"
+                        isIndeterminate
+                    />
+                )}
             </Box>
             {preview && (
                 <>

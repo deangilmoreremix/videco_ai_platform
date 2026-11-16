@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import React from "react";
 
 import { ChakraProvider } from "@chakra-ui/react";
 
@@ -19,4 +19,3 @@ export const AllTheProviders = ({ children }: any) => {
 };
 
 export { AllTheProviders };
-

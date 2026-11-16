@@ -127,31 +127,40 @@ GitHub Actions makes it easy to automate all your software workflows, now with w
 [Go To Documentation](https://docs.github.com/en/actions)
 
 
+## 🧩 How this fork is built
 
+Upstream Videco ran on Vercel with Inngest, Speechify, Sync.so, Cloudinary and
+Stripe. This fork runs on **Netlify + Supabase + Muapi + OpenAI** and keeps the
+upstream product features:
 
-## 🤝 Contributing
+| Feature | Where it lives |
+|---|---|
+| Voice cloning ("record your intro") | `api` Edge Function `videos/preview`, using Speechify |
+| Personalized campaign videos | `videos/process`: cloned-voice name card + website-scroll background, composed with Cloudinary |
+| AI clone (lip-sync) | `videos/clone`: Muapi `sync-lipsync` in the cloned voice |
+| Job status | `jobs?id=&action=poll`, driven by `pollUntilDone` in `src/services` |
+| Billing | `pages/api/stripe/{checkout,portal,webhooks}.ts` |
 
-## 🚀 2026 Tech Stack Migration (In Progress)
+The browser calls everything through `src/services` (`callMuapi`), which targets
+`<SUPABASE_URL>/functions/v1/api/...`.
 
-The platform is being rebuilt on:
-- **Supabase** Edge Functions + Storage + Auth
-- **Muapi.ai** for all image/video generation, lipsync, and effects (replacing Sync.so + Cloudinary heavy usage)
-- **Netlify** for hosting + serverless functions
-- **OpenAI** Responses + Realtime APIs + LLM for personalized scripting and voice
+## 🚀 Setup and deployment
 
-**Key changes for developers:**
-- New integration modules: `src/lib/muapi.ts`, `src/lib/openai.ts`, `src/lib/storage.ts`
-- Supabase Edge Function: `supabase/functions/ai-orchestrator`
-- Netlify config: `netlify.toml` + `netlify/functions/`
-- Feature flag: `NEXT_PUBLIC_USE_MUAPI_AI=true` enables new AI paths (legacy paths remain for rollback)
-- See detailed plan: `.kilo/plans/1779745006493-.md`
-
-Run with the new stack:
-```bash
-netlify dev
-# or
-yarn dev   # still works (hybrid during migration)
-```
+1. **Environment.** Copy `env.example` to `.env.local` and fill it in. Set the same
+   values in Netlify. Edge Function keys go in Supabase secrets, as listed at the
+   bottom of `env.example`.
+2. **Database.** Videco shares its Supabase project with other apps. Apply only
+   Videco's migration files, one at a time, through the SQL editor or
+   `apply_migration`. **Do not run `supabase db push`** against a shared project.
+   Never add triggers on `auth.users`; Videco creates tenants per user, on demand.
+3. **Edge Function.** Deploy it:
+   ```bash
+   supabase functions deploy api --project-ref <ref>
+   ```
+4. **Stripe.** Create the Prices, put their ids in `NEXT_PUBLIC_PLAN_*`, and add a
+   webhook endpoint at `https://<site>/api/stripe/webhooks`.
+5. **Run locally** with `yarn dev` and test with `yarn test`; `yarn build` must pass
+   before Netlify will deploy.
 
 ## 🤝 Contributing
 

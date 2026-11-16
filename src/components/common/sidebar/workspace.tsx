@@ -52,7 +52,15 @@ export const WorkspaceSwitcher = () => {
             .select()
             .eq("owner", user?.id)
             .then((_res) => {
-                setWorkspaces(_res.data);
+                const list = _res.data ?? [];
+                setWorkspaces(list);
+                // New users have no selected workspace yet; default to the
+                // first one so the switcher (and pages that scope by
+                // workspace) have something to show.
+                const current = useWorkspaces.getState().workspace;
+                if (list.length && !list.some((w) => w.id === current?.id)) {
+                    setWorkspace({ id: list[0].id, name: list[0].name ?? "" });
+                }
             });
     };
     const deleteWorkspaces = async (id: string) => {
@@ -263,11 +271,11 @@ export const WorkspaceSwitcher = () => {
                             border="1px solid #F8F8F8"
                             size="sm"
                             mr={2}
-                            name={workspace.name}
+                            name={workspace?.name}
                             src="/default_icon.png"
                         />
                         <Text as="span" height="full">
-                            {workspace.name}
+                            {workspace?.name ?? "Workspace"}
                         </Text>
                     </Stack>
                 </MenuButton>
