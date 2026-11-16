@@ -282,9 +282,17 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
 // ============================================================================
 // SUPABASE STORAGE (helper for non-AI uploads)
 // ============================================================================
+/**
+ * Public Supabase Storage bucket for Videco media (recordings, voice samples,
+ * uploads). Must be public: the app stores getPublicUrl() links for playback
+ * and Muapi / Speechify / Cloudinary fetch them.
+ */
+export const MEDIA_BUCKET =
+    process.env.NEXT_PUBLIC_VIDECO_MEDIA_BUCKET || "videco-videos";
+
 export async function uploadToStorage(
     file: File,
-    bucket = "uploads",
+    bucket = MEDIA_BUCKET,
     tenantId = "default",
 ) {
     const path = `${tenantId}/${crypto.randomUUID()}-${file.name}`;

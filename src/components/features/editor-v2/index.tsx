@@ -133,47 +133,42 @@ export const Editor: React.FC = () => {
             videoId &&
             (router.query.clone === "true" || router.query.aivideos)
         ) {
-            const requestId =
-                (video as Record<string, unknown>)?.ai_preview || meta?.preview; // ai_preview stores the Muapi request_id in new path
-
-            if (
-                requestId &&
-                typeof requestId === "string" &&
-                requestId.length < 100
-            ) {
-                const signal = { cancelled: false };
-                (async () => {
-                    try {
-                        // Look up our job for this Muapi request, then poll it
-                        // through the `api` Edge Function. (Calling Muapi from
-                        // the browser can't work: the API key is server-only.)
-                        const { data: job } = await supabase
-                            .from("jobs")
-                            .select("id")
-                            .eq("request_id", requestId)
-                            .maybeSingle();
-                        if (!job?.id) return;
-                        const res = await pollUntilDone(job.id, { signal });
-                        const finalUrl = firstOutputUrl(res);
-                        if (
-                            res.status === "completed" &&
-                            finalUrl &&
-                            !signal.cancelled
-                        ) {
-                            setVideoUrl(finalUrl);
-                            setMediaStatus("completed");
-                            // Refresh video data
-                            getVideoByID();
-                        }
-                    } catch (e) {
-                        console.log("Muapi poll error (will retry)", e);
+            const signal = { cancelled: false };
+            (async () => {
+                try {
+                    // Latest Muapi job started for this video (AI clone).
+                    // videos.ai_preview holds the voice preview URL, so the
+                    // job is found through jobs.input.video_id instead.
+                    const { data: job } = await supabase
+                        .from("jobs")
+                        .select("id")
+                        .eq("input->>video_id", String(videoId))
+                        .order("created_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    if (!job?.id) return;
+                    // Poll through the `api` Edge Function (the Muapi key is
+                    // server-only, so the browser can't call Muapi itself).
+                    const res = await pollUntilDone(job.id, { signal });
+                    const finalUrl = firstOutputUrl(res);
+                    if (
+                        res.status === "completed" &&
+                        finalUrl &&
+                        !signal.cancelled
+                    ) {
+                        setVideoUrl(finalUrl);
+                        setMediaStatus("completed");
+                        // Refresh video data
+                        getVideoByID();
                     }
-                })();
+                } catch (e) {
+                    console.log("Muapi poll error (will retry)", e);
+                }
+            })();
 
-                return () => {
-                    signal.cancelled = true;
-                };
-            }
+            return () => {
+                signal.cancelled = true;
+            };
         }
     }, [mediaStatus, videoId, router.query.clone]);
 
@@ -323,7 +318,7 @@ export const Editor: React.FC = () => {
             const { uploadToStorage } = await import("src/services");
             const result = await uploadToStorage(
                 fileToUpload,
-                "videos",
+                undefined,
                 user.id,
             );
 

@@ -1,11 +1,10 @@
-import axios from "axios";
 import { blobUrlToBlob } from "src/utils/video";
 import { uploadToStorage } from "src/services";
 
 export async function uploadVideoToStorage(
     file: File | Blob,
 ): Promise<{ data: { path: string; url: string } }> {
-    const result = await uploadToStorage(file as File, "videos", "default");
+    const result = await uploadToStorage(file as File);
     return {
         data: {
             path: result.path,
@@ -14,29 +13,22 @@ export async function uploadVideoToStorage(
     };
 }
 
-// Upload via our server API to Supabase Storage (no Cloudinary)
+/**
+ * Upload a recorded blob: URL (voice sample or recording) straight to
+ * Supabase Storage with the user's session. The old version posted to
+ * /api/v1/videos/upload, which never existed, so every voice recording
+ * failed before reaching the server.
+ */
 export const uploadVideoToStorageDirect = async (file: string) => {
-    const blobFile = await blobUrlToBlob(file);
-    const formData = new FormData();
-    formData.append("file", new File([blobFile], `upload.mp4`));
-
-    try {
-        const uploadedVideo = await axios.post(
-            "/api/v1/videos/upload",
-            formData,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            },
-        );
-        return {
-            data: {
-                public_url: uploadedVideo.data.result.publicUrl,
-                path: uploadedVideo.data.result.path,
-            },
-        };
-    } catch (e) {
-        console.log(e);
-    }
+    const blob = await blobUrlToBlob(file);
+    const type = blob.type || "audio/webm";
+    const ext = type.includes("mp4")
+        ? "mp4"
+        : type.includes("mpeg")
+        ? "mp3"
+        : "webm";
+    const result = await uploadToStorage(
+        new File([blob], `recording.${ext}`, { type }),
+    );
+    return { data: { public_url: result.url, path: result.path } };
 };

@@ -184,12 +184,7 @@ export const CreateContent: React.FC = () => {
         try {
             const result = await uploadVideoToStorageDirect(url);
             const startJob = await createAIPreview({
-                audio: result.data?.public_url
-                    ? result.data.public_url.replace(
-                          /\.(mp4|webm|mov|m3u8)$/,
-                          ".mp3",
-                      )
-                    : result.data?.public_url || "",
+                audio: result?.data?.public_url || "",
                 video_id: router.query.id,
                 language: language,
                 userId: user.id,
@@ -202,9 +197,23 @@ export const CreateContent: React.FC = () => {
                 runningJobID.current = (
                     startJob as { data: { job_id: string } }
                 ).data.job_id;
-                pollUntilDone(runningJobID.current).catch((e) =>
-                    console.warn("[preview] polling failed:", e),
-                );
+                // The voice clone + preview finish inside the request, often
+                // before the realtime subscription sees the job, so complete
+                // the step from the poll result too.
+                pollUntilDone(runningJobID.current)
+                    .then((res) => {
+                        if (res.status === "completed") {
+                            setJobUpdates("completed");
+                            setJobUpdateMessages(
+                                "Voice cloning is done. Peparing the audio player",
+                            );
+                        } else if (res.status === "failed") {
+                            setJobUpdateMessages(
+                                "Something went wrong with ai voice creation. Please refresh and try again.",
+                            );
+                        }
+                    })
+                    .catch((e) => console.warn("[preview] polling failed:", e));
                 setJobUpdateMessages(
                     "AI is generating your voice. This might take a few minutes. Hang on. Please don't close this window.",
                 );
@@ -379,11 +388,7 @@ export const CreateContent: React.FC = () => {
 
         try {
             const { uploadToStorage } = await import("src/services");
-            const result = await uploadToStorage(
-                videoFile,
-                "uploads",
-                "default",
-            );
+            const result = await uploadToStorage(videoFile);
             const publicUrl = result.url;
             setVideoLoading(false);
             if (publicUrl) {
