@@ -62,9 +62,7 @@ yarn start
 - **Frontend**: Next.js, React, Chakra UI
 - **Backend**: Next.js API Routes (served via Netlify), Supabase (Auth, DB, Realtime, Edge Functions, Storage)
 - **AI Services (2026)**: Muapi.ai (image/video/lipsync), OpenAI (Responses, Realtime, LLM scripting & TTS)
-- **Legacy (transitional)**: Sync.so, Cloudinary, Speechify, Inngest
-- **Hosting**: Netlify (replacing Vercel)
-- **Payment**: Stripe
+- **Hosting**: Netlify
 - **Analytics**: PostHog, Usetiful
 - **State Management**: Zustand
 - **Internationalization**: next-i18next
@@ -130,16 +128,18 @@ GitHub Actions makes it easy to automate all your software workflows, now with w
 ## 🧩 How this fork is built
 
 Upstream Videco ran on Vercel with Inngest, Speechify, Sync.so, Cloudinary and
-Stripe. This fork runs on **Netlify + Supabase + Muapi + OpenAI** and keeps the
-upstream product features:
+Stripe. This fork uses only **Supabase + Muapi + OpenAI** (hosted on Netlify):
 
 | Feature | Where it lives |
 |---|---|
-| Voice cloning ("record your intro") | `api` Edge Function `videos/preview`, using Speechify |
-| Personalized campaign videos | `videos/process`: cloned-voice name card + website-scroll background, composed with Cloudinary |
-| AI clone (lip-sync) | `videos/clone`: Muapi `sync-lipsync` in the cloned voice |
+| Voice preview | `api` Edge Function `videos/preview`: greeting in an OpenAI TTS voice |
+| Personalized campaign videos | `videos/process`: OpenAI speaks "greeting + first name", Muapi `sync-lipsync` lip-syncs your recording |
+| AI clone (lip-sync) | `videos/clone`: OpenAI voice + Muapi lip-sync |
 | Job status | `jobs?id=&action=poll`, driven by `pollUntilDone` in `src/services` |
-| Billing | `pages/api/stripe/{checkout,portal,webhooks}.ts` |
+| Public player | Supabase RPCs `videco_public_video`, `videco_public_ai_video`, `videco_track_event` |
+
+Not available on this stack: cloned voices, website-scroll backgrounds and
+online payments (the pricing page records the chosen plan).
 
 The browser calls everything through `src/services` (`callMuapi`), which targets
 `<SUPABASE_URL>/functions/v1/api/...`.
@@ -160,9 +160,7 @@ The browser calls everything through `src/services` (`callMuapi`), which targets
    ```bash
    supabase functions deploy api videos jobs images leads auth ai-orchestrator --project-ref <ref>
    ```
-4. **Stripe.** Create the Prices, put their ids in `NEXT_PUBLIC_PLAN_*`, and add a
-   webhook endpoint at `https://<site>/api/stripe/webhooks`.
-5. **Run locally** with `yarn dev` and test with `yarn test`; `yarn build` must pass
+4. **Run locally** with `yarn dev` and test with `yarn test`; `yarn build` must pass
    before Netlify will deploy.
 
 ## 🤝 Contributing

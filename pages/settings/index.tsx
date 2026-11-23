@@ -48,7 +48,7 @@ function generateSecureKey() {
 const SettingsContent: React.FC = () => {
     const session = useSession();
     const [plan, setPlan] = React.useState<string | null>(null);
-    const [stipeId, setStipeId] = React.useState<string | null>(null);
+    const [, setStipeId] = React.useState<string | null>(null);
     const { isOpen, onClose } = useDisclosure();
     const cancelRef = React.useRef();
     const user = session?.user;
@@ -67,21 +67,6 @@ const SettingsContent: React.FC = () => {
     const { getTeamUserIds, getData } = useFetchTeamData();
     const { getPlan } = useUserPlan();
 
-    // Stripe billing portal for the signed-in user (upstream Settings link).
-    const openBillingPortal = async () => {
-        const {
-            data: { session: authSession },
-        } = await supabase.auth.getSession();
-        const res = await fetch("/api/stripe/portal", {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${authSession?.access_token ?? ""}`,
-            },
-        });
-        const body = await res.json().catch(() => ({}));
-        if (body.url) window.location.href = body.url;
-        else alert(body.error || "Could not open billing");
-    };
     const [, setVideos] = React.useState<number>(0);
     const [, setVideoSize] = React.useState<number>(0);
     const [show, setShow] = React.useState(false);
@@ -411,34 +396,6 @@ const SettingsContent: React.FC = () => {
                                                         fontWeight="normal"
                                                     />
                                                 </Link>
-                                                {stipeId && (
-                                                    <Link
-                                                        onClick={
-                                                            openBillingPortal
-                                                        }
-                                                        color="#383F40"
-                                                        mt="4"
-                                                        _hover={{
-                                                            textDecor: "none",
-                                                            bg: "#DADADA",
-                                                        }}
-                                                        mr={4}
-                                                        px={4}
-                                                        py={2}
-                                                        rounded="md"
-                                                        border=".5px solid #383F40"
-                                                        shadow="sm"
-                                                        textAlign="left"
-                                                    >
-                                                        Billing{" "}
-                                                        <ExternalLinkIcon
-                                                            fontSize="sm"
-                                                            ml={1}
-                                                            mb={1}
-                                                            fontWeight="normal"
-                                                        />
-                                                    </Link>
-                                                )}
                                             </Box>
                                         </Stack>
                                     </CardBody>

@@ -529,7 +529,6 @@ const Start: React.FC = () => {
                 greeting: the_greeting(language, greeting),
                 text: el.fname,
                 website: el.website,
-                linkedin_cookie: linkedinCookie || undefined,
                 voiceCloningEnabled: voiceCloningEnabled,
             })) as { data?: { job_id?: string } };
             // Drive the job to completion; the poll updates ai_videos,

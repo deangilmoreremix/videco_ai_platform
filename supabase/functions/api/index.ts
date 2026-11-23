@@ -13,14 +13,13 @@
 //   - Audio (MMAudio text-to-audio, video-to-audio)
 //   - AI Video Effects (Wan AI Effects: stylization, restoration, animation)
 //   - Image enhancement (upscale, background-remover, face-swap, colorize)
-//   - Account (balance, keys)
+//   - (Muapi account / key management is deliberately not exposed)
 //   - File upload (pass-through to Muapi for hosted URLs)
 //   - OpenAI: script generation, content ideas, captions
 //   - Storyboarding (project + character + scene + shot CRUD + asset generation)
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { v2 as cloudinary } from "npm:cloudinary@2.5.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,21 +52,10 @@ const WEBHOOK_URL = MUAPI_WEBHOOK_URL
 
 const LIPSYNC_MODEL = Deno.env.get("MUAPI_LIPSYNC_MODEL") || "sync-lipsync";
 
-// Upstream feature parity (voice cloning, website backgrounds, composition).
-// Each is optional: without its key the flow degrades instead of failing.
-const SPEECHIFY_API_KEY = Deno.env.get("SPEECHIFY_API_KEY") || "";
-const SCREENSHOTONE_ACCESS_KEY = Deno.env.get("SCREENSHOTONE_ACCESS_KEY") || "";
-const CLOUDINARY_CLOUD_NAME = Deno.env.get("CLOUDINARY_CLOUD_NAME") || "";
+// Videco runs on Muapi + OpenAI + Supabase only. Muapi has no voice cloning,
+// TTS or compositing, so voices come from OpenAI TTS and personalised videos
+// are Muapi lip-syncs of the user's recording.
 const MEDIA_BUCKET = Deno.env.get("VIDECO_MEDIA_BUCKET") || "videco-videos";
-
-if (CLOUDINARY_CLOUD_NAME) {
-  cloudinary.config({
-    cloud_name: CLOUDINARY_CLOUD_NAME,
-    api_key: Deno.env.get("CLOUDINARY_API_KEY"),
-    api_secret: Deno.env.get("CLOUDINARY_API_SECRET"),
-    secure: true,
-  });
-}
 const T2V_MODEL = "veo3-fast-text-to-video";
 
 const requestIdOf = (submit: any): string | undefined =>
@@ -165,9 +153,12 @@ async function openaiResponses(
   return res.json();
 }
 
+/** OpenAI TTS voices (stored per user in profiles.ai_voice_id). */
+const OPENAI_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+
 /** OpenAI TTS -> upload to Muapi -> hosted audio URL usable by lipsync. */
 async function synthesizeVoiceToMuapi(text: string, voice = "alloy"): Promise<string> {
-  const allowed = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+  const allowed = OPENAI_VOICES;
   const res = await fetch("https://api.openai.com/v1/audio/speech", {
     method: "POST",
     headers: {
@@ -193,227 +184,19 @@ async function synthesizeVoiceToMuapi(text: string, voice = "alloy"): Promise<st
   return url;
 }
 
-// ============================================================================
-// Upstream parity helpers: Speechify voice cloning, ScreenshotOne website
-// backgrounds, Cloudinary composition. Ported from upstream Videco
-// (src/services/api/aiVoice.ts, src/services/inngest.ts @ d58efdb).
-// ============================================================================
-const SPEECHIFY_BASE = "https://api.sws.speechify.com/v1";
-
-const SPEECHIFY_LANGUAGES: Record<string, string> = {
-  english: "en",
-  french: "fr-FR",
-  german: "de-DE",
-  spanish: "es-ES",
-  portuguese_br: "pt-BR",
-  portuguese: "pt-PT",
-  dutch: "nl-NL",
-  italian: "it-IT",
-  turkish: "tr-TR",
-  swedish: "sv-SE",
-  polish: "pl-PL",
-  danish: "da-DK",
-  norwegian: "nb-NO",
-};
-
-/** Clone a voice from a recorded sample. Returns the Speechify voice id. */
-async function speechifyCreateVoice(
-  sampleUrl: string,
-  consent: { userId: string; fullName: string; email: string },
-): Promise<string> {
-  const sample = await fetch(sampleUrl);
-  if (!sample.ok) throw new Error(`Could not fetch voice sample: ${sample.status}`);
-  const blob = await sample.blob();
-  const fd = new FormData();
-  fd.append("name", consent.userId);
-  fd.append("sample", blob, "sample" + (blob.type.includes("webm") ? ".webm" : ".mp3"));
-  fd.append("consent", JSON.stringify({ fullName: consent.fullName, email: consent.email }));
-  const res = await fetch(`${SPEECHIFY_BASE}/voices`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${SPEECHIFY_API_KEY}` },
-    body: fd,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.id) throw new Error(`Speechify voice clone failed: ${res.status} ${JSON.stringify(data)}`);
-  return data.id;
-}
-
-/** Text to speech in a (cloned) Speechify voice. Returns mp3 bytes. */
-async function speechifyTTS(text: string, voiceId: string, language?: string): Promise<Uint8Array> {
-  const res = await fetch(`${SPEECHIFY_BASE}/audio/speech`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${SPEECHIFY_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      audio_format: "mp3",
-      input: text,
-      model: "simba-multilingual",
-      voice_id: voiceId,
-      language: SPEECHIFY_LANGUAGES[language || "english"] || "en",
-      options: { loudness_normalization: true },
-    }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.audio_data) throw new Error(`Speechify TTS failed: ${res.status} ${JSON.stringify(data)}`);
-  return Uint8Array.from(atob(data.audio_data), (c) => c.charCodeAt(0));
-}
-
-/** Store bytes in Supabase Storage and return the public URL. */
-async function storeMedia(bytes: Uint8Array, path: string, contentType: string): Promise<string> {
-  const { error } = await supabase.storage
-    .from(MEDIA_BUCKET)
-    .upload(path, bytes, { contentType, upsert: true });
-  if (error) throw error;
-  return supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
-}
-
-/** The user's cloned voice id (upstream stored it on profiles.ai_voice_id). */
-async function getUserVoiceId(userId: string | null): Promise<string | null> {
+/** The user's chosen OpenAI voice (set at the voice-preview step). */
+async function getUserVoice(userId: string | null): Promise<string | null> {
   if (!userId) return null;
   const { data } = await supabase.from("profiles").select("ai_voice_id").eq("id", userId).maybeSingle();
-  return (data as any)?.ai_voice_id || null;
+  const v = (data as any)?.ai_voice_id;
+  return OPENAI_VOICES.includes(v) ? v : null;
 }
 
-/** Speak `text` in the user's cloned voice if there is one, else OpenAI TTS. Returns a hosted mp3 URL. */
-async function speakAsUser(
-  text: string,
-  opts: { userId: string | null; voiceId?: string | null; language?: string; fallbackVoice?: string },
-): Promise<string> {
-  const voiceId = opts.voiceId || (await getUserVoiceId(opts.userId));
-  if (SPEECHIFY_API_KEY && voiceId) {
-    const mp3 = await speechifyTTS(text, voiceId, opts.language);
-    return storeMedia(mp3, `voice/${opts.userId || "anon"}/${crypto.randomUUID()}.mp3`, "audio/mpeg");
-  }
-  return synthesizeVoiceToMuapi(text, opts.fallbackVoice);
-}
-
-/** Scrolling screen recording of a website (upstream used ScreenshotOne `animate`). */
-async function fetchWebsiteScroll(rawWebsite: string, linkedinCookie?: string): Promise<Uint8Array> {
-  // Older clients appended "&cookies=li_at=..." to the URL; split it off.
-  const [website, legacyCookie] = rawWebsite.split("&cookies=");
-  const params = new URLSearchParams({
-    access_key: SCREENSHOTONE_ACCESS_KEY,
-    url: website,
-    format: "mp4",
-    block_ads: "true",
-    block_cookie_banners: "true",
-    block_banners_by_heuristics: "false",
-    block_trackers: "true",
-    delay: "0",
-    timeout: "60",
-    scenario: "scroll",
-    duration: "5",
-    scroll_delay: "500",
-    scroll_duration: "1500",
-    scroll_by: "1000",
-    scroll_start_immediately: "true",
-    scroll_back: "true",
-    scroll_complete: "true",
-    scroll_easing: "ease_in_out_quint",
-    ignore_host_errors: "true",
-  });
-  // ScreenshotOne cookie format: name=value; Domain=...; Secure; HttpOnly
-  const cookie = linkedinCookie
-    ? `li_at=${linkedinCookie}; Domain=www.linkedin.com; Secure; HttpOnly`
-    : legacyCookie
-      ? decodeURIComponent(legacyCookie.replace(/\+/g, " "))
-      : "";
-  if (cookie) params.append("cookies", cookie);
-  let lastErr = "";
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(`https://api.screenshotone.com/animate?${params}`);
-    if (res.ok) return new Uint8Array(await res.arrayBuffer());
-    lastErr = `${res.status} ${await res.text()}`;
-  }
-  throw new Error(`ScreenshotOne failed: ${lastErr}`);
-}
-
-/** Upload a remote file (or bytes) to Cloudinary as a video/audio asset; returns public_id. */
-async function cloudinaryUpload(source: string | Uint8Array, publicId?: string): Promise<string> {
-  const file = typeof source === "string"
-    ? source
-    : `data:video/mp4;base64,${btoa(Array.from(source, (b) => String.fromCharCode(b)).join(""))}`;
-  const result = await cloudinary.uploader.upload(file, {
-    resource_type: "video",
-    ...(publicId ? { public_id: publicId, overwrite: false } : {}),
-  });
-  return result.public_id;
-}
-
-/**
- * Compose the personalised video exactly as upstream did (Cloudinary URL
- * transformations): either the talking head picture-in-picture over the
- * lead's website, or a 2s spoken name card spliced before the original video.
- */
-function composePersonalizedVideo(opts: {
-  sourceId: string;
-  voiceId?: string;
-  backgroundId?: string;
-  cardText: string;
-}): string {
-  const { sourceId, voiceId, backgroundId, cardText } = opts;
-  if (backgroundId) {
-    return cloudinary.url(sourceId, {
-      resource_type: "video",
-      transformation: [
-        { audio_codec: "none" },
-        { overlay: `video:${sourceId}`, start_offset: voiceId ? "2" : "0" },
-        { overlay: `video:${backgroundId}`, effect: "loop:4" },
-        { flags: "layer_apply" },
-        ...(voiceId ? [{ overlay: `audio:${voiceId}` }, { flags: "layer_apply" }] : []),
-        {
-          overlay: `video:${sourceId}`,
-          start_offset: voiceId ? "2" : "0",
-          height: 250,
-          width: 200,
-          crop: "fill",
-          audio_codec: "none",
-        },
-        { radius: 40 },
-        { flags: "layer_apply", gravity: "south_west", y: 70, x: 20 },
-        { flags: "layer_apply" },
-        { if: "du_lte_4" },
-        { effect: "fade:1000" },
-        { effect: "fade:-1000" },
-        { if: "else" },
-        { effect: "fade:2000" },
-        { effect: "fade:-2000" },
-        { if: "end" },
-      ],
-    });
-  }
-  return cloudinary.url(sourceId, {
-    resource_type: "video",
-    transformation: [
-      { audio_codec: "none" },
-      { effect: "blur:100" },
-      { effect: "fade:1000" },
-      ...(voiceId ? [{ overlay: `audio:${voiceId}` }] : []),
-      { overlay: `video:${sourceId}`, flags: "splice" },
-      { flags: "layer_apply" },
-      ...(voiceId
-        ? [
-            {
-              color: "white",
-              background: "black",
-              overlay: { font_family: "Arial", font_size: 150, text: cardText },
-              flags: "text_no_trim",
-              duration: "2",
-              start_offset: "0",
-              effect: "fade:500",
-            },
-            { border: "6px_solid_rgb:05405A", duration: "2", start_offset: "0" },
-            { flags: "layer_apply", duration: "2" },
-          ]
-        : []),
-    ],
-  });
-}
-
-/** Stable Cloudinary public_id for a source URL, so each video uploads once. */
-async function sourcePublicId(url: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(url));
-  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
-  return `videco/source/${hex}`;
+/** Speak `text` in the requested or saved voice; returns a hosted mp3 URL. */
+async function speakAsUser(text: string, opts: { userId: string | null; voice?: string | null }): Promise<string> {
+  const voice = (opts.voice && OPENAI_VOICES.includes(opts.voice) ? opts.voice : null) ||
+    (await getUserVoice(opts.userId)) || "alloy";
+  return synthesizeVoiceToMuapi(text, voice);
 }
 
 async function openaiExtractText(resp: any): Promise<string> {
@@ -718,7 +501,7 @@ const MODELS: Record<string, { type: string; resource: string }> = {
   "grok-imagine-image-to-video": { type: "image-to-video", resource: "video" },
   // Lip-sync
   "sync-lipsync": { type: "lip-sync", resource: "video" },
-  "latent-sync": { type: "lip-sync", resource: "video" },
+  "latentsync-video": { type: "lip-sync", resource: "video" },
   "creatify-lipsync": { type: "lip-sync", resource: "video" },
   "veed-lipsync": { type: "lip-sync", resource: "video" },
   // Music
@@ -932,7 +715,7 @@ Deno.serve(async (req: Request) => {
       const tenantId = await getTenantFromRequest(req);
       if (!tenantId) return json({ error: "Auth required" }, 401);
       const { user_id, video_url, audio_url, model = "sync-lipsync", ...rest } = await req.json();
-      const endpoint = model; // sync-lipsync | latent-sync | creatify-lipsync | veed-lipsync
+      const endpoint = model; // sync-lipsync | latentsync-video | creatify-lipsync | veed-lipsync
       const submit = await muapiSubmit(endpoint, { video_url, audio_url, ...rest });
       const requestId = submit.request_id || submit.data?.request_id;
       if (!requestId) return json({ error: "Muapi submit failed", detail: submit }, 502);
@@ -1520,13 +1303,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // ========================================================================
-    // PERSONALIZED VIDEO FLOWS (upstream Videco parity)
-    //   preview    : clone the user's voice from a recorded sample (Speechify)
-    //                and return a spoken greeting preview (videos.ai_preview)
-    //   process    : per-lead campaign video, composed like upstream:
-    //                cloned-voice name card + original video, or talking head
-    //                over a scroll recording of the lead's website (Cloudinary)
-    //   clone      : lip-sync the source video to a script in the cloned voice
+    // PERSONALIZED VIDEO FLOWS (Muapi + OpenAI)
+    //   preview    : spoken greeting preview in the chosen OpenAI voice
+    //                (videos.ai_preview); saves the voice on the profile
+    //   process    : per-lead campaign video: OpenAI speaks the greeting +
+    //                name, Muapi lip-syncs the user's recording to it
+    //   clone      : lip-sync the recording to a script
     //   onboarding : text-to-video welcome clip
     // All return { data: { job_id, request_id?, mode, status } }.
     // ========================================================================
@@ -1542,107 +1324,38 @@ Deno.serve(async (req: Request) => {
       const kind = segments[1];
       const aiVideoId = body.ai_video_id && body.ai_video_id !== "test_id" ? body.ai_video_id : null;
 
-      // ---- preview: voice cloning --------------------------------------
+      // ---- preview: greeting in the chosen voice --------------------------
       if (kind === "preview") {
-        const sampleUrl: string | undefined = body.audio || body.audio_url;
-        if (!sampleUrl) return json({ error: "audio (voice sample URL) required" }, 400);
         const script = [body.greeting, body.text].filter(Boolean).join(" ");
-
-        let voiceId: string | null = null;
-        let previewUrl: string;
-        if (SPEECHIFY_API_KEY) {
-          voiceId = await speechifyCreateVoice(sampleUrl, {
-            userId: userId || "videco-user",
-            fullName: body.userName || "",
-            email: body.email || "",
-          });
-          const mp3 = await speechifyTTS(script, voiceId, body.language);
-          previewUrl = await storeMedia(mp3, `voice/${userId}/preview-${crypto.randomUUID()}.mp3`, "audio/mpeg");
-          await supabase.from("profiles").upsert({ id: userId, ai_voice_id: voiceId }, { onConflict: "id" });
-        } else {
-          // No voice-cloning key configured: preview with a stock voice.
-          previewUrl = await synthesizeVoiceToMuapi(script);
-        }
+        if (!script) return json({ error: "greeting or text required" }, 400);
+        const voice = OPENAI_VOICES.includes(body.voice_id)
+          ? body.voice_id
+          : (await getUserVoice(userId)) || "alloy";
+        const previewUrl = await synthesizeVoiceToMuapi(script, voice);
+        // The UI moves on once profiles.ai_voice_id is set.
+        await supabase.from("profiles").upsert({ id: userId, ai_voice_id: voice }, { onConflict: "id" });
 
         if (body.video_id) {
           await supabase
             .from("videos")
-            .update({ ai_preview: previewUrl, training_audio: sampleUrl, language: body.language })
+            .update({
+              ai_preview: previewUrl,
+              training_audio: body.audio || body.audio_url || null,
+              language: body.language,
+            })
             .eq("id", body.video_id);
         }
         const job = await recordJob({
           tenantId,
           userId,
           type: "ai-preview",
-          model: voiceId ? "speechify-clone" : "openai-tts",
+          model: "openai-tts",
           requestId: `preview:${crypto.randomUUID()}`,
-          input: { video_id: body.video_id || null, sample: sampleUrl, voice_cloned: !!voiceId },
+          input: { video_id: body.video_id || null, voice },
           resourceType: "audio",
         });
-        await finalizeJob(job.id, "completed", { outputs: [previewUrl], ai_voice_id: voiceId });
-        return json({ data: { job_id: job.id, mode: "speechify", status: "completed", url: previewUrl } }, 201);
-      }
-
-      // ---- process: campaign video composition --------------------------
-      if (kind === "process") {
-        if (!CLOUDINARY_CLOUD_NAME) {
-          return json({ error: "Campaign videos need CLOUDINARY_* secrets configured" }, 503);
-        }
-        const videoUrl: string | undefined = body.video_url || body.og_video_url;
-        if (!videoUrl) return json({ error: "video_url required" }, 400);
-        if (aiVideoId) {
-          await supabase.from("ai_videos").update({ status: "pending" }).eq("id", aiVideoId);
-        }
-        try {
-          const sourceId = await cloudinaryUpload(videoUrl, await sourcePublicId(videoUrl));
-          const cardText = [body.greeting, body.text].filter(Boolean).join(" ");
-
-          let voicePublicId: string | undefined;
-          if (body.voiceCloningEnabled !== false && cardText) {
-            const voiceUrl = await speakAsUser(cardText, {
-              userId,
-              voiceId: body.voice_id,
-              language: body.language,
-            });
-            voicePublicId = await cloudinaryUpload(voiceUrl);
-          }
-
-          let backgroundId: string | undefined;
-          if (body.background === "website" && body.website) {
-            if (!SCREENSHOTONE_ACCESS_KEY) {
-              return json({ error: "Website backgrounds need SCREENSHOTONE_ACCESS_KEY" }, 503);
-            }
-            backgroundId = await cloudinaryUpload(
-              await fetchWebsiteScroll(body.website, body.linkedin_cookie),
-            );
-          }
-
-          const finalUrl = composePersonalizedVideo({
-            sourceId,
-            voiceId: voicePublicId,
-            backgroundId,
-            cardText,
-          });
-          const job = await recordJob({
-            tenantId,
-            userId,
-            type: "ai-process",
-            model: "cloudinary-compose",
-            requestId: `compose:${crypto.randomUUID()}`,
-            input: { video_url: videoUrl, ai_video_id: aiVideoId, background: body.background || null },
-            resourceType: "video",
-          });
-          await finalizeJob(job.id, "completed", { outputs: [finalUrl] });
-          if (aiVideoId) {
-            await supabase.from("ai_videos").update({ status: "completed", url: finalUrl }).eq("id", aiVideoId);
-          }
-          return json({ data: { job_id: job.id, mode: "compose", status: "completed", url: finalUrl } }, 201);
-        } catch (err) {
-          if (aiVideoId) {
-            await supabase.from("ai_videos").update({ status: "error" }).eq("id", aiVideoId);
-          }
-          throw err;
-        }
+        await finalizeJob(job.id, "completed", { outputs: [previewUrl], voice });
+        return json({ data: { job_id: job.id, mode: "openai-tts", status: "completed", url: previewUrl } }, 201);
       }
 
       // ---- clone / onboarding: Muapi jobs --------------------------------
@@ -1657,7 +1370,7 @@ Deno.serve(async (req: Request) => {
         if (!prompt) return json({ error: "prompt required" }, 400);
         payload = { prompt };
       } else {
-        type = "ai-clone";
+        type = kind === "process" ? "ai-process" : "ai-clone";
         model = body.model || LIPSYNC_MODEL;
 
         let videoUrl: string | undefined = body.video_url || body.og_video_url;
@@ -1673,13 +1386,12 @@ Deno.serve(async (req: Request) => {
 
         let audioUrl: string | undefined = body.audio_url;
         if (!audioUrl) {
-          if (!body.text) return json({ error: "text or audio_url required" }, 400);
-          audioUrl = await speakAsUser(body.text, {
-            userId,
-            voiceId: body.voice_id,
-            language: body.language,
-            fallbackVoice: body.voice_id,
-          });
+          // Campaign: "<greeting> <first name>"; clone: the full script.
+          const script = kind === "process"
+            ? [body.greeting, body.text].filter(Boolean).join(" ")
+            : body.text;
+          if (!script) return json({ error: "text or audio_url required" }, 400);
+          audioUrl = await speakAsUser(script, { userId, voice: body.voice_id });
         }
         payload = { video_url: videoUrl, audio_url: audioUrl };
       }
@@ -1699,9 +1411,12 @@ Deno.serve(async (req: Request) => {
       });
 
       if (body.video_id) {
-        // ai_preview holds the voice preview URL (upstream); the job row
-        // carries the Muapi request id.
+        // ai_preview holds the voice preview URL; the job row carries the
+        // Muapi request id.
         await supabase.from("videos").update({ media_status: "in_progress" }).eq("id", body.video_id);
+      }
+      if (aiVideoId) {
+        await supabase.from("ai_videos").update({ status: "in_progress", ai_preview: requestId }).eq("id", aiVideoId);
       }
 
       return json({ data: { job_id: job.id, request_id: requestId, mode: "muapi", status: "processing" } }, 201);

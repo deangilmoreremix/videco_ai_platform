@@ -30,34 +30,22 @@ export const PricingTable = ({ user, expanded }: PricingTableProps) => {
         await handleSubscriptions();
     };
     const handleSubscriptions = async () => {
-        // Remember the choice, then hand off to hosted Stripe Checkout.
-        // The server picks the price from plan + frequency; the webhook
-        // (/api/stripe/webhooks) activates the plan after payment.
+        // No payment provider is connected (the stack is Muapi + OpenAI +
+        // Supabase), so record the chosen plan for follow-up.
         try {
-            await supabase
+            const { error } = await supabase
                 .from("profiles")
                 .update({
                     desired_plan: planSelector(selectedPlan, frequency),
                 })
                 .eq("id", user.id);
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-            const res = await fetch("/api/stripe/checkout", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${session?.access_token ?? ""}`,
-                },
-                body: JSON.stringify({ plan: selectedPlan, frequency }),
-            });
-            const body = await res.json().catch(() => ({}));
-            if (!res.ok || !body.url) {
-                throw new Error(body.error || "Could not start checkout");
-            }
-            window.location.href = body.url;
+            if (error) throw error;
+            alert(
+                "Thanks! Your plan choice is saved and our team will contact you to activate it.",
+            );
         } catch (e) {
-            alert((e as Error).message);
+            alert((e as Error).message || "Could not save your plan choice");
+        } finally {
             setIsLoading(false);
         }
     };
